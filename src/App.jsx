@@ -18,7 +18,6 @@ import {
 /**
  * Application LIFE Dashboard
  * Gère les finances, le sport, la nutrition et l'agenda.
- * Version composant pur compatible avec le rendu automatique.
  */
 export default function App() {
   // --- ÉTATS ---
@@ -52,15 +51,14 @@ export default function App() {
             const vId = import.meta.env.VITE_APP_ID;
             
             if (vConfig) {
-              // Nettoyage des guillemets si le JSON a été collé avec des guillemets extérieurs
+              // Nettoyage automatique des guillemets si collé avec des quotes extérieurs
               const cleanedConfig = vConfig.trim().replace(/^['"]|['"]$/g, '');
               config = JSON.parse(cleanedConfig);
             }
-            
             if (vId) setAppId(vId);
           }
         } catch (e) {
-          console.warn("Environnement Vercel non détecté.");
+          console.warn("Variables d'environnement non détectées ou mal formatées.");
         }
 
         // 2. Fallback pour l'aperçu local Gemini (Canvas)
@@ -81,7 +79,7 @@ export default function App() {
 
         onAuthStateChanged(firebaseAuth, (u) => {
           if (!u) {
-            signInAnonymously(firebaseAuth).catch(err => setInitError("Erreur Auth: " + err.message));
+            signInAnonymously(firebaseAuth).catch(err => setInitError("Erreur d'authentification : " + err.message));
           } else {
             setUser(u);
             setLoading(false);
@@ -109,7 +107,7 @@ export default function App() {
     const unsubs = collections.map(({ n, s }) => 
       onSnapshot(query(collection(db, 'artifacts', appId, 'users', user.uid, n)), 
       (snap) => s(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
-      (err) => console.error(`Sync Error ${n}:`, err))
+      (err) => console.error(`Erreur synchro ${n}:`, err))
     );
 
     const unsubGoal = onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'budget'), (d) => {
@@ -170,21 +168,21 @@ export default function App() {
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6 font-sans">
       <div className="bg-white p-8 rounded-[32px] shadow-2xl border border-red-100 max-w-md text-center">
         <AlertCircle className="text-red-500 mx-auto mb-4" size={48} />
-        <h2 className="text-xl font-black text-slate-800 mb-2">Erreur Détectée</h2>
+        <h2 className="text-xl font-black text-slate-800 mb-2">Presque prêt !</h2>
         <p className="text-sm text-red-600 mb-6">{initError}</p>
         <div className="text-left bg-slate-50 p-4 rounded-2xl text-[10px] font-mono text-slate-400 mb-6 leading-relaxed">
-          1. Vérifiez vos variables sur Vercel.<br/>
-          2. Allez dans <strong>Settings {' > '} Env Variables</strong>.<br/>
-          3. Refaites un <strong>Commit</strong> sur GitHub pour forcer la mise à jour.
+          1. Sur Vercel, allez dans <strong>Settings {' > '} Env Variables</strong>.<br/>
+          2. Vérifiez <strong>VITE_FIREBASE_CONFIG</strong>.<br/>
+          3. Faites un nouveau <strong>Commit</strong> sur GitHub pour forcer le build.
         </div>
-        <button onClick={() => window.location.reload()} className="w-full bg-indigo-600 text-white py-3 rounded-2xl font-bold shadow-lg">Vérifier à nouveau</button>
+        <button onClick={() => window.location.reload()} className="w-full bg-indigo-600 text-white py-3 rounded-2xl font-bold shadow-lg">Rafraîchir la page</button>
       </div>
     </div>
   );
 
   if (loading) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4 font-sans text-center">
-      <div className="w-12 h-12 bg-indigo-600 rounded-[24px] animate-bounce shadow-2xl"></div>
+      <div className="w-12 h-12 bg-indigo-600 rounded-[24px] animate-bounce shadow-2xl shadow-indigo-100"></div>
       <p className="font-black text-indigo-600 text-[10px] uppercase tracking-widest animate-pulse">Chargement LIFE Dashboard</p>
     </div>
   );
@@ -207,7 +205,7 @@ export default function App() {
         {activeTab === 'accueil' ? (
           <div className="space-y-6 animate-in fade-in duration-500">
             <header className="flex justify-between items-end">
-              <div><h1 className="text-4xl font-black tracking-tighter">LIFE.</h1><p className="text-slate-500 font-medium text-sm italic">Suivi personnel 🇨🇭</p></div>
+              <div><h1 className="text-4xl font-black tracking-tighter">LIFE.</h1><p className="text-slate-500 font-medium text-sm italic">Mon dashboard 🇨🇭</p></div>
               <div className="text-right">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Solde Réel</p>
                 <p className={`text-2xl font-black ${stats.realBalance >= 0 ? 'text-green-500' : 'text-red-500'}`}>{stats.realBalance.toFixed(2)} CHF</p>
@@ -228,6 +226,7 @@ export default function App() {
                 <div><p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Charges Fixes</p><h2 className="text-2xl font-black mt-1 text-slate-800">{stats.totalSub.toFixed(2)} CHF</h2></div>
                 <div className="mt-4 flex gap-2 overflow-x-auto no-scrollbar">
                   {subscriptions.map(s => <span key={s.id} className="bg-slate-50 px-3 py-1 rounded-full text-[9px] font-bold text-slate-500 whitespace-nowrap border border-slate-100">{s.name} (le {s.day})</span>)}
+                  {subscriptions.length === 0 && <span className="text-[10px] text-slate-300 italic">Aucun abonnement</span>}
                 </div>
               </div>
             </div>
@@ -276,10 +275,22 @@ export default function App() {
 
       {/* Navigation Mobile */}
       <nav className="fixed bottom-0 left-0 right-0 h-24 bg-white/90 backdrop-blur-xl border-t border-slate-100 flex items-center justify-around px-4 md:hidden z-50 rounded-t-[40px] shadow-2xl">
-        <button onClick={() => setActiveTab('accueil')} className={`p-4 rounded-[24px] transition-all ${activeTab === 'accueil' ? 'bg-indigo-600 text-white shadow-2xl -translate-y-4 scale-110' : 'text-slate-300'}`}><LayoutDashboard size={24}/></button>
-        <button onClick={() => setActiveTab('budget')} className={`p-4 rounded-[24px] transition-all ${activeTab === 'budget' ? 'bg-indigo-600 text-white shadow-2xl -translate-y-4 scale-110' : 'text-slate-300'}`}><Wallet size={24}/></button>
+        <button onClick={() => setActiveTab('accueil')} className={`p-4 rounded-[24px] transition-all ${activeTab === 'accueil' ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-100 -translate-y-4 scale-110' : 'text-slate-300'}`}><LayoutDashboard size={24}/></button>
+        <button onClick={() => setActiveTab('budget')} className={`p-4 rounded-[24px] transition-all ${activeTab === 'budget' ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-100 -translate-y-4 scale-110' : 'text-slate-300'}`}><Wallet size={24}/></button>
       </nav>
       <style dangerouslySetInnerHTML={{ __html: `.no-scrollbar::-webkit-scrollbar { display: none; } .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }` }} />
     </div>
   );
+}
+
+// --- LOGIQUE DE DÉMARRAGE UNIVERSELLE ---
+// Ce bloc permet à l'application de s'afficher sur Vercel sans casser Gemini
+if (typeof window !== 'undefined' && !window.__firebase_config) {
+  // On importe ReactDOM de manière dynamique pour éviter l'erreur "ReactSharedInternals" dans Gemini
+  import('react-dom/client').then(({ createRoot }) => {
+    const container = document.getElementById('root');
+    if (container) {
+      createRoot(container).render(<App />);
+    }
+  }).catch(err => console.error("Erreur chargement React DOM:", err));
 }
