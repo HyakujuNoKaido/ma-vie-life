@@ -15,41 +15,60 @@ import {
   getAuth, signInAnonymously, onAuthStateChanged 
 } from 'firebase/auth';
 
-// --- GESTION DE LA CONFIGURATION ---
+// --- FONCTION DE PARSING SECURISEE ---
+const safeJsonParse = (str) => {
+  try {
+    if (!str) return null;
+    // Nettoyage des éventuels guillemets superflus si collé avec des quotes
+    const cleaned = str.trim().replace(/^['"]|['"]$/g, '');
+    return JSON.parse(cleaned);
+  } catch (e) {
+    console.error("Erreur de parsing JSON:", e);
+    return null;
+  }
+};
+
+// --- GESTION DE LA CONFIGURATION (HORS COMPOSANT POUR INITIALISATION) ---
 let firebaseConfig = null;
 let appId = 'life-dashboard-suisse-v5';
-let configError = null;
+let configErrorMessage = null;
 
 try {
-  // Syntaxe standard Vite pour Vercel
-  const env = import.meta.env;
+  // 1. Tentative avec les variables Vercel (Vite)
+  // On accède à import.meta.env de manière très prudente
+  const env = typeof import.meta !== 'undefined' ? import.meta.env : {};
   
-  if (env && env.VITE_FIREBASE_CONFIG) {
-    firebaseConfig = JSON.parse(env.VITE_FIREBASE_CONFIG);
-  } else if (typeof __firebase_config !== 'undefined') {
-    firebaseConfig = JSON.parse(__firebase_config);
+  const vConfig = env?.VITE_FIREBASE_CONFIG;
+  const vId = env?.VITE_APP_ID;
+
+  if (vConfig) {
+    firebaseConfig = safeJsonParse(vConfig);
+  } 
+  
+  // 2. Fallback pour l'aperçu Gemini si les variables Vercel sont absentes
+  if (!firebaseConfig && typeof __firebase_config !== 'undefined') {
+    firebaseConfig = safeJsonParse(__firebase_config);
   }
 
-  if (env && env.VITE_APP_ID) {
-    appId = env.VITE_APP_ID;
-  }
+  if (vId) appId = vId;
 
+  // 3. Validation
   if (!firebaseConfig || !firebaseConfig.apiKey) {
-    configError = "Configuration Firebase introuvable. Vérifiez la variable VITE_FIREBASE_CONFIG sur Vercel.";
+    configErrorMessage = "Configuration Firebase introuvable ou mal formatée. Vérifiez VITE_FIREBASE_CONFIG sur Vercel.";
   }
 } catch (e) {
-  configError = "Erreur de configuration : " + e.message;
+  configErrorMessage = "Erreur fatale de configuration : " + e.message;
 }
 
-// Initialisation Firebase
+// Initialisation Firebase (uniquement si la config est valide)
 let app, auth, db;
-if (!configError) {
+if (!configErrorMessage) {
   try {
     app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
     auth = getAuth(app);
     db = getFirestore(app);
   } catch (e) {
-    configError = "Erreur d'initialisation Firebase : " + e.message;
+    configErrorMessage = "Échec du démarrage de Firebase : " + e.message;
   }
 }
 
@@ -92,15 +111,18 @@ export default function App() {
   const [workouts, setWorkouts] = useState([]);
   const [budgetGoal, setBudgetGoal] = useState(0);
 
-  // Écran d'erreur si la config échoue
-  if (configError) {
+  // --- RENDU D'ERREUR PRECOCE (EVITE L'ECRAN BLANC) ---
+  if (configErrorMessage) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-100 p-6 font-sans">
-        <Card className="max-w-md border-red-200 bg-red-50 shadow-xl text-center text-slate-800">
-          <AlertCircle className="text-red-500 mx-auto mb-4" size={48} />
-          <h2 className="text-xl font-black text-red-700 mb-2">Erreur de Démarrage</h2>
-          <p className="text-sm text-red-600 mb-4">{configError}</p>
-          <p className="text-[10px] text-red-400 uppercase font-bold">Vérifiez vos clés sur Vercel et enregistrez à nouveau sur GitHub.</p>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6 font-sans">
+        <Card className="max-w-md border-red-200 bg-red-50 shadow-2xl text-center">
+          <AlertCircle className="text-red-500 mx-auto mb-4" size={56} />
+          <h2 className="text-2xl font-black text-red-700 mb-2">Erreur de Configuration</h2>
+          <p className="text-sm text-red-600 mb-6 leading-relaxed">{configErrorMessage}</p>
+          <div className="text-left bg-white p-4 rounded-2xl text-[10px] font-mono text-slate-400 border border-red-100 break-all mb-4">
+            <strong>Conseil :</strong> Sur Vercel, la valeur de VITE_FIREBASE_CONFIG doit commencer par {"{"} et finir par {"}"} sans guillemets autour du bloc.
+          </div>
+          <Button onClick={() => window.location.reload()} className="w-full">Réessayer</Button>
         </Card>
       </div>
     );
@@ -109,7 +131,7 @@ export default function App() {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
       if (!u) {
-        signInAnonymously(auth).catch(err => console.error("Auth Error", err));
+        signInAnonymously(auth).catch(err => console.error("Erreur Auth", err));
       } else {
         setUser(u);
         setLoading(false);
@@ -186,7 +208,7 @@ export default function App() {
   if (loading) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4 font-sans">
       <div className="w-12 h-12 bg-indigo-600 rounded-[24px] animate-bounce shadow-2xl"></div>
-      <p className="font-black text-indigo-600 text-[10px] uppercase tracking-widest animate-pulse">LIFE DASHBOARD</p>
+      <p className="font-black text-indigo-600 text-[10px] uppercase tracking-widest animate-pulse">Chargement LIFE</p>
     </div>
   );
 
@@ -202,11 +224,11 @@ export default function App() {
       </aside>
 
       {/* Main View */}
-      <main className="max-w-2xl mx-auto p-4 md:max-w-4xl md:p-12">
+      <main className="max-w-2xl mx-auto p-4 md:max-w-4xl md:p-12 text-slate-800">
         {activeTab === 'accueil' ? (
           <div className="space-y-6 animate-in fade-in duration-500">
             <header className="flex justify-between items-end">
-              <div><h1 className="text-4xl font-black tracking-tighter text-slate-900">LIFE.</h1><p className="text-slate-500 font-medium text-sm italic">Mon tableau de bord 🇨🇭</p></div>
+              <div><h1 className="text-4xl font-black tracking-tighter">LIFE.</h1><p className="text-slate-500 font-medium text-sm italic">Tableau de bord 🇨🇭</p></div>
               <div className="text-right">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Solde Réel</p>
                 <p className={`text-2xl font-black ${stats.realBalance >= 0 ? 'text-indigo-600' : 'text-red-500'}`}>{stats.realBalance.toFixed(2)} CHF</p>
@@ -222,7 +244,7 @@ export default function App() {
                 </div>
                 <Wallet className="absolute -right-6 -bottom-6 opacity-10 w-32 h-32 rotate-12" />
               </Card>
-              <Card className="border-slate-100 shadow-sm flex flex-col justify-between bg-white text-slate-800">
+              <Card className="border-slate-100 shadow-sm flex flex-col justify-between bg-white">
                 <div><p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Charges Fixes</p><h2 className="text-2xl font-black mt-1">{stats.totalSub.toFixed(2)} CHF</h2></div>
                 <div className="mt-4 flex gap-2 overflow-x-auto no-scrollbar">
                   {subscriptions.length > 0 ? subscriptions.map(s => <span key={s.id} className="bg-slate-50 px-3 py-1 rounded-full text-[9px] font-bold text-slate-500 whitespace-nowrap border border-slate-100">{s.name} (le {s.day})</span>) : <p className="text-[10px] text-slate-300 italic">Aucune charge fixe</p>}
@@ -232,14 +254,14 @@ export default function App() {
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="flex justify-between items-center text-slate-800">
+            <div className="flex justify-between items-center">
               <h2 className="text-2xl font-black">Finances</h2>
               <select className="bg-white border-none rounded-xl text-[10px] font-black p-2 shadow-sm outline-none" value={selectedMonth} onChange={e => setSelectedMonth(Number(e.target.value))}>
                 {["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"].map((m, i) => <option key={m} value={i}>{m}</option>)}
               </select>
             </div>
 
-            <Card className="bg-indigo-50 border-indigo-100 text-slate-800">
+            <Card className="bg-indigo-50 border-indigo-100">
               <div className="flex items-center gap-2 text-indigo-600 mb-2"><Target size={18}/><h3 className="text-xs font-black uppercase tracking-widest">Objectif Mensuel</h3></div>
               <div className="flex gap-2">
                 <input type="number" placeholder="Budget Max (ex: 800)" className="flex-1 p-3 rounded-xl border-none font-black text-lg outline-none focus:ring-2 focus:ring-indigo-500" value={budgetGoal || ''} onChange={e => updateBudgetGoal(e.target.value)} />
@@ -256,7 +278,7 @@ export default function App() {
                       {item.type === 'income' ? <ArrowUpCircle size={20}/> : item.type === 'fixed' ? <Clock size={20}/> : <ArrowDownCircle size={20}/>}
                     </div>
                     <div>
-                      <div className="flex items-center gap-2 text-slate-800"><p className="font-black text-sm">{item.name}</p>{item.isPlanned && <span className="bg-indigo-100 text-indigo-700 text-[7px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter shadow-sm">Prévu</span>}</div>
+                      <div className="flex items-center gap-2"><p className="font-black text-sm">{item.name}</p>{item.isPlanned && <span className="bg-indigo-100 text-indigo-700 text-[7px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter shadow-sm">Prévu</span>}</div>
                       <p className="text-[10px] text-slate-400 font-black uppercase">{item.date}</p>
                     </div>
                   </div>
