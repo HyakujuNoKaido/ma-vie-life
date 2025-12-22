@@ -45,24 +45,32 @@ export default function App() {
       try {
         let config = null;
 
-        // Lecture des variables Vercel (Vite) ou Fallback Gemini
+        // 1. Lecture des variables Vercel (Vite)
         try {
           if (typeof import.meta !== 'undefined' && import.meta.env) {
             const vConfig = import.meta.env.VITE_FIREBASE_CONFIG;
             const vId = import.meta.env.VITE_APP_ID;
-            if (vConfig) config = JSON.parse(vConfig.trim());
+            
+            if (vConfig) {
+              // Nettoyage de sécurité si le JSON a été collé avec des guillemets extérieurs
+              const cleanedConfig = vConfig.trim().replace(/^['"]|['"]$/g, '');
+              config = JSON.parse(cleanedConfig);
+            }
+            
             if (vId) setAppId(vId);
           }
         } catch (e) {
-          console.warn("Environnement Vercel non détecté.");
+          console.warn("Erreur lecture variables Vercel:", e.message);
         }
 
+        // 2. Fallback pour l'aperçu local Gemini
         if (!config && typeof __firebase_config !== 'undefined') {
           config = JSON.parse(__firebase_config);
         }
 
+        // 3. Vérification finale
         if (!config || !config.apiKey) {
-          throw new Error("Configuration Firebase manquante. Vérifiez VITE_FIREBASE_CONFIG.");
+          throw new Error("Configuration Firebase introuvable. L'application est en ligne mais ne trouve pas ses réglages Vercel.");
         }
 
         const firebaseApp = getApps().length === 0 ? initializeApp(config) : getApps()[0];
@@ -94,13 +102,14 @@ export default function App() {
     const collections = [
       { n: 'expenses', s: setExpenses },
       { n: 'subscriptions', s: setSubscriptions },
-      { n: 'incomes', s: setIncomes }
+      { n: 'incomes', s: setIncomes },
+      { n: 'workouts', s: setWorkouts }
     ];
 
     const unsubs = collections.map(({ n, s }) => 
       onSnapshot(query(collection(db, 'artifacts', appId, 'users', user.uid, n)), 
       (snap) => s(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
-      (err) => console.error(err))
+      (err) => console.error(`Erreur synchro ${n}:`, err))
     );
 
     const unsubGoal = onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'budget'), (d) => {
@@ -164,9 +173,15 @@ export default function App() {
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6 font-sans">
       <div className="bg-white p-8 rounded-[32px] shadow-2xl border border-red-100 max-w-md text-center">
         <AlertCircle className="text-red-500 mx-auto mb-4" size={48} />
-        <h2 className="text-xl font-black text-slate-800 mb-2">Erreur de Configuration</h2>
-        <p className="text-sm text-slate-500 mb-6">{initError}</p>
-        <button onClick={() => window.location.reload()} className="w-full bg-indigo-600 text-white py-3 rounded-2xl font-bold">Réessayer</button>
+        <h2 className="text-xl font-black text-slate-800 mb-2">Presque prêt !</h2>
+        <p className="text-sm text-red-600 mb-6">{initError}</p>
+        <div className="text-left bg-slate-50 p-4 rounded-2xl text-[10px] font-mono text-slate-400 mb-6 leading-relaxed">
+          1. Sur Vercel, allez dans <strong>Settings {' > '} Environment Variables</strong>.<br/>
+          2. Vérifiez que <strong>VITE_FIREBASE_CONFIG</strong> contient le bloc JSON.<br/>
+          3. <strong>Attention :</strong> Ne mettez pas de guillemets avant le {"{"} et après le {"}"}.<br/>
+          4. Dans l'onglet <strong>Deployments</strong>, faites un "Redeploy" manuel.
+        </div>
+        <button onClick={() => window.location.reload()} className="w-full bg-indigo-600 text-white py-3 rounded-2xl font-bold">Rafraîchir la page</button>
       </div>
     </div>
   );
@@ -174,7 +189,7 @@ export default function App() {
   if (loading) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4 font-sans text-center">
       <div className="w-12 h-12 bg-indigo-600 rounded-[24px] animate-bounce shadow-2xl"></div>
-      <p className="font-black text-indigo-600 text-[10px] uppercase tracking-widest animate-pulse">Initialisation LIFE Dashboard</p>
+      <p className="font-black text-indigo-600 text-[10px] uppercase tracking-widest animate-pulse">Synchronisation LIFE Dashboard</p>
     </div>
   );
 
