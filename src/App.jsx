@@ -16,32 +16,35 @@ import {
 } from 'firebase/auth';
 
 // --- CONFIGURATION SECURISEE POUR VERCEL ---
+// On utilise des vérifications très prudentes pour éviter l'écran blanc (crash JS)
 let firebaseConfig = null;
 let appId = 'life-dashboard-suisse-v5';
 let configError = null;
 
 try {
-  // On tente de lire les variables d'environnement Vite
-  const envConfig = import.meta.env.VITE_FIREBASE_CONFIG;
-  const envId = import.meta.env.VITE_APP_ID;
+  // Tentative sécurisée de lecture des variables d'environnement Vite/Vercel
+  // Le ?. évite de crasher si import.meta ou env n'existent pas
+  const envConfig = import.meta?.env?.VITE_FIREBASE_CONFIG;
+  const envId = import.meta?.env?.VITE_APP_ID;
 
   if (envConfig) {
     firebaseConfig = JSON.parse(envConfig);
   } else if (typeof __firebase_config !== 'undefined') {
-    // Fallback pour l'aperçu local
+    // Fallback pour l'aperçu local Gemini
     firebaseConfig = JSON.parse(__firebase_config);
   }
 
   if (envId) appId = envId;
 
+  // Si après tout ça on n'a toujours rien, on prépare un message d'erreur clair
   if (!firebaseConfig || !firebaseConfig.apiKey) {
-    configError = "La variable VITE_FIREBASE_CONFIG est vide ou mal configurée sur Vercel.";
+    configError = "Configuration Firebase non détectée. Vérifiez VITE_FIREBASE_CONFIG dans Vercel > Settings > Environment Variables.";
   }
 } catch (e) {
-  configError = "Erreur lors de l'analyse du JSON : " + e.message;
+  configError = "Erreur fatale lors de la lecture de la configuration : " + e.message;
 }
 
-// Initialisation de Firebase
+// Initialisation de Firebase avec protection contre les doubles initialisations
 let app, auth, db;
 if (!configError) {
   try {
@@ -49,7 +52,7 @@ if (!configError) {
     auth = getAuth(app);
     db = getFirestore(app);
   } catch (e) {
-    configError = "Erreur Firebase : " + e.message;
+    configError = "Erreur lors du démarrage de Firebase : " + e.message;
   }
 }
 
@@ -58,6 +61,7 @@ const CAT_DEPENSES = ['Nourriture', 'Loisirs', 'Transport', 'Santé', 'Shopping'
 const CAT_ABONNEMENTS = ['Loyer', 'Assurance Maladie', 'Télécom', 'Streaming', 'Fitness', 'Autres'];
 const CAT_REVENUS = ['Salaire', 'Bonus', 'Freelance', 'Cadeau', 'Remboursement', 'Autres'];
 
+// --- Composants UI de base ---
 const Card = ({ children, className = "" }) => (
   <div className={`bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 ${className}`}>
     {children}
@@ -92,15 +96,15 @@ export default function App() {
   const [workouts, setWorkouts] = useState([]);
   const [budgetGoal, setBudgetGoal] = useState(0);
 
-  // Affichage d'un message d'erreur au lieu d'un ecran blanc
+  // Écran d'erreur robuste (Remplace l'écran blanc si la config échoue)
   if (configError) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-100 p-6 font-sans">
         <Card className="max-w-md border-red-200 bg-red-50 shadow-xl text-center">
           <AlertCircle className="text-red-500 mx-auto mb-4" size={48} />
-          <h2 className="text-xl font-black text-red-700 mb-2">Erreur Vercel</h2>
+          <h2 className="text-xl font-black text-red-700 mb-2">Erreur de Démarrage</h2>
           <p className="text-sm text-red-600 mb-4">{configError}</p>
-          <p className="text-[10px] text-red-400 uppercase font-bold">Vérifiez vos Environment Variables et REDEPLOYEZ.</p>
+          <p className="text-[10px] text-red-400 uppercase font-bold">Action requise : Vérifiez vos variables sur Vercel et faites un nouveau commit sur GitHub.</p>
         </Card>
       </div>
     );
@@ -156,6 +160,7 @@ export default function App() {
     const parseDate = (d) => {
       if (!d) return null;
       const p = d.includes('.') ? d.split('.') : d.split('/');
+      if (p.length < 3) return null;
       return { month: parseInt(p[1]) - 1, year: parseInt(p[2]) };
     };
     const isCurrent = (d) => {
@@ -183,7 +188,7 @@ export default function App() {
   }, [expenses, incomes, subscriptions, selectedMonth, selectedYear, budgetGoal]);
 
   if (loading) return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4 font-sans">
       <div className="w-12 h-12 bg-indigo-600 rounded-[24px] animate-bounce shadow-2xl"></div>
       <p className="font-black text-indigo-600 text-[10px] uppercase tracking-widest animate-pulse">LIFE DASHBOARD</p>
     </div>
@@ -207,7 +212,7 @@ export default function App() {
             <header className="flex justify-between items-end">
               <div><h1 className="text-4xl font-black tracking-tighter">LIFE.</h1><p className="text-slate-500 font-medium text-sm italic">Mon tableau de bord 🇨🇭</p></div>
               <div className="text-right">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Solde Reel</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Solde Réel</p>
                 <p className={`text-2xl font-black ${stats.realBalance >= 0 ? 'text-indigo-600' : 'text-red-500'}`}>{stats.realBalance.toFixed(2)} CHF</p>
               </div>
             </header>
@@ -215,16 +220,16 @@ export default function App() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card className="bg-indigo-600 text-white border-none shadow-xl shadow-indigo-100 overflow-hidden relative">
                 <div className="z-10 relative">
-                  <p className="text-indigo-200 text-xs font-black uppercase">Reste a depenser</p>
+                  <p className="text-indigo-200 text-xs font-black uppercase">Reste à dépenser</p>
                   <h2 className="text-4xl font-black mt-1">{stats.goalRemaining.toFixed(2)} CHF</h2>
-                  <p className="text-[10px] text-indigo-100 font-bold mt-2 opacity-80 uppercase">{budgetGoal > 0 ? `Objectif : ${budgetGoal} CHF` : "Definissez un objectif dans Finances"}</p>
+                  <p className="text-[10px] text-indigo-100 font-bold mt-2 opacity-80 uppercase">{budgetGoal > 0 ? `Objectif : ${budgetGoal} CHF` : "Définissez un objectif dans Finances"}</p>
                 </div>
                 <Wallet className="absolute -right-6 -bottom-6 opacity-10 w-32 h-32 rotate-12" />
               </Card>
               <Card className="border-slate-100 shadow-sm flex flex-col justify-between bg-white">
                 <div><p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Charges Fixes</p><h2 className="text-2xl font-black mt-1 text-slate-800">{stats.totalSub.toFixed(2)} CHF</h2></div>
                 <div className="mt-4 flex gap-2 overflow-x-auto no-scrollbar">
-                  {subscriptions.map(s => <span key={s.id} className="bg-slate-50 px-3 py-1 rounded-full text-[9px] font-bold text-slate-500 whitespace-nowrap border border-slate-100">{s.name} (le {s.day})</span>)}
+                  {subscriptions.length > 0 ? subscriptions.map(s => <span key={s.id} className="bg-slate-50 px-3 py-1 rounded-full text-[9px] font-bold text-slate-500 whitespace-nowrap border border-slate-100">{s.name} (le {s.day})</span>) : <p className="text-[10px] text-slate-300 italic">Aucune charge fixe</p>}
                 </div>
               </Card>
             </div>
@@ -234,7 +239,7 @@ export default function App() {
             <div className="flex justify-between items-center text-slate-800">
               <h2 className="text-2xl font-black">Finances</h2>
               <select className="bg-white border-none rounded-xl text-[10px] font-black p-2 shadow-sm outline-none" value={selectedMonth} onChange={e => setSelectedMonth(Number(e.target.value))}>
-                {["Janvier", "Fevrier", "Mars", "Avril", "Mai", "Juin", "Juillet", "Aout", "Septembre", "Octobre", "Novembre", "Decembre"].map((m, i) => <option key={m} value={i}>{m}</option>)}
+                {["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"].map((m, i) => <option key={m} value={i}>{m}</option>)}
               </select>
             </div>
 
@@ -247,7 +252,7 @@ export default function App() {
             </Card>
 
             <div className="space-y-3">
-              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-8">Journal & Previsions</h3>
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-8">Journal & Prévisions</h3>
               {stats.journal.map((item, idx) => (
                 <div key={item.id || idx} className={`flex justify-between items-center p-5 rounded-[28px] border shadow-sm ${item.type === 'fixed' ? 'bg-slate-50/80 border-dashed border-slate-300' : 'bg-white border-slate-50'}`}>
                   <div className="flex items-center gap-4">
@@ -255,7 +260,7 @@ export default function App() {
                       {item.type === 'income' ? <ArrowUpCircle size={20}/> : item.type === 'fixed' ? <Clock size={20}/> : <ArrowDownCircle size={20}/>}
                     </div>
                     <div>
-                      <div className="flex items-center gap-2"><p className="font-black text-sm text-slate-800">{item.name}</p>{item.isPlanned && <span className="bg-indigo-100 text-indigo-700 text-[7px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter shadow-sm">Prevu</span>}</div>
+                      <div className="flex items-center gap-2"><p className="font-black text-sm text-slate-800">{item.name}</p>{item.isPlanned && <span className="bg-indigo-100 text-indigo-700 text-[7px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter shadow-sm">Prévu</span>}</div>
                       <p className="text-[10px] text-slate-400 font-black uppercase">{item.date}</p>
                     </div>
                   </div>
