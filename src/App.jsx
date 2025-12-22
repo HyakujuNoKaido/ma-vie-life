@@ -1,655 +1,374 @@
-{\rtf1\ansi\ansicpg1252\cocoartf2822
-\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;}
-{\colortbl;\red255\green255\blue255;\red183\green111\blue247;\red23\green24\blue24;\red202\green202\blue202;
-\red54\green192\blue160;\red212\green212\blue212;\red113\green192\blue131;\red109\green115\blue120;\red246\green124\blue48;
-\red238\green46\blue56;}
-{\*\expandedcolortbl;;\cssrgb\c77255\c54118\c97647;\cssrgb\c11765\c12157\c12549;\cssrgb\c83137\c83137\c83137;
-\cssrgb\c23922\c78824\c69020;\cssrgb\c86275\c86275\c86275;\cssrgb\c50588\c78824\c58431;\cssrgb\c50196\c52549\c54510;\cssrgb\c98039\c56471\c24314;
-\cssrgb\c95686\c27843\c27843;}
-\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
-\deftab720
-\pard\pardeftab720\partightenfactor0
+import React, { useState, useEffect, useMemo } from 'react';
+import { 
+  LayoutDashboard, Wallet, Dumbbell as GymIcon, Utensils, Calendar, 
+  Plus, Trash2, TrendingDown, TrendingUp, Zap, CheckCircle2, PieChart, 
+  CreditCard, ArrowUpCircle, ArrowDownCircle, Activity, History, Library, 
+  ChevronRight, Weight, Check, Search, ArrowLeft, CalendarDays, Target, 
+  PlusCircle, Settings, AlertCircle, Clock 
+} from 'lucide-react';
+import { initializeApp } from 'firebase/app';
+import { 
+  getFirestore, collection, doc, addDoc, onSnapshot, query, 
+  deleteDoc, updateDoc, setDoc 
+} from 'firebase/firestore';
+import { 
+  getAuth, signInAnonymously, onAuthStateChanged 
+} from 'firebase/auth';
 
-\f0\fs28 \cf2 \cb3 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec2 import\cf4 \strokec4  \cf5 \strokec5 React\cf6 \strokec6 ,\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \strokec4  useState\cf6 \strokec6 ,\cf4 \strokec4  useEffect\cf6 \strokec6 ,\cf4 \strokec4  useMemo \cf6 \strokec6 \}\cf4 \strokec4  \cf2 \strokec2 from\cf4 \strokec4  \cf7 \strokec7 'react'\cf6 \strokec6 ;\cf4 \cb1 \strokec4 \
-\cf2 \cb3 \strokec2 import\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \strokec4  \cb1 \
-\pard\pardeftab720\partightenfactor0
-\cf4 \cb3   \cf5 \strokec5 LayoutDashboard\cf6 \strokec6 ,\cf4 \strokec4  \cb1 \
-\cb3   \cf5 \strokec5 Wallet\cf6 \strokec6 ,\cf4 \strokec4  \cb1 \
-\cb3   \cf5 \strokec5 Dumbbell\cf4 \strokec4  \cf2 \strokec2 as\cf4 \strokec4  \cf5 \strokec5 GymIcon\cf6 \strokec6 ,\cf4 \strokec4  \cb1 \
-\cb3   \cf5 \strokec5 Utensils\cf6 \strokec6 ,\cf4 \strokec4  \cb1 \
-\cb3   \cf5 \strokec5 Calendar\cf6 \strokec6 ,\cf4 \strokec4  \cb1 \
-\cb3   \cf5 \strokec5 Plus\cf6 \strokec6 ,\cf4 \strokec4  \cb1 \
-\cb3   \cf5 \strokec5 Trash2\cf6 \strokec6 ,\cf4 \strokec4  \cb1 \
-\cb3   \cf5 \strokec5 TrendingDown\cf6 \strokec6 ,\cf4 \strokec4  \cb1 \
-\cb3   \cf5 \strokec5 TrendingUp\cf6 \strokec6 ,\cf4 \cb1 \strokec4 \
-\cb3   \cf5 \strokec5 Zap\cf6 \strokec6 ,\cf4 \cb1 \strokec4 \
-\cb3   \cf5 \strokec5 CheckCircle2\cf6 \strokec6 ,\cf4 \cb1 \strokec4 \
-\cb3   \cf5 \strokec5 PieChart\cf6 \strokec6 ,\cf4 \cb1 \strokec4 \
-\cb3   \cf5 \strokec5 CreditCard\cf6 \strokec6 ,\cf4 \cb1 \strokec4 \
-\cb3   \cf5 \strokec5 ArrowUpCircle\cf6 \strokec6 ,\cf4 \cb1 \strokec4 \
-\cb3   \cf5 \strokec5 ArrowDownCircle\cf6 \strokec6 ,\cf4 \cb1 \strokec4 \
-\cb3   \cf5 \strokec5 Activity\cf6 \strokec6 ,\cf4 \cb1 \strokec4 \
-\cb3   \cf5 \strokec5 History\cf6 \strokec6 ,\cf4 \cb1 \strokec4 \
-\cb3   \cf5 \strokec5 Library\cf6 \strokec6 ,\cf4 \cb1 \strokec4 \
-\cb3   \cf5 \strokec5 ChevronRight\cf6 \strokec6 ,\cf4 \cb1 \strokec4 \
-\cb3   \cf5 \strokec5 Weight\cf6 \strokec6 ,\cf4 \cb1 \strokec4 \
-\cb3   \cf5 \strokec5 Check\cf6 \strokec6 ,\cf4 \cb1 \strokec4 \
-\cb3   \cf5 \strokec5 Search\cf6 \strokec6 ,\cf4 \cb1 \strokec4 \
-\cb3   \cf5 \strokec5 ArrowLeft\cf6 \strokec6 ,\cf4 \cb1 \strokec4 \
-\cb3   \cf5 \strokec5 CalendarDays\cf6 \strokec6 ,\cf4 \cb1 \strokec4 \
-\cb3   \cf5 \strokec5 Target\cf6 \strokec6 ,\cf4 \cb1 \strokec4 \
-\cb3   \cf5 \strokec5 PlusCircle\cf6 \strokec6 ,\cf4 \cb1 \strokec4 \
-\cb3   \cf5 \strokec5 Settings\cf6 \strokec6 ,\cf4 \cb1 \strokec4 \
-\cb3   \cf5 \strokec5 AlertCircle\cf6 \strokec6 ,\cf4 \cb1 \strokec4 \
-\cb3   \cf5 \strokec5 Clock\cf4 \cb1 \strokec4 \
-\pard\pardeftab720\partightenfactor0
-\cf6 \cb3 \strokec6 \}\cf4 \strokec4  \cf2 \strokec2 from\cf4 \strokec4  \cf7 \strokec7 'lucide-react'\cf6 \strokec6 ;\cf4 \cb1 \strokec4 \
-\pard\pardeftab720\partightenfactor0
-\cf2 \cb3 \strokec2 import\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \strokec4  initializeApp \cf6 \strokec6 \}\cf4 \strokec4  \cf2 \strokec2 from\cf4 \strokec4  \cf7 \strokec7 'firebase/app'\cf6 \strokec6 ;\cf4 \cb1 \strokec4 \
-\cf2 \cb3 \strokec2 import\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \strokec4  \cb1 \
-\pard\pardeftab720\partightenfactor0
-\cf4 \cb3   getFirestore\cf6 \strokec6 ,\cf4 \strokec4  \cb1 \
-\cb3   collection\cf6 \strokec6 ,\cf4 \strokec4  \cb1 \
-\cb3   doc\cf6 \strokec6 ,\cf4 \strokec4  \cb1 \
-\cb3   addDoc\cf6 \strokec6 ,\cf4 \strokec4  \cb1 \
-\cb3   onSnapshot\cf6 \strokec6 ,\cf4 \strokec4  \cb1 \
-\cb3   query\cf6 \strokec6 ,\cf4 \strokec4  \cb1 \
-\cb3   deleteDoc\cf6 \strokec6 ,\cf4 \strokec4  \cb1 \
-\cb3   updateDoc\cf6 \strokec6 ,\cf4 \cb1 \strokec4 \
-\cb3   setDoc\cb1 \
-\pard\pardeftab720\partightenfactor0
-\cf6 \cb3 \strokec6 \}\cf4 \strokec4  \cf2 \strokec2 from\cf4 \strokec4  \cf7 \strokec7 'firebase/firestore'\cf6 \strokec6 ;\cf4 \cb1 \strokec4 \
-\pard\pardeftab720\partightenfactor0
-\cf2 \cb3 \strokec2 import\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \strokec4  \cb1 \
-\pard\pardeftab720\partightenfactor0
-\cf4 \cb3   getAuth\cf6 \strokec6 ,\cf4 \strokec4  \cb1 \
-\cb3   signInWithCustomToken\cf6 \strokec6 ,\cf4 \strokec4  \cb1 \
-\cb3   signInAnonymously\cf6 \strokec6 ,\cf4 \strokec4  \cb1 \
-\cb3   onAuthStateChanged \cb1 \
-\pard\pardeftab720\partightenfactor0
-\cf6 \cb3 \strokec6 \}\cf4 \strokec4  \cf2 \strokec2 from\cf4 \strokec4  \cf7 \strokec7 'firebase/auth'\cf6 \strokec6 ;\cf4 \cb1 \strokec4 \
-\
-\pard\pardeftab720\partightenfactor0
-\cf8 \cb3 \strokec8 // --- Configuration Firebase ---\cf4 \cb1 \strokec4 \
-\pard\pardeftab720\partightenfactor0
-\cf2 \cb3 \strokec2 const\cf4 \strokec4  firebaseConfig \cf6 \strokec6 =\cf4 \strokec4  \cf5 \strokec5 JSON\cf6 \strokec6 .\cf4 \strokec4 parse\cf6 \strokec6 (\cf4 \strokec4 __firebase_config\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cf2 \cb3 \strokec2 const\cf4 \strokec4  app \cf6 \strokec6 =\cf4 \strokec4  initializeApp\cf6 \strokec6 (\cf4 \strokec4 firebaseConfig\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cf2 \cb3 \strokec2 const\cf4 \strokec4  auth \cf6 \strokec6 =\cf4 \strokec4  getAuth\cf6 \strokec6 (\cf4 \strokec4 app\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cf2 \cb3 \strokec2 const\cf4 \strokec4  db \cf6 \strokec6 =\cf4 \strokec4  getFirestore\cf6 \strokec6 (\cf4 \strokec4 app\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cf2 \cb3 \strokec2 const\cf4 \strokec4  appId \cf6 \strokec6 =\cf4 \strokec4  \cf2 \strokec2 typeof\cf4 \strokec4  __app_id \cf6 \strokec6 !==\cf4 \strokec4  \cf7 \strokec7 'undefined'\cf4 \strokec4  \cf6 \strokec6 ?\cf4 \strokec4  __app_id \cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'life-dashboard-suisse-v5'\cf6 \strokec6 ;\cf4 \cb1 \strokec4 \
-\
-\pard\pardeftab720\partightenfactor0
-\cf8 \cb3 \strokec8 // --- Donn\'e9es Statiques ---\cf4 \cb1 \strokec4 \
-\pard\pardeftab720\partightenfactor0
-\cf2 \cb3 \strokec2 const\cf4 \strokec4  \cf5 \strokec5 STATIC_EXERCICES\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  \cf6 \strokec6 [\cf4 \cb1 \strokec4 \
-\pard\pardeftab720\partightenfactor0
-\cf4 \cb3   \cf6 \strokec6 \{\cf4 \strokec4  id\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'p1'\cf6 \strokec6 ,\cf4 \strokec4  name\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'D\'e9velopp\'e9 Couch\'e9 (Barre)'\cf6 \strokec6 ,\cf4 \strokec4  img\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400'\cf6 \strokec6 ,\cf4 \strokec4  equipment\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'Barre & Banc'\cf6 \strokec6 ,\cf4 \strokec4  cat\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'Pectoraux'\cf4 \strokec4  \cf6 \strokec6 \},\cf4 \cb1 \strokec4 \
-\cb3   \cf6 \strokec6 \{\cf4 \strokec4  id\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'p2'\cf6 \strokec6 ,\cf4 \strokec4  name\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'D\'e9velopp\'e9 Couch\'e9 (Halt\'e8res)'\cf6 \strokec6 ,\cf4 \strokec4  img\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=400'\cf6 \strokec6 ,\cf4 \strokec4  equipment\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'Halt\'e8res'\cf6 \strokec6 ,\cf4 \strokec4  cat\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'Pectoraux'\cf4 \strokec4  \cf6 \strokec6 \},\cf4 \cb1 \strokec4 \
-\cb3   \cf6 \strokec6 \{\cf4 \strokec4  id\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'd1'\cf6 \strokec6 ,\cf4 \strokec4  name\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'Tractions Pronation'\cf6 \strokec6 ,\cf4 \strokec4  img\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=400'\cf6 \strokec6 ,\cf4 \strokec4  equipment\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'Barre fixe'\cf6 \strokec6 ,\cf4 \strokec4  cat\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'Dos'\cf4 \strokec4  \cf6 \strokec6 \},\cf4 \cb1 \strokec4 \
-\cb3   \cf6 \strokec6 \{\cf4 \strokec4  id\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'j1'\cf6 \strokec6 ,\cf4 \strokec4  name\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'Squat Arri\'e8re'\cf6 \strokec6 ,\cf4 \strokec4  img\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'https://images.unsplash.com/photo-1534367507873-d2d7e24c797f?w=400'\cf6 \strokec6 ,\cf4 \strokec4  equipment\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'Cage \'e0 squat'\cf6 \strokec6 ,\cf4 \strokec4  cat\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'Jambes'\cf4 \strokec4  \cf6 \strokec6 \},\cf4 \cb1 \strokec4 \
-\pard\pardeftab720\partightenfactor0
-\cf6 \cb3 \strokec6 ];\cf4 \cb1 \strokec4 \
-\
-\pard\pardeftab720\partightenfactor0
-\cf2 \cb3 \strokec2 const\cf4 \strokec4  \cf5 \strokec5 CAT_DEPENSES\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  \cf6 \strokec6 [\cf7 \strokec7 'Nourriture'\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'Loisirs'\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'Transport'\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'Sant\'e9'\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'Shopping'\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'Cadeaux'\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'Autres'\cf6 \strokec6 ];\cf4 \cb1 \strokec4 \
-\cf2 \cb3 \strokec2 const\cf4 \strokec4  \cf5 \strokec5 CAT_ABONNEMENTS\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  \cf6 \strokec6 [\cf7 \strokec7 'Loyer'\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'Assurance Maladie'\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'T\'e9l\'e9com'\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'Streaming'\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'Fitness'\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'Autres'\cf6 \strokec6 ];\cf4 \cb1 \strokec4 \
-\cf2 \cb3 \strokec2 const\cf4 \strokec4  \cf5 \strokec5 CAT_REVENUS\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  \cf6 \strokec6 [\cf7 \strokec7 'Salaire'\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'Bonus'\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'Freelance'\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'Cadeau'\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'Remboursement'\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'Autres'\cf6 \strokec6 ];\cf4 \cb1 \strokec4 \
-\
-\cf2 \cb3 \strokec2 const\cf4 \strokec4  \cf5 \strokec5 Card\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  \cf6 \strokec6 (\{\cf4 \strokec4  children\cf6 \strokec6 ,\cf4 \strokec4  className \cf6 \strokec6 =\cf4 \strokec4  \cf7 \strokec7 ""\cf4 \strokec4  \cf6 \strokec6 \})\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 (\cf4 \cb1 \strokec4 \
-\pard\pardeftab720\partightenfactor0
-\cf4 \cb3   \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\{\cf7 \strokec7 `bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 \cf6 \strokec6 $\{\cf4 \strokec4 className\cf6 \strokec6 \}\cf7 \strokec7 `\cf6 \strokec6 \}>\cf4 \cb1 \strokec4 \
-\cb3     \cf6 \strokec6 \{\cf4 \strokec4 children\cf6 \strokec6 \}\cf4 \cb1 \strokec4 \
-\cb3   \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\pard\pardeftab720\partightenfactor0
-\cf6 \cb3 \strokec6 );\cf4 \cb1 \strokec4 \
-\
-\pard\pardeftab720\partightenfactor0
-\cf2 \cb3 \strokec2 const\cf4 \strokec4  \cf5 \strokec5 Button\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  \cf6 \strokec6 (\{\cf4 \strokec4  children\cf6 \strokec6 ,\cf4 \strokec4  onClick\cf6 \strokec6 ,\cf4 \strokec4  variant \cf6 \strokec6 =\cf4 \strokec4  \cf7 \strokec7 "primary"\cf6 \strokec6 ,\cf4 \strokec4  className \cf6 \strokec6 =\cf4 \strokec4  \cf7 \strokec7 ""\cf6 \strokec6 ,\cf4 \strokec4  disabled \cf6 \strokec6 =\cf4 \strokec4  \cf2 \strokec2 false\cf4 \strokec4  \cf6 \strokec6 \})\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \cb1 \strokec4 \
-\pard\pardeftab720\partightenfactor0
-\cf4 \cb3   \cf2 \strokec2 const\cf4 \strokec4  variants \cf6 \strokec6 =\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \cb1 \strokec4 \
-\cb3     primary\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 "bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-slate-300 shadow-md shadow-indigo-100"\cf6 \strokec6 ,\cf4 \cb1 \strokec4 \
-\cb3     secondary\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 "bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-white"\cf6 \strokec6 ,\cf4 \cb1 \strokec4 \
-\cb3     outline\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 "border-2 border-slate-100 text-slate-500 hover:border-indigo-500 hover:text-indigo-600"\cf6 \strokec6 ,\cf4 \cb1 \strokec4 \
-\cb3     danger\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 "bg-red-50 text-red-600 hover:bg-red-100"\cf6 \strokec6 ,\cf4 \cb1 \strokec4 \
-\cb3     ghost\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 "text-slate-400 hover:text-red-500 transition-colors"\cf4 \cb1 \strokec4 \
-\cb3   \cf6 \strokec6 \};\cf4 \cb1 \strokec4 \
-\cb3   \cf2 \strokec2 return\cf4 \strokec4  \cf6 \strokec6 (\cf4 \cb1 \strokec4 \
-\cb3     \cf6 \strokec6 <\cf4 \strokec4 button disabled\cf6 \strokec6 =\{\cf4 \strokec4 disabled\cf6 \strokec6 \}\cf4 \strokec4  onClick\cf6 \strokec6 =\{\cf4 \strokec4 onClick\cf6 \strokec6 \}\cf4 \strokec4  className\cf6 \strokec6 =\{\cf7 \strokec7 `px-4 py-2.5 rounded-2xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2 \cf6 \strokec6 $\{\cf4 \strokec4 variants\cf6 \strokec6 [\cf4 \strokec4 variant\cf6 \strokec6 ]\}\cf7 \strokec7  \cf6 \strokec6 $\{\cf4 \strokec4 className\cf6 \strokec6 \}\cf7 \strokec7 `\cf6 \strokec6 \}>\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 \{\cf4 \strokec4 children\cf6 \strokec6 \}\cf4 \cb1 \strokec4 \
-\cb3     \cf6 \strokec6 </\cf4 \strokec4 button\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3   \cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\pard\pardeftab720\partightenfactor0
-\cf6 \cb3 \strokec6 \};\cf4 \cb1 \strokec4 \
-\
-\pard\pardeftab720\partightenfactor0
-\cf2 \cb3 \strokec2 export\cf4 \strokec4  \cf2 \strokec2 default\cf4 \strokec4  \cf2 \strokec2 function\cf4 \strokec4  \cf5 \strokec5 App\cf6 \strokec6 ()\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \cb1 \strokec4 \
-\pard\pardeftab720\partightenfactor0
-\cf4 \cb3   \cf2 \strokec2 const\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 activeTab\cf6 \strokec6 ,\cf4 \strokec4  setActiveTab\cf6 \strokec6 ]\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  useState\cf6 \strokec6 (\cf7 \strokec7 'accueil'\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3   \cf2 \strokec2 const\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 user\cf6 \strokec6 ,\cf4 \strokec4  setUser\cf6 \strokec6 ]\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  useState\cf6 \strokec6 (\cf2 \strokec2 null\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3   \cf2 \strokec2 const\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 loading\cf6 \strokec6 ,\cf4 \strokec4  setLoading\cf6 \strokec6 ]\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  useState\cf6 \strokec6 (\cf2 \strokec2 true\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\
-\cb3   \cf8 \strokec8 // Filtres Finances\cf4 \cb1 \strokec4 \
-\cb3   \cf2 \strokec2 const\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 selectedMonth\cf6 \strokec6 ,\cf4 \strokec4  setSelectedMonth\cf6 \strokec6 ]\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  useState\cf6 \strokec6 (\cf2 \strokec2 new\cf4 \strokec4  \cf5 \strokec5 Date\cf6 \strokec6 ().\cf4 \strokec4 getMonth\cf6 \strokec6 ());\cf4 \cb1 \strokec4 \
-\cb3   \cf2 \strokec2 const\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 selectedYear\cf6 \strokec6 ,\cf4 \strokec4  setSelectedYear\cf6 \strokec6 ]\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  useState\cf6 \strokec6 (\cf2 \strokec2 new\cf4 \strokec4  \cf5 \strokec5 Date\cf6 \strokec6 ().\cf4 \strokec4 getFullYear\cf6 \strokec6 ());\cf4 \cb1 \strokec4 \
-\
-\cb3   \cf8 \strokec8 // Donn\'e9es\cf4 \cb1 \strokec4 \
-\cb3   \cf2 \strokec2 const\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 expenses\cf6 \strokec6 ,\cf4 \strokec4  setExpenses\cf6 \strokec6 ]\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  useState\cf6 \strokec6 ([]);\cf4 \cb1 \strokec4 \
-\cb3   \cf2 \strokec2 const\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 subscriptions\cf6 \strokec6 ,\cf4 \strokec4  setSubscriptions\cf6 \strokec6 ]\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  useState\cf6 \strokec6 ([]);\cf4 \cb1 \strokec4 \
-\cb3   \cf2 \strokec2 const\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 incomes\cf6 \strokec6 ,\cf4 \strokec4  setIncomes\cf6 \strokec6 ]\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  useState\cf6 \strokec6 ([]);\cf4 \cb1 \strokec4 \
-\cb3   \cf2 \strokec2 const\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 workouts\cf6 \strokec6 ,\cf4 \strokec4  setWorkouts\cf6 \strokec6 ]\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  useState\cf6 \strokec6 ([]);\cf4 \cb1 \strokec4 \
-\cb3   \cf2 \strokec2 const\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 menus\cf6 \strokec6 ,\cf4 \strokec4  setMenus\cf6 \strokec6 ]\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  useState\cf6 \strokec6 ([]);\cf4 \cb1 \strokec4 \
-\cb3   \cf2 \strokec2 const\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 tasks\cf6 \strokec6 ,\cf4 \strokec4  setTasks\cf6 \strokec6 ]\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  useState\cf6 \strokec6 ([]);\cf4 \cb1 \strokec4 \
-\cb3   \cf2 \strokec2 const\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 customExercises\cf6 \strokec6 ,\cf4 \strokec4  setCustomExercises\cf6 \strokec6 ]\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  useState\cf6 \strokec6 ([]);\cf4 \cb1 \strokec4 \
-\cb3   \cf2 \strokec2 const\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 budgetGoal\cf6 \strokec6 ,\cf4 \strokec4  setBudgetGoal\cf6 \strokec6 ]\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  useState\cf6 \strokec6 (\cf9 \strokec9 0\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\
-\cb3   \cf8 \strokec8 // --- Auth ---\cf4 \cb1 \strokec4 \
-\cb3   useEffect\cf6 \strokec6 (()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  initAuth \cf6 \strokec6 =\cf4 \strokec4  \cf2 \strokec2 async\cf4 \strokec4  \cf6 \strokec6 ()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \cb1 \strokec4 \
-\cb3       \cf2 \strokec2 if\cf4 \strokec4  \cf6 \strokec6 (\cf2 \strokec2 typeof\cf4 \strokec4  __initial_auth_token \cf6 \strokec6 !==\cf4 \strokec4  \cf7 \strokec7 'undefined'\cf4 \strokec4  \cf6 \strokec6 &&\cf4 \strokec4  __initial_auth_token\cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \cb1 \strokec4 \
-\cb3         \cf2 \strokec2 await\cf4 \strokec4  signInWithCustomToken\cf6 \strokec6 (\cf4 \strokec4 auth\cf6 \strokec6 ,\cf4 \strokec4  __initial_auth_token\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 \}\cf4 \strokec4  \cf2 \strokec2 else\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \cb1 \strokec4 \
-\cb3         \cf2 \strokec2 await\cf4 \strokec4  signInAnonymously\cf6 \strokec6 (\cf4 \strokec4 auth\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 \}\cf4 \cb1 \strokec4 \
-\cb3     \cf6 \strokec6 \};\cf4 \cb1 \strokec4 \
-\cb3     initAuth\cf6 \strokec6 ();\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 return\cf4 \strokec4  onAuthStateChanged\cf6 \strokec6 (\cf4 \strokec4 auth\cf6 \strokec6 ,\cf4 \strokec4  \cf6 \strokec6 (\cf4 \strokec4 u\cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \strokec4  setUser\cf6 \strokec6 (\cf4 \strokec4 u\cf6 \strokec6 );\cf4 \strokec4  setLoading\cf6 \strokec6 (\cf2 \strokec2 false\cf6 \strokec6 );\cf4 \strokec4  \cf6 \strokec6 \});\cf4 \cb1 \strokec4 \
-\cb3   \cf6 \strokec6 \},\cf4 \strokec4  \cf6 \strokec6 []);\cf4 \cb1 \strokec4 \
-\
-\cb3   \cf8 \strokec8 // --- Sync Data ---\cf4 \cb1 \strokec4 \
-\cb3   useEffect\cf6 \strokec6 (()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 if\cf4 \strokec4  \cf6 \strokec6 (!\cf4 \strokec4 user\cf6 \strokec6 )\cf4 \strokec4  \cf2 \strokec2 return\cf6 \strokec6 ;\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  collections \cf6 \strokec6 =\cf4 \strokec4  \cf6 \strokec6 [\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 \{\cf4 \strokec4  n\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'expenses'\cf6 \strokec6 ,\cf4 \strokec4  s\cf6 \strokec6 :\cf4 \strokec4  setExpenses \cf6 \strokec6 \},\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 \{\cf4 \strokec4  n\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'subscriptions'\cf6 \strokec6 ,\cf4 \strokec4  s\cf6 \strokec6 :\cf4 \strokec4  setSubscriptions \cf6 \strokec6 \},\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 \{\cf4 \strokec4  n\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'incomes'\cf6 \strokec6 ,\cf4 \strokec4  s\cf6 \strokec6 :\cf4 \strokec4  setIncomes \cf6 \strokec6 \},\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 \{\cf4 \strokec4  n\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'workouts'\cf6 \strokec6 ,\cf4 \strokec4  s\cf6 \strokec6 :\cf4 \strokec4  setWorkouts \cf6 \strokec6 \},\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 \{\cf4 \strokec4  n\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'menus'\cf6 \strokec6 ,\cf4 \strokec4  s\cf6 \strokec6 :\cf4 \strokec4  setMenus \cf6 \strokec6 \},\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 \{\cf4 \strokec4  n\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'tasks'\cf6 \strokec6 ,\cf4 \strokec4  s\cf6 \strokec6 :\cf4 \strokec4  setTasks \cf6 \strokec6 \},\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 \{\cf4 \strokec4  n\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'customExercises'\cf6 \strokec6 ,\cf4 \strokec4  s\cf6 \strokec6 :\cf4 \strokec4  setCustomExercises \cf6 \strokec6 \}\cf4 \cb1 \strokec4 \
-\cb3     \cf6 \strokec6 ];\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  unsubscribes \cf6 \strokec6 =\cf4 \strokec4  collections\cf6 \strokec6 .\cf4 \strokec4 map\cf6 \strokec6 ((\{\cf4 \strokec4  n\cf6 \strokec6 ,\cf4 \strokec4  s \cf6 \strokec6 \})\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cb1 \
-\cb3       onSnapshot\cf6 \strokec6 (\cf4 \strokec4 query\cf6 \strokec6 (\cf4 \strokec4 collection\cf6 \strokec6 (\cf4 \strokec4 db\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'artifacts'\cf6 \strokec6 ,\cf4 \strokec4  appId\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'users'\cf6 \strokec6 ,\cf4 \strokec4  user\cf6 \strokec6 .\cf4 \strokec4 uid\cf6 \strokec6 ,\cf4 \strokec4  n\cf6 \strokec6 )),\cf4 \strokec4  \cb1 \
-\cb3       \cf6 \strokec6 (\cf4 \strokec4 snap\cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  s\cf6 \strokec6 (\cf4 \strokec4 snap\cf6 \strokec6 .\cf4 \strokec4 docs\cf6 \strokec6 .\cf4 \strokec4 map\cf6 \strokec6 (\cf4 \strokec4 d \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 (\{\cf4 \strokec4  id\cf6 \strokec6 :\cf4 \strokec4  d\cf6 \strokec6 .\cf4 \strokec4 id\cf6 \strokec6 ,\cf4 \strokec4  \cf6 \strokec6 ...\cf4 \strokec4 d\cf6 \strokec6 .\cf4 \strokec4 data\cf6 \strokec6 ()\cf4 \strokec4  \cf6 \strokec6 \}))),\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 (\cf4 \strokec4 err\cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  console\cf6 \strokec6 .\cf4 \strokec4 error\cf6 \strokec6 (\cf4 \strokec4 err\cf6 \strokec6 ))\cf4 \cb1 \strokec4 \
-\cb3     \cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  unsubGoal \cf6 \strokec6 =\cf4 \strokec4  onSnapshot\cf6 \strokec6 (\cf4 \strokec4 doc\cf6 \strokec6 (\cf4 \strokec4 db\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'artifacts'\cf6 \strokec6 ,\cf4 \strokec4  appId\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'users'\cf6 \strokec6 ,\cf4 \strokec4  user\cf6 \strokec6 .\cf4 \strokec4 uid\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'settings'\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'budget'\cf6 \strokec6 ),\cf4 \strokec4  \cf6 \strokec6 (\cf4 \strokec4 d\cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \cb1 \strokec4 \
-\cb3       \cf2 \strokec2 if\cf6 \strokec6 (\cf4 \strokec4 d\cf6 \strokec6 .\cf4 \strokec4 exists\cf6 \strokec6 ())\cf4 \strokec4  setBudgetGoal\cf6 \strokec6 (\cf4 \strokec4 d\cf6 \strokec6 .\cf4 \strokec4 data\cf6 \strokec6 ().\cf4 \strokec4 monthlyGoal \cf6 \strokec6 ||\cf4 \strokec4  \cf9 \strokec9 0\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3     \cf6 \strokec6 \});\cf4 \cb1 \strokec4 \
-\
-\cb3     \cf2 \strokec2 return\cf4 \strokec4  \cf6 \strokec6 ()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \cb1 \strokec4 \
-\cb3       unsubscribes\cf6 \strokec6 .\cf4 \strokec4 forEach\cf6 \strokec6 (\cf4 \strokec4 u \cf6 \strokec6 =>\cf4 \strokec4  u\cf6 \strokec6 ());\cf4 \cb1 \strokec4 \
-\cb3       unsubGoal\cf6 \strokec6 ();\cf4 \cb1 \strokec4 \
-\cb3     \cf6 \strokec6 \};\cf4 \cb1 \strokec4 \
-\cb3   \cf6 \strokec6 \},\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 user\cf6 \strokec6 ]);\cf4 \cb1 \strokec4 \
-\
-\cb3   \cf2 \strokec2 const\cf4 \strokec4  addItem \cf6 \strokec6 =\cf4 \strokec4  \cf2 \strokec2 async\cf4 \strokec4  \cf6 \strokec6 (\cf4 \strokec4 col\cf6 \strokec6 ,\cf4 \strokec4  data\cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 if\cf4 \strokec4  \cf6 \strokec6 (!\cf4 \strokec4 user\cf6 \strokec6 )\cf4 \strokec4  \cf2 \strokec2 return\cf6 \strokec6 ;\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 await\cf4 \strokec4  addDoc\cf6 \strokec6 (\cf4 \strokec4 collection\cf6 \strokec6 (\cf4 \strokec4 db\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'artifacts'\cf6 \strokec6 ,\cf4 \strokec4  appId\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'users'\cf6 \strokec6 ,\cf4 \strokec4  user\cf6 \strokec6 .\cf4 \strokec4 uid\cf6 \strokec6 ,\cf4 \strokec4  col\cf6 \strokec6 ),\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \strokec4  \cf6 \strokec6 ...\cf4 \strokec4 data\cf6 \strokec6 ,\cf4 \strokec4  createdAt\cf6 \strokec6 :\cf4 \strokec4  \cf5 \strokec5 Date\cf6 \strokec6 .\cf4 \strokec4 now\cf6 \strokec6 ()\cf4 \strokec4  \cf6 \strokec6 \});\cf4 \cb1 \strokec4 \
-\cb3   \cf6 \strokec6 \};\cf4 \cb1 \strokec4 \
-\
-\cb3   \cf2 \strokec2 const\cf4 \strokec4  deleteItem \cf6 \strokec6 =\cf4 \strokec4  \cf2 \strokec2 async\cf4 \strokec4  \cf6 \strokec6 (\cf4 \strokec4 col\cf6 \strokec6 ,\cf4 \strokec4  id\cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 if\cf4 \strokec4  \cf6 \strokec6 (!\cf4 \strokec4 user\cf6 \strokec6 )\cf4 \strokec4  \cf2 \strokec2 return\cf6 \strokec6 ;\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 await\cf4 \strokec4  deleteDoc\cf6 \strokec6 (\cf4 \strokec4 doc\cf6 \strokec6 (\cf4 \strokec4 db\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'artifacts'\cf6 \strokec6 ,\cf4 \strokec4  appId\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'users'\cf6 \strokec6 ,\cf4 \strokec4  user\cf6 \strokec6 .\cf4 \strokec4 uid\cf6 \strokec6 ,\cf4 \strokec4  col\cf6 \strokec6 ,\cf4 \strokec4  id\cf6 \strokec6 ));\cf4 \cb1 \strokec4 \
-\cb3   \cf6 \strokec6 \};\cf4 \cb1 \strokec4 \
-\
-\cb3   \cf2 \strokec2 const\cf4 \strokec4  updateBudgetGoal \cf6 \strokec6 =\cf4 \strokec4  \cf2 \strokec2 async\cf4 \strokec4  \cf6 \strokec6 (\cf4 \strokec4 val\cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 if\cf4 \strokec4  \cf6 \strokec6 (!\cf4 \strokec4 user\cf6 \strokec6 )\cf4 \strokec4  \cf2 \strokec2 return\cf6 \strokec6 ;\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 await\cf4 \strokec4  setDoc\cf6 \strokec6 (\cf4 \strokec4 doc\cf6 \strokec6 (\cf4 \strokec4 db\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'artifacts'\cf6 \strokec6 ,\cf4 \strokec4  appId\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'users'\cf6 \strokec6 ,\cf4 \strokec4  user\cf6 \strokec6 .\cf4 \strokec4 uid\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'settings'\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'budget'\cf6 \strokec6 ),\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \strokec4  monthlyGoal\cf6 \strokec6 :\cf4 \strokec4  \cf5 \strokec5 Number\cf6 \strokec6 (\cf4 \strokec4 val\cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 \});\cf4 \cb1 \strokec4 \
-\cb3   \cf6 \strokec6 \};\cf4 \cb1 \strokec4 \
-\
-\cb3   \cf8 \strokec8 // --- Logique Finance Am\'e9lior\'e9e ---\cf4 \cb1 \strokec4 \
-\cb3   \cf2 \strokec2 const\cf4 \strokec4  financeStats \cf6 \strokec6 =\cf4 \strokec4  useMemo\cf6 \strokec6 (()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  parseDate \cf6 \strokec6 =\cf4 \strokec4  \cf6 \strokec6 (\cf4 \strokec4 dateStr\cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \cb1 \strokec4 \
-\cb3       \cf2 \strokec2 if\cf4 \strokec4  \cf6 \strokec6 (!\cf4 \strokec4 dateStr\cf6 \strokec6 )\cf4 \strokec4  \cf2 \strokec2 return\cf4 \strokec4  \cf2 \strokec2 null\cf6 \strokec6 ;\cf4 \cb1 \strokec4 \
-\cb3       \cf2 \strokec2 const\cf4 \strokec4  parts \cf6 \strokec6 =\cf4 \strokec4  dateStr\cf6 \strokec6 .\cf4 \strokec4 includes\cf6 \strokec6 (\cf7 \strokec7 '.'\cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 ?\cf4 \strokec4  dateStr\cf6 \strokec6 .\cf4 \strokec4 split\cf6 \strokec6 (\cf7 \strokec7 '.'\cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 :\cf4 \strokec4  dateStr\cf6 \strokec6 .\cf4 \strokec4 split\cf6 \strokec6 (\cf7 \strokec7 '/'\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3       \cf2 \strokec2 if\cf4 \strokec4  \cf6 \strokec6 (\cf4 \strokec4 parts\cf6 \strokec6 .\cf4 \strokec4 length \cf6 \strokec6 ===\cf4 \strokec4  \cf9 \strokec9 3\cf6 \strokec6 )\cf4 \strokec4  \cf2 \strokec2 return\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \strokec4  day\cf6 \strokec6 :\cf4 \strokec4  parseInt\cf6 \strokec6 (\cf4 \strokec4 parts\cf6 \strokec6 [\cf9 \strokec9 0\cf6 \strokec6 ]),\cf4 \strokec4  month\cf6 \strokec6 :\cf4 \strokec4  parseInt\cf6 \strokec6 (\cf4 \strokec4 parts\cf6 \strokec6 [\cf9 \strokec9 1\cf6 \strokec6 ])\cf4 \strokec4  \cf6 \strokec6 -\cf4 \strokec4  \cf9 \strokec9 1\cf6 \strokec6 ,\cf4 \strokec4  year\cf6 \strokec6 :\cf4 \strokec4  parseInt\cf6 \strokec6 (\cf4 \strokec4 parts\cf6 \strokec6 [\cf9 \strokec9 2\cf6 \strokec6 ])\cf4 \strokec4  \cf6 \strokec6 \};\cf4 \cb1 \strokec4 \
-\cb3       \cf2 \strokec2 return\cf4 \strokec4  \cf2 \strokec2 null\cf6 \strokec6 ;\cf4 \cb1 \strokec4 \
-\cb3     \cf6 \strokec6 \};\cf4 \cb1 \strokec4 \
-\
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  isCurrentMonth \cf6 \strokec6 =\cf4 \strokec4  \cf6 \strokec6 (\cf4 \strokec4 dStr\cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \cb1 \strokec4 \
-\cb3       \cf2 \strokec2 const\cf4 \strokec4  p \cf6 \strokec6 =\cf4 \strokec4  parseDate\cf6 \strokec6 (\cf4 \strokec4 dStr\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3       \cf2 \strokec2 return\cf4 \strokec4  p \cf6 \strokec6 &&\cf4 \strokec4  p\cf6 \strokec6 .\cf4 \strokec4 month \cf6 \strokec6 ===\cf4 \strokec4  selectedMonth \cf6 \strokec6 &&\cf4 \strokec4  p\cf6 \strokec6 .\cf4 \strokec4 year \cf6 \strokec6 ===\cf4 \strokec4  selectedYear\cf6 \strokec6 ;\cf4 \cb1 \strokec4 \
-\cb3     \cf6 \strokec6 \};\cf4 \cb1 \strokec4 \
-\
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  fIncomes \cf6 \strokec6 =\cf4 \strokec4  incomes\cf6 \strokec6 .\cf4 \strokec4 filter\cf6 \strokec6 (\cf4 \strokec4 i \cf6 \strokec6 =>\cf4 \strokec4  isCurrentMonth\cf6 \strokec6 (\cf4 \strokec4 i\cf6 \strokec6 .\cf4 \strokec4 date\cf6 \strokec6 ));\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  fExpenses \cf6 \strokec6 =\cf4 \strokec4  expenses\cf6 \strokec6 .\cf4 \strokec4 filter\cf6 \strokec6 (\cf4 \strokec4 e \cf6 \strokec6 =>\cf4 \strokec4  isCurrentMonth\cf6 \strokec6 (\cf4 \strokec4 e\cf6 \strokec6 .\cf4 \strokec4 date\cf6 \strokec6 ));\cf4 \cb1 \strokec4 \
-\cb3     \cb1 \
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  totalInc \cf6 \strokec6 =\cf4 \strokec4  fIncomes\cf6 \strokec6 .\cf4 \strokec4 reduce\cf6 \strokec6 ((\cf4 \strokec4 acc\cf6 \strokec6 ,\cf4 \strokec4  c\cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  acc \cf6 \strokec6 +\cf4 \strokec4  \cf5 \strokec5 Number\cf6 \strokec6 (\cf4 \strokec4 c\cf6 \strokec6 .\cf4 \strokec4 amount\cf6 \strokec6 ),\cf4 \strokec4  \cf9 \strokec9 0\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  totalSubs \cf6 \strokec6 =\cf4 \strokec4  subscriptions\cf6 \strokec6 .\cf4 \strokec4 reduce\cf6 \strokec6 ((\cf4 \strokec4 acc\cf6 \strokec6 ,\cf4 \strokec4  c\cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  acc \cf6 \strokec6 +\cf4 \strokec4  \cf5 \strokec5 Number\cf6 \strokec6 (\cf4 \strokec4 c\cf6 \strokec6 .\cf4 \strokec4 amount\cf6 \strokec6 ),\cf4 \strokec4  \cf9 \strokec9 0\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  totalExp \cf6 \strokec6 =\cf4 \strokec4  fExpenses\cf6 \strokec6 .\cf4 \strokec4 reduce\cf6 \strokec6 ((\cf4 \strokec4 acc\cf6 \strokec6 ,\cf4 \strokec4  c\cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  acc \cf6 \strokec6 +\cf4 \strokec4  \cf5 \strokec5 Number\cf6 \strokec6 (\cf4 \strokec4 c\cf6 \strokec6 .\cf4 \strokec4 amount\cf6 \strokec6 ),\cf4 \strokec4  \cf9 \strokec9 0\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3     \cb1 \
-\cb3     \cf8 \strokec8 // Reste \'e0 vivre r\'e9el = Revenus - (Abonnements + D\'e9penses variables)\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  realBalance \cf6 \strokec6 =\cf4 \strokec4  totalInc \cf6 \strokec6 -\cf4 \strokec4  \cf6 \strokec6 (\cf4 \strokec4 totalSubs \cf6 \strokec6 +\cf4 \strokec4  totalExp\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3     \cb1 \
-\cb3     \cf8 \strokec8 // Reste \'e0 d\'e9penser selon objectif = Objectif - D\'e9penses variables d\'e9j\'e0 effectu\'e9es\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  goalRemaining \cf6 \strokec6 =\cf4 \strokec4  budgetGoal \cf6 \strokec6 >\cf4 \strokec4  \cf9 \strokec9 0\cf4 \strokec4  \cf6 \strokec6 ?\cf4 \strokec4  budgetGoal \cf6 \strokec6 -\cf4 \strokec4  totalExp \cf6 \strokec6 :\cf4 \strokec4  realBalance\cf6 \strokec6 ;\cf4 \cb1 \strokec4 \
-\
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  catTotals \cf6 \strokec6 =\cf4 \strokec4  fExpenses\cf6 \strokec6 .\cf4 \strokec4 reduce\cf6 \strokec6 ((\cf4 \strokec4 acc\cf6 \strokec6 ,\cf4 \strokec4  c\cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \cb1 \strokec4 \
-\cb3       acc\cf6 \strokec6 [\cf4 \strokec4 c\cf6 \strokec6 .\cf4 \strokec4 category\cf6 \strokec6 ]\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  \cf6 \strokec6 (\cf4 \strokec4 acc\cf6 \strokec6 [\cf4 \strokec4 c\cf6 \strokec6 .\cf4 \strokec4 category\cf6 \strokec6 ]\cf4 \strokec4  \cf6 \strokec6 ||\cf4 \strokec4  \cf9 \strokec9 0\cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 +\cf4 \strokec4  \cf5 \strokec5 Number\cf6 \strokec6 (\cf4 \strokec4 c\cf6 \strokec6 .\cf4 \strokec4 amount\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3       \cf2 \strokec2 return\cf4 \strokec4  acc\cf6 \strokec6 ;\cf4 \cb1 \strokec4 \
-\cb3     \cf6 \strokec6 \},\cf4 \strokec4  \cf6 \strokec6 \{\});\cf4 \cb1 \strokec4 \
-\
-\cb3     \cf8 \strokec8 // Cr\'e9ation du journal pr\'e9visionnel\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  journalEntries \cf6 \strokec6 =\cf4 \strokec4  \cf6 \strokec6 [\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 ...\cf4 \strokec4 fIncomes\cf6 \strokec6 .\cf4 \strokec4 map\cf6 \strokec6 (\cf4 \strokec4 i \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 (\{\cf4 \strokec4  \cf6 \strokec6 ...\cf4 \strokec4 i\cf6 \strokec6 ,\cf4 \strokec4  \cf2 \strokec2 type\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'income'\cf4 \strokec4  \cf6 \strokec6 \})),\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 ...\cf4 \strokec4 fExpenses\cf6 \strokec6 .\cf4 \strokec4 map\cf6 \strokec6 (\cf4 \strokec4 e \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 (\{\cf4 \strokec4  \cf6 \strokec6 ...\cf4 \strokec4 e\cf6 \strokec6 ,\cf4 \strokec4  \cf2 \strokec2 type\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'expense'\cf4 \strokec4  \cf6 \strokec6 \})),\cf4 \cb1 \strokec4 \
-\cb3       \cf8 \strokec8 // On injecte les abonnements comme s'ils \'e9taient des d\'e9penses du mois\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 ...\cf4 \strokec4 subscriptions\cf6 \strokec6 .\cf4 \strokec4 map\cf6 \strokec6 (\cf4 \strokec4 s \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 (\{\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 ...\cf4 \strokec4 s\cf6 \strokec6 ,\cf4 \cb1 \strokec4 \
-\cb3         \cf2 \strokec2 type\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'fixed'\cf6 \strokec6 ,\cf4 \cb1 \strokec4 \
-\cb3         isPlanned\cf6 \strokec6 :\cf4 \strokec4  \cf2 \strokec2 true\cf6 \strokec6 ,\cf4 \cb1 \strokec4 \
-\cb3         date\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 `\cf6 \strokec6 $\{\cf5 \strokec5 String\cf6 \strokec6 (\cf4 \strokec4 s\cf6 \strokec6 .\cf4 \strokec4 day \cf6 \strokec6 ||\cf4 \strokec4  \cf7 \strokec7 '01'\cf6 \strokec6 ).\cf4 \strokec4 padStart\cf6 \strokec6 (\cf9 \strokec9 2\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 '0'\cf6 \strokec6 )\}\cf7 \strokec7 .\cf6 \strokec6 $\{\cf5 \strokec5 String\cf6 \strokec6 (\cf4 \strokec4 selectedMonth \cf6 \strokec6 +\cf4 \strokec4  \cf9 \strokec9 1\cf6 \strokec6 ).\cf4 \strokec4 padStart\cf6 \strokec6 (\cf9 \strokec9 2\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 '0'\cf6 \strokec6 )\}\cf7 \strokec7 .\cf6 \strokec6 $\{\cf4 \strokec4 selectedYear\cf6 \strokec6 \}\cf7 \strokec7 `\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 \}))\cf4 \cb1 \strokec4 \
-\cb3     \cf6 \strokec6 ].\cf4 \strokec4 sort\cf6 \strokec6 ((\cf4 \strokec4 a\cf6 \strokec6 ,\cf4 \strokec4  b\cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  b\cf6 \strokec6 .\cf4 \strokec4 createdAt \cf6 \strokec6 -\cf4 \strokec4  a\cf6 \strokec6 .\cf4 \strokec4 createdAt\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\
-\cb3     \cf2 \strokec2 return\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \strokec4  totalInc\cf6 \strokec6 ,\cf4 \strokec4  totalSubs\cf6 \strokec6 ,\cf4 \strokec4  totalExp\cf6 \strokec6 ,\cf4 \strokec4  realBalance\cf6 \strokec6 ,\cf4 \strokec4  goalRemaining\cf6 \strokec6 ,\cf4 \strokec4  catTotals\cf6 \strokec6 ,\cf4 \strokec4  journalEntries \cf6 \strokec6 \};\cf4 \cb1 \strokec4 \
-\cb3   \cf6 \strokec6 \},\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 expenses\cf6 \strokec6 ,\cf4 \strokec4  incomes\cf6 \strokec6 ,\cf4 \strokec4  subscriptions\cf6 \strokec6 ,\cf4 \strokec4  selectedMonth\cf6 \strokec6 ,\cf4 \strokec4  selectedYear\cf6 \strokec6 ,\cf4 \strokec4  budgetGoal\cf6 \strokec6 ]);\cf4 \cb1 \strokec4 \
-\
-\cb3   \cf2 \strokec2 const\cf4 \strokec4  fullLibrary \cf6 \strokec6 =\cf4 \strokec4  useMemo\cf6 \strokec6 (()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 [...\cf5 \strokec5 STATIC_EXERCICES\cf6 \strokec6 ,\cf4 \strokec4  \cf6 \strokec6 ...\cf4 \strokec4 customExercises\cf6 \strokec6 ],\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 customExercises\cf6 \strokec6 ]);\cf4 \cb1 \strokec4 \
-\
-\cb3   \cf8 \strokec8 // --- Vues ---\cf4 \cb1 \strokec4 \
-\
-\cb3   \cf2 \strokec2 const\cf4 \strokec4  \cf5 \strokec5 ViewAccueil\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  \cf6 \strokec6 ()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 (\cf4 \cb1 \strokec4 \
-\cb3     \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "space-y-6 animate-in fade-in duration-500 pb-10"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 <\cf4 \strokec4 header className\cf6 \strokec6 =\cf7 \strokec7 "flex justify-between items-end"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 <\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 <\cf4 \strokec4 h1 className\cf6 \strokec6 =\cf7 \strokec7 "text-4xl font-black tracking-tighter"\cf6 \strokec6 >\cf5 \strokec5 LIFE\cf6 \strokec6 .</\cf4 \strokec4 h1\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 <\cf4 \strokec4 p className\cf6 \strokec6 =\cf7 \strokec7 "text-slate-500 font-medium text-sm"\cf6 \strokec6 >\cf5 \strokec5 Bonjour\cf6 \strokec6 ,\cf4 \strokec4  voici votre \cf10 \strokec10 \'e9\cf4 \strokec4 tat actuel \cf10 \strokec10 \uc0\u55356 \u56808 \u55356 \u56813 \cf6 \strokec6 </\cf4 \strokec4 p\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "text-right"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 <\cf4 \strokec4 p className\cf6 \strokec6 =\cf7 \strokec7 "text-[10px] font-black text-slate-400 uppercase tracking-widest"\cf6 \strokec6 >\cf5 \strokec5 Balance\cf4 \strokec4  \cf5 \strokec5 R\cf10 \strokec10 \'e9\cf4 \strokec4 elle\cf6 \strokec6 </\cf4 \strokec4 p\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 <\cf4 \strokec4 p className\cf6 \strokec6 =\{\cf7 \strokec7 `text-2xl font-black \cf6 \strokec6 $\{\cf4 \strokec4 financeStats\cf6 \strokec6 .\cf4 \strokec4 realBalance \cf6 \strokec6 >=\cf4 \strokec4  \cf9 \strokec9 0\cf4 \strokec4  \cf6 \strokec6 ?\cf4 \strokec4  \cf7 \strokec7 'text-green-500'\cf4 \strokec4  \cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'text-red-500'\cf6 \strokec6 \}\cf7 \strokec7 `\cf6 \strokec6 \}>\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 \{\cf4 \strokec4 financeStats\cf6 \strokec6 .\cf4 \strokec4 realBalance\cf6 \strokec6 .\cf4 \strokec4 toFixed\cf6 \strokec6 (\cf9 \strokec9 2\cf6 \strokec6 )\}\cf4 \strokec4  \cf5 \strokec5 CHF\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 </\cf4 \strokec4 p\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 </\cf4 \strokec4 header\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\
-\cb3       \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "grid grid-cols-1 md:grid-cols-2 gap-4"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 <\cf5 \strokec5 Card\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "bg-indigo-600 text-white border-none shadow-xl shadow-indigo-100 overflow-hidden relative"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "z-10 relative"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 <\cf4 \strokec4 p className\cf6 \strokec6 =\cf7 \strokec7 "text-indigo-200 text-xs font-black uppercase"\cf6 \strokec6 >\cf5 \strokec5 Reste\cf4 \strokec4  \cf10 \strokec10 \'e0\cf4 \strokec4  d\cf10 \strokec10 \'e9\cf4 \strokec4 penser\cf6 \strokec6 </\cf4 \strokec4 p\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 <\cf4 \strokec4 h2 className\cf6 \strokec6 =\cf7 \strokec7 "text-4xl font-black mt-1"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 \{\cf4 \strokec4 financeStats\cf6 \strokec6 .\cf4 \strokec4 goalRemaining\cf6 \strokec6 .\cf4 \strokec4 toFixed\cf6 \strokec6 (\cf9 \strokec9 2\cf6 \strokec6 )\}\cf4 \strokec4  \cf6 \strokec6 <\cf4 \strokec4 span className\cf6 \strokec6 =\cf7 \strokec7 "text-xl"\cf6 \strokec6 >\cf5 \strokec5 CHF\cf6 \strokec6 </\cf4 \strokec4 span\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 </\cf4 \strokec4 h2\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 \{\cf4 \strokec4 budgetGoal \cf6 \strokec6 >\cf4 \strokec4  \cf9 \strokec9 0\cf4 \strokec4  \cf6 \strokec6 &&\cf4 \strokec4  \cf6 \strokec6 (\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "mt-3 bg-indigo-500/30 rounded-full h-1.5 w-full overflow-hidden"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                 \cf6 \strokec6 <\cf4 \strokec4 div \cb1 \
-\cb3                   className\cf6 \strokec6 =\cf7 \strokec7 "bg-white h-full transition-all duration-700"\cf4 \strokec4  \cb1 \
-\cb3                   style\cf6 \strokec6 =\{\{\cf4 \strokec4  width\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 `\cf6 \strokec6 $\{\cf5 \strokec5 Math\cf6 \strokec6 .\cf4 \strokec4 min\cf6 \strokec6 (\cf9 \strokec9 100\cf6 \strokec6 ,\cf4 \strokec4  \cf6 \strokec6 (\cf4 \strokec4 financeStats\cf6 \strokec6 .\cf4 \strokec4 totalExp \cf6 \strokec6 /\cf4 \strokec4  budgetGoal\cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 *\cf4 \strokec4  \cf9 \strokec9 100\cf6 \strokec6 )\}\cf7 \strokec7 %`\cf4 \strokec4  \cf6 \strokec6 \}\}\cf4 \cb1 \strokec4 \
-\cb3                 />\cb1 \
-\cb3               \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 )\}\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 <\cf4 \strokec4 p className\cf6 \strokec6 =\cf7 \strokec7 "text-[10px] text-indigo-100 font-bold mt-2 opacity-80 uppercase tracking-wider"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 \{\cf4 \strokec4 budgetGoal \cf6 \strokec6 >\cf4 \strokec4  \cf9 \strokec9 0\cf4 \strokec4  \cf6 \strokec6 ?\cf4 \strokec4  \cf7 \strokec7 `Objectif : \cf6 \strokec6 $\{\cf4 \strokec4 budgetGoal\cf6 \strokec6 \}\cf7 \strokec7  CHF`\cf4 \strokec4  \cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 "Aucun objectif d\'e9fini"\cf6 \strokec6 \}\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 </\cf4 \strokec4 p\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 <\cf5 \strokec5 Wallet\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "absolute -right-6 -bottom-6 opacity-10 w-32 h-32 rotate-12"\cf4 \strokec4  />\cb1 \
-\cb3         \cf6 \strokec6 </\cf5 \strokec5 Card\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cb1 \
-\cb3         \cf6 \strokec6 <\cf5 \strokec5 Card\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "flex flex-col justify-between border-slate-100"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "flex justify-between items-start"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 <\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 <\cf4 \strokec4 p className\cf6 \strokec6 =\cf7 \strokec7 "text-slate-400 text-[10px] font-black uppercase tracking-widest"\cf6 \strokec6 >\cf5 \strokec5 Charges\cf4 \strokec4  \cf5 \strokec5 Fixes\cf4 \strokec4  du mois\cf6 \strokec6 </\cf4 \strokec4 p\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 <\cf4 \strokec4 h2 className\cf6 \strokec6 =\cf7 \strokec7 "text-2xl font-black mt-1 text-slate-800"\cf6 \strokec6 >\{\cf4 \strokec4 financeStats\cf6 \strokec6 .\cf4 \strokec4 totalSubs\cf6 \strokec6 .\cf4 \strokec4 toFixed\cf6 \strokec6 (\cf9 \strokec9 2\cf6 \strokec6 )\}\cf4 \strokec4  \cf5 \strokec5 CHF\cf6 \strokec6 </\cf4 \strokec4 h2\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "p-2 bg-slate-50 rounded-xl text-slate-400"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 <\cf5 \strokec5 CreditCard\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 20\cf6 \strokec6 \}\cf4 \strokec4  />\cb1 \
-\cb3             \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "mt-4 space-y-1"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3              \cf6 \strokec6 \{\cf4 \strokec4 subscriptions\cf6 \strokec6 .\cf4 \strokec4 slice\cf6 \strokec6 (\cf9 \strokec9 0\cf6 \strokec6 ,\cf4 \strokec4  \cf9 \strokec9 2\cf6 \strokec6 ).\cf4 \strokec4 map\cf6 \strokec6 (\cf4 \strokec4 s \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 (\cf4 \cb1 \strokec4 \
-\cb3                \cf6 \strokec6 <\cf4 \strokec4 div key\cf6 \strokec6 =\{\cf4 \strokec4 s\cf6 \strokec6 .\cf4 \strokec4 id\cf6 \strokec6 \}\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "flex justify-between text-[10px] font-bold text-slate-500"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                  \cf6 \strokec6 <\cf4 \strokec4 span\cf6 \strokec6 >\{\cf4 \strokec4 s\cf6 \strokec6 .\cf4 \strokec4 name\cf6 \strokec6 \}\cf4 \strokec4  \cf6 \strokec6 (\cf4 \strokec4 le \cf6 \strokec6 \{\cf4 \strokec4 s\cf6 \strokec6 .\cf4 \strokec4 day \cf6 \strokec6 ||\cf4 \strokec4  \cf7 \strokec7 '1'\cf6 \strokec6 \})</\cf4 \strokec4 span\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                  \cf6 \strokec6 <\cf4 \strokec4 span\cf6 \strokec6 >\{\cf5 \strokec5 Number\cf6 \strokec6 (\cf4 \strokec4 s\cf6 \strokec6 .\cf4 \strokec4 amount\cf6 \strokec6 ).\cf4 \strokec4 toFixed\cf6 \strokec6 (\cf9 \strokec9 2\cf6 \strokec6 )\}</\cf4 \strokec4 span\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3              \cf6 \strokec6 ))\}\cf4 \cb1 \strokec4 \
-\cb3              \cf6 \strokec6 \{\cf4 \strokec4 subscriptions\cf6 \strokec6 .\cf4 \strokec4 length \cf6 \strokec6 >\cf4 \strokec4  \cf9 \strokec9 2\cf4 \strokec4  \cf6 \strokec6 &&\cf4 \strokec4  \cf6 \strokec6 <\cf4 \strokec4 p className\cf6 \strokec6 =\cf7 \strokec7 "text-[9px] text-indigo-600 font-black uppercase mt-1"\cf4 \strokec4 >+\cf6 \strokec6 \{\cf4 \strokec4 subscriptions\cf6 \strokec6 .\cf4 \strokec4 length \cf6 \strokec6 -\cf4 \strokec4  \cf9 \strokec9 2\cf6 \strokec6 \}\cf4 \strokec4  autres abonnements\cf6 \strokec6 </\cf4 \strokec4 p\cf6 \strokec6 >\}\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 </\cf5 \strokec5 Card\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\
-\cb3       \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "grid grid-cols-1 md:grid-cols-2 gap-4"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 <\cf5 \strokec5 Card\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 <\cf4 \strokec4 h3 className\cf6 \strokec6 =\cf7 \strokec7 "text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2"\cf4 \strokec4 ><\cf5 \strokec5 PieChart\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 14\cf6 \strokec6 \}\cf4 \strokec4 /> \cf5 \strokec5 D\cf10 \strokec10 \'e9\cf4 \strokec4 penses \cf5 \strokec5 Variables\cf6 \strokec6 </\cf4 \strokec4 h3\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "space-y-4"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 \{\cf5 \strokec5 Object\cf6 \strokec6 .\cf4 \strokec4 entries\cf6 \strokec6 (\cf4 \strokec4 financeStats\cf6 \strokec6 .\cf4 \strokec4 catTotals\cf6 \strokec6 ).\cf4 \strokec4 sort\cf6 \strokec6 ((\cf4 \strokec4 a\cf6 \strokec6 ,\cf4 \strokec4 b\cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  b\cf6 \strokec6 [\cf9 \strokec9 1\cf6 \strokec6 ]-\cf4 \strokec4 a\cf6 \strokec6 [\cf9 \strokec9 1\cf6 \strokec6 ]).\cf4 \strokec4 slice\cf6 \strokec6 (\cf9 \strokec9 0\cf6 \strokec6 ,\cf4 \strokec4  \cf9 \strokec9 3\cf6 \strokec6 ).\cf4 \strokec4 map\cf6 \strokec6 (([\cf4 \strokec4 cat\cf6 \strokec6 ,\cf4 \strokec4  val\cf6 \strokec6 ])\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 (\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 <\cf4 \strokec4 div key\cf6 \strokec6 =\{\cf4 \strokec4 cat\cf6 \strokec6 \}>\cf4 \cb1 \strokec4 \
-\cb3                 \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "flex justify-between text-xs font-bold mb-1"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                   \cf6 \strokec6 <\cf4 \strokec4 span\cf6 \strokec6 >\{\cf4 \strokec4 cat\cf6 \strokec6 \}</\cf4 \strokec4 span\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                   \cf6 \strokec6 <\cf4 \strokec4 span\cf6 \strokec6 >\{\cf4 \strokec4 val\cf6 \strokec6 .\cf4 \strokec4 toFixed\cf6 \strokec6 (\cf9 \strokec9 2\cf6 \strokec6 )\}\cf4 \strokec4  \cf5 \strokec5 CHF\cf6 \strokec6 </\cf4 \strokec4 span\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                 \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                 \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "w-full bg-slate-50 h-1.5 rounded-full overflow-hidden"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                   \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "bg-indigo-500 h-full rounded-full"\cf4 \strokec4  style\cf6 \strokec6 =\{\{\cf4 \strokec4 width\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 `\cf6 \strokec6 $\{(\cf4 \strokec4 val\cf6 \strokec6 /\cf4 \strokec4 financeStats\cf6 \strokec6 .\cf4 \strokec4 totalExp\cf6 \strokec6 )*\cf9 \strokec9 100\cf6 \strokec6 \}\cf7 \strokec7 %`\cf6 \strokec6 \}\}\cf4 \strokec4 ></div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                 \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 ))\}\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 \{\cf5 \strokec5 Object\cf6 \strokec6 .\cf4 \strokec4 keys\cf6 \strokec6 (\cf4 \strokec4 financeStats\cf6 \strokec6 .\cf4 \strokec4 catTotals\cf6 \strokec6 ).\cf4 \strokec4 length \cf6 \strokec6 ===\cf4 \strokec4  \cf9 \strokec9 0\cf4 \strokec4  \cf6 \strokec6 &&\cf4 \strokec4  \cf6 \strokec6 <\cf4 \strokec4 p className\cf6 \strokec6 =\cf7 \strokec7 "text-xs italic text-slate-400 py-4 text-center"\cf6 \strokec6 >\cf5 \strokec5 Aucune\cf4 \strokec4  d\cf10 \strokec10 \'e9\cf4 \strokec4 pense ce mois\cf6 \strokec6 .</\cf4 \strokec4 p\cf6 \strokec6 >\}\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 </\cf5 \strokec5 Card\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\
-\cb3         \cf6 \strokec6 <\cf5 \strokec5 Card\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 <\cf4 \strokec4 h3 className\cf6 \strokec6 =\cf7 \strokec7 "text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2"\cf4 \strokec4 ><\cf5 \strokec5 GymIcon\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 14\cf6 \strokec6 \}\cf4 \strokec4 /> \cf5 \strokec5 Sport\cf4 \strokec4  \cf6 \strokec6 &\cf4 \strokec4  \cf5 \strokec5 Training\cf6 \strokec6 </\cf4 \strokec4 h3\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 \{\cf4 \strokec4 workouts\cf6 \strokec6 .\cf4 \strokec4 length \cf6 \strokec6 >\cf4 \strokec4  \cf9 \strokec9 0\cf4 \strokec4  \cf6 \strokec6 ?\cf4 \strokec4  \cf6 \strokec6 (\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "space-y-3"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "p-4 bg-slate-50 rounded-2xl border border-slate-100"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                 \cf6 \strokec6 <\cf4 \strokec4 p className\cf6 \strokec6 =\cf7 \strokec7 "text-[10px] font-black text-indigo-600 uppercase mb-1"\cf6 \strokec6 >\cf5 \strokec5 Derni\cf10 \strokec10 \'e8\cf4 \strokec4 re \cf5 \strokec5 S\cf10 \strokec10 \'e9\cf4 \strokec4 ance\cf6 \strokec6 </\cf4 \strokec4 p\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                 \cf6 \strokec6 <\cf4 \strokec4 p className\cf6 \strokec6 =\cf7 \strokec7 "font-bold text-sm"\cf6 \strokec6 >\{\cf4 \strokec4 workouts\cf6 \strokec6 [\cf4 \strokec4 workouts\cf6 \strokec6 .\cf4 \strokec4 length\cf6 \strokec6 -\cf9 \strokec9 1\cf6 \strokec6 ].\cf4 \strokec4 sessionName\cf6 \strokec6 \}</\cf4 \strokec4 p\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                 \cf6 \strokec6 <\cf4 \strokec4 p className\cf6 \strokec6 =\cf7 \strokec7 "text-[10px] text-slate-400"\cf6 \strokec6 >\{\cf4 \strokec4 workouts\cf6 \strokec6 [\cf4 \strokec4 workouts\cf6 \strokec6 .\cf4 \strokec4 length\cf6 \strokec6 -\cf9 \strokec9 1\cf6 \strokec6 ].\cf4 \strokec4 date\cf6 \strokec6 \}</\cf4 \strokec4 p\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 <\cf5 \strokec5 Button\cf4 \strokec4  variant\cf6 \strokec6 =\cf7 \strokec7 "secondary"\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "w-full text-xs"\cf4 \strokec4  onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  setActiveTab\cf6 \strokec6 (\cf7 \strokec7 'sport'\cf6 \strokec6 )\}>\cf5 \strokec5 Acc\cf10 \strokec10 \'e9\cf4 \strokec4 der \cf10 \strokec10 \'e0\cf4 \strokec4  l\cf7 \strokec7 'historique</Button>\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 :\cf4 \strokec4  \cf6 \strokec6 <\cf4 \strokec4 p className\cf6 \strokec6 =\cf7 \strokec7 "text-xs italic text-slate-400 py-8 text-center"\cf6 \strokec6 >\cf5 \strokec5 Pr\cf10 \strokec10 \'ea\cf4 \strokec4 t pour une session ?</p\cf6 \strokec6 >\}\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 </\cf5 \strokec5 Card\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3     \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3   \cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\
-\cb3   \cf2 \strokec2 const\cf4 \strokec4  \cf5 \strokec5 ViewBudget\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  \cf6 \strokec6 ()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 view\cf6 \strokec6 ,\cf4 \strokec4  setView\cf6 \strokec6 ]\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  useState\cf6 \strokec6 (\cf7 \strokec7 'journal'\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 form\cf6 \strokec6 ,\cf4 \strokec4  setForm\cf6 \strokec6 ]\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  useState\cf6 \strokec6 (\{\cf4 \strokec4  amount\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 ''\cf6 \strokec6 ,\cf4 \strokec4  label\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 ''\cf6 \strokec6 ,\cf4 \strokec4  cat\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'Nourriture'\cf6 \strokec6 ,\cf4 \strokec4  \cf2 \strokec2 type\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'variable'\cf6 \strokec6 ,\cf4 \strokec4  day\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 '1'\cf4 \strokec4  \cf6 \strokec6 \});\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  months \cf6 \strokec6 =\cf4 \strokec4  \cf6 \strokec6 [\cf7 \strokec7 "Janvier"\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 "F\'e9vrier"\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 "Mars"\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 "Avril"\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 "Mai"\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 "Juin"\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 "Juillet"\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 "Ao\'fbt"\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 "Septembre"\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 "Octobre"\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 "Novembre"\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 "D\'e9cembre"\cf6 \strokec6 ];\cf4 \cb1 \strokec4 \
-\
-\cb3     useEffect\cf6 \strokec6 (()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \cb1 \strokec4 \
-\cb3       \cf2 \strokec2 if\cf4 \strokec4  \cf6 \strokec6 (\cf4 \strokec4 form\cf6 \strokec6 .\cf2 \strokec2 type\cf4 \strokec4  \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'income'\cf6 \strokec6 )\cf4 \strokec4  setForm\cf6 \strokec6 (\cf4 \strokec4 f \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 (\{\cf4 \strokec4  \cf6 \strokec6 ...\cf4 \strokec4 f\cf6 \strokec6 ,\cf4 \strokec4  cat\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'Salaire'\cf4 \strokec4  \cf6 \strokec6 \}));\cf4 \cb1 \strokec4 \
-\cb3       \cf2 \strokec2 else\cf4 \strokec4  \cf2 \strokec2 if\cf4 \strokec4  \cf6 \strokec6 (\cf4 \strokec4 form\cf6 \strokec6 .\cf2 \strokec2 type\cf4 \strokec4  \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'fixed'\cf6 \strokec6 )\cf4 \strokec4  setForm\cf6 \strokec6 (\cf4 \strokec4 f \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 (\{\cf4 \strokec4  \cf6 \strokec6 ...\cf4 \strokec4 f\cf6 \strokec6 ,\cf4 \strokec4  cat\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'Loyer'\cf4 \strokec4  \cf6 \strokec6 \}));\cf4 \cb1 \strokec4 \
-\cb3       \cf2 \strokec2 else\cf4 \strokec4  setForm\cf6 \strokec6 (\cf4 \strokec4 f \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 (\{\cf4 \strokec4  \cf6 \strokec6 ...\cf4 \strokec4 f\cf6 \strokec6 ,\cf4 \strokec4  cat\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'Nourriture'\cf4 \strokec4  \cf6 \strokec6 \}));\cf4 \cb1 \strokec4 \
-\cb3     \cf6 \strokec6 \},\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 form\cf6 \strokec6 .\cf2 \strokec2 type\cf6 \strokec6 ]);\cf4 \cb1 \strokec4 \
-\
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  handleAdd \cf6 \strokec6 =\cf4 \strokec4  \cf6 \strokec6 ()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \cb1 \strokec4 \
-\cb3       \cf2 \strokec2 if\cf6 \strokec6 (!\cf4 \strokec4 form\cf6 \strokec6 .\cf4 \strokec4 amount\cf6 \strokec6 )\cf4 \strokec4  \cf2 \strokec2 return\cf6 \strokec6 ;\cf4 \cb1 \strokec4 \
-\cb3       \cf2 \strokec2 const\cf4 \strokec4  data \cf6 \strokec6 =\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \strokec4  \cb1 \
-\cb3         amount\cf6 \strokec6 :\cf4 \strokec4  form\cf6 \strokec6 .\cf4 \strokec4 amount\cf6 \strokec6 ,\cf4 \strokec4  \cb1 \
-\cb3         name\cf6 \strokec6 :\cf4 \strokec4  form\cf6 \strokec6 .\cf4 \strokec4 label \cf6 \strokec6 ||\cf4 \strokec4  form\cf6 \strokec6 .\cf4 \strokec4 cat\cf6 \strokec6 ,\cf4 \strokec4  \cb1 \
-\cb3         category\cf6 \strokec6 :\cf4 \strokec4  form\cf6 \strokec6 .\cf4 \strokec4 cat\cf6 \strokec6 ,\cf4 \strokec4  \cb1 \
-\cb3         date\cf6 \strokec6 :\cf4 \strokec4  \cf2 \strokec2 new\cf4 \strokec4  \cf5 \strokec5 Date\cf6 \strokec6 ().\cf4 \strokec4 toLocaleDateString\cf6 \strokec6 (\cf7 \strokec7 'fr-CH'\cf6 \strokec6 )\cf4 \strokec4  \cb1 \
-\cb3       \cf6 \strokec6 \};\cf4 \cb1 \strokec4 \
-\cb3       \cf2 \strokec2 if\cf4 \strokec4  \cf6 \strokec6 (\cf4 \strokec4 form\cf6 \strokec6 .\cf2 \strokec2 type\cf4 \strokec4  \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'fixed'\cf4 \strokec4  \cf6 \strokec6 ||\cf4 \strokec4  form\cf6 \strokec6 .\cf2 \strokec2 type\cf4 \strokec4  \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'income'\cf6 \strokec6 )\cf4 \strokec4  data\cf6 \strokec6 .\cf4 \strokec4 day \cf6 \strokec6 =\cf4 \strokec4  form\cf6 \strokec6 .\cf4 \strokec4 day\cf6 \strokec6 ;\cf4 \cb1 \strokec4 \
-\cb3       \cb1 \
-\cb3       addItem\cf6 \strokec6 (\cf4 \strokec4 form\cf6 \strokec6 .\cf2 \strokec2 type\cf4 \strokec4  \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'income'\cf4 \strokec4  \cf6 \strokec6 ?\cf4 \strokec4  \cf7 \strokec7 'incomes'\cf4 \strokec4  \cf6 \strokec6 :\cf4 \strokec4  \cf6 \strokec6 (\cf4 \strokec4 form\cf6 \strokec6 .\cf2 \strokec2 type\cf4 \strokec4  \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'fixed'\cf4 \strokec4  \cf6 \strokec6 ?\cf4 \strokec4  \cf7 \strokec7 'subscriptions'\cf4 \strokec4  \cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'expenses'\cf6 \strokec6 ),\cf4 \strokec4  data\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3       setForm\cf6 \strokec6 (\{\cf4 \strokec4  amount\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 ''\cf6 \strokec6 ,\cf4 \strokec4  label\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 ''\cf6 \strokec6 ,\cf4 \strokec4  cat\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'Nourriture'\cf6 \strokec6 ,\cf4 \strokec4  \cf2 \strokec2 type\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'variable'\cf6 \strokec6 ,\cf4 \strokec4  day\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 '1'\cf4 \strokec4  \cf6 \strokec6 \});\cf4 \cb1 \strokec4 \
-\cb3       setView\cf6 \strokec6 (\cf7 \strokec7 'journal'\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3     \cf6 \strokec6 \};\cf4 \cb1 \strokec4 \
-\
-\cb3     \cf2 \strokec2 return\cf4 \strokec4  \cf6 \strokec6 (\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "space-y-6"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "flex justify-between items-center"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 <\cf4 \strokec4 h2 className\cf6 \strokec6 =\cf7 \strokec7 "text-2xl font-black"\cf6 \strokec6 >\cf5 \strokec5 Mes\cf4 \strokec4  \cf5 \strokec5 Finances\cf6 \strokec6 </\cf4 \strokec4 h2\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 <\cf4 \strokec4 select className\cf6 \strokec6 =\cf7 \strokec7 "bg-white border-none rounded-xl text-[10px] font-black p-2 shadow-sm uppercase outline-none"\cf4 \strokec4  value\cf6 \strokec6 =\{\cf4 \strokec4 selectedMonth\cf6 \strokec6 \}\cf4 \strokec4  onChange\cf6 \strokec6 =\{\cf4 \strokec4 e \cf6 \strokec6 =>\cf4 \strokec4  setSelectedMonth\cf6 \strokec6 (\cf5 \strokec5 Number\cf6 \strokec6 (\cf4 \strokec4 e\cf6 \strokec6 .\cf4 \strokec4 target\cf6 \strokec6 .\cf4 \strokec4 value\cf6 \strokec6 ))\}>\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 \{\cf4 \strokec4 months\cf6 \strokec6 .\cf4 \strokec4 map\cf6 \strokec6 ((\cf4 \strokec4 m\cf6 \strokec6 ,\cf4 \strokec4  i\cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 <\cf4 \strokec4 option key\cf6 \strokec6 =\{\cf4 \strokec4 m\cf6 \strokec6 \}\cf4 \strokec4  value\cf6 \strokec6 =\{\cf4 \strokec4 i\cf6 \strokec6 \}>\{\cf4 \strokec4 m\cf6 \strokec6 \}</\cf4 \strokec4 option\cf6 \strokec6 >)\}\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 </\cf4 \strokec4 select\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\
-\cb3         \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "flex gap-2 bg-white p-1.5 rounded-2xl border border-slate-100 shadow-sm"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 <\cf4 \strokec4 button onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  setView\cf6 \strokec6 (\cf7 \strokec7 'journal'\cf6 \strokec6 )\}\cf4 \strokec4  className\cf6 \strokec6 =\{\cf7 \strokec7 `flex-1 py-2.5 rounded-xl text-xs font-black transition-all \cf6 \strokec6 $\{\cf4 \strokec4 view \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'journal'\cf4 \strokec4  \cf6 \strokec6 ?\cf4 \strokec4  \cf7 \strokec7 'bg-indigo-600 text-white shadow-lg'\cf4 \strokec4  \cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'text-slate-400'\cf6 \strokec6 \}\cf7 \strokec7 `\cf6 \strokec6 \}>\cf5 \strokec5 Journal\cf6 \strokec6 </\cf4 \strokec4 button\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 <\cf4 \strokec4 button onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  setView\cf6 \strokec6 (\cf7 \strokec7 'ajouter'\cf6 \strokec6 )\}\cf4 \strokec4  className\cf6 \strokec6 =\{\cf7 \strokec7 `flex-1 py-2.5 rounded-xl text-xs font-black transition-all \cf6 \strokec6 $\{\cf4 \strokec4 view \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'ajouter'\cf4 \strokec4  \cf6 \strokec6 ?\cf4 \strokec4  \cf7 \strokec7 'bg-indigo-600 text-white shadow-lg'\cf4 \strokec4  \cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'text-slate-400'\cf6 \strokec6 \}\cf7 \strokec7 `\cf6 \strokec6 \}>\cf5 \strokec5 Ajouter\cf6 \strokec6 </\cf4 \strokec4 button\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 <\cf4 \strokec4 button onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  setView\cf6 \strokec6 (\cf7 \strokec7 'settings'\cf6 \strokec6 )\}\cf4 \strokec4  className\cf6 \strokec6 =\{\cf7 \strokec7 `p-2.5 rounded-xl transition-all \cf6 \strokec6 $\{\cf4 \strokec4 view \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'settings'\cf4 \strokec4  \cf6 \strokec6 ?\cf4 \strokec4  \cf7 \strokec7 'bg-indigo-600 text-white shadow-lg'\cf4 \strokec4  \cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'text-slate-400'\cf6 \strokec6 \}\cf7 \strokec7 `\cf6 \strokec6 \}\cf4 \strokec4 ><\cf5 \strokec5 Settings\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 18\cf6 \strokec6 \}\cf4 \strokec4 /></button\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\
-\cb3         \cf6 \strokec6 \{\cf4 \strokec4 view \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'settings'\cf4 \strokec4  \cf6 \strokec6 &&\cf4 \strokec4  \cf6 \strokec6 (\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 <\cf5 \strokec5 Card\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "animate-in slide-in-from-right-4 border-indigo-100 bg-indigo-50/30"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 <\cf4 \strokec4 h3 className\cf6 \strokec6 =\cf7 \strokec7 "text-sm font-black uppercase tracking-widest text-indigo-600 mb-4 flex items-center gap-2"\cf4 \strokec4 ><\cf5 \strokec5 Target\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 16\cf6 \strokec6 \}\cf4 \strokec4 /> \cf5 \strokec5 Budget\cf4 \strokec4  \cf5 \strokec5 Variable\cf4 \strokec4  \cf5 \strokec5 Mensuel\cf6 \strokec6 </\cf4 \strokec4 h3\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 <\cf4 \strokec4 p className\cf6 \strokec6 =\cf7 \strokec7 "text-xs text-slate-500 mb-4 font-medium leading-relaxed italic"\cf6 \strokec6 >\cf5 \strokec5 D\cf10 \strokec10 \'e9\cf4 \strokec4 terminez la somme maximale que vous souhaitez d\cf10 \strokec10 \'e9\cf4 \strokec4 penser ce mois \cf6 \strokec6 (\cf4 \strokec4 hors charges fixes\cf6 \strokec6 ).</\cf4 \strokec4 p\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "flex gap-2"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 <\cf4 \strokec4 input \cf2 \strokec2 type\cf6 \strokec6 =\cf7 \strokec7 "number"\cf4 \strokec4  placeholder\cf6 \strokec6 =\cf7 \strokec7 "Somme max (ex: 800)"\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "flex-1 p-4 rounded-2xl border-2 border-white font-black text-lg outline-none focus:border-indigo-500 bg-white shadow-inner"\cf4 \strokec4  value\cf6 \strokec6 =\{\cf4 \strokec4 budgetGoal \cf6 \strokec6 ||\cf4 \strokec4  \cf7 \strokec7 ''\cf6 \strokec6 \}\cf4 \strokec4  onChange\cf6 \strokec6 =\{\cf4 \strokec4 e \cf6 \strokec6 =>\cf4 \strokec4  updateBudgetGoal\cf6 \strokec6 (\cf4 \strokec4 e\cf6 \strokec6 .\cf4 \strokec4 target\cf6 \strokec6 .\cf4 \strokec4 value\cf6 \strokec6 )\}\cf4 \strokec4  />\cb1 \
-\cb3               \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "bg-indigo-600 text-white p-4 rounded-2xl flex items-center justify-center font-black"\cf6 \strokec6 >\cf5 \strokec5 CHF\cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 </\cf5 \strokec5 Card\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 )\}\cf4 \cb1 \strokec4 \
-\
-\cb3         \cf6 \strokec6 \{\cf4 \strokec4 view \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'ajouter'\cf4 \strokec4  \cf6 \strokec6 ?\cf4 \strokec4  \cf6 \strokec6 (\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 <\cf5 \strokec5 Card\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "animate-in slide-in-from-bottom-6"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "space-y-4"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "flex gap-1 bg-slate-50 p-1 rounded-2xl"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                 \cf6 \strokec6 \{[[\cf7 \strokec7 'variable'\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'D\'e9pense'\cf6 \strokec6 ],\cf4 \strokec4  \cf6 \strokec6 [\cf7 \strokec7 'fixed'\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'Fixe'\cf6 \strokec6 ],\cf4 \strokec4  \cf6 \strokec6 [\cf7 \strokec7 'income'\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'Revenu'\cf6 \strokec6 ]].\cf4 \strokec4 map\cf6 \strokec6 (([\cf4 \strokec4 id\cf6 \strokec6 ,\cf4 \strokec4  label\cf6 \strokec6 ])\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 (\cf4 \cb1 \strokec4 \
-\cb3                   \cf6 \strokec6 <\cf4 \strokec4 button key\cf6 \strokec6 =\{\cf4 \strokec4 id\cf6 \strokec6 \}\cf4 \strokec4  onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  setForm\cf6 \strokec6 (\{...\cf4 \strokec4 form\cf6 \strokec6 ,\cf4 \strokec4  \cf2 \strokec2 type\cf6 \strokec6 :\cf4 \strokec4  id\cf6 \strokec6 \})\}\cf4 \strokec4  className\cf6 \strokec6 =\{\cf7 \strokec7 `flex-1 py-2 text-[9px] font-black uppercase rounded-xl transition-all \cf6 \strokec6 $\{\cf4 \strokec4 form\cf6 \strokec6 .\cf2 \strokec2 type\cf4 \strokec4  \cf6 \strokec6 ===\cf4 \strokec4  id \cf6 \strokec6 ?\cf4 \strokec4  \cf7 \strokec7 'bg-white shadow-sm text-indigo-600'\cf4 \strokec4  \cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'text-slate-400'\cf6 \strokec6 \}\cf7 \strokec7 `\cf6 \strokec6 \}>\{\cf4 \strokec4 label\cf6 \strokec6 \}</\cf4 \strokec4 button\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                 \cf6 \strokec6 ))\}\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3               \cb1 \
-\cb3               \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "grid grid-cols-1 md:grid-cols-2 gap-3"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                 \cf6 \strokec6 <\cf4 \strokec4 input \cf2 \strokec2 type\cf6 \strokec6 =\cf7 \strokec7 "number"\cf4 \strokec4  placeholder\cf6 \strokec6 =\cf7 \strokec7 "Montant CHF"\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "w-full p-4 rounded-2xl border-2 border-slate-50 font-black text-xl outline-none focus:border-indigo-500"\cf4 \strokec4  value\cf6 \strokec6 =\{\cf4 \strokec4 form\cf6 \strokec6 .\cf4 \strokec4 amount\cf6 \strokec6 \}\cf4 \strokec4  onChange\cf6 \strokec6 =\{\cf4 \strokec4 e \cf6 \strokec6 =>\cf4 \strokec4  setForm\cf6 \strokec6 (\{...\cf4 \strokec4 form\cf6 \strokec6 ,\cf4 \strokec4  amount\cf6 \strokec6 :\cf4 \strokec4  e\cf6 \strokec6 .\cf4 \strokec4 target\cf6 \strokec6 .\cf4 \strokec4 value\cf6 \strokec6 \})\}\cf4 \strokec4  />\cb1 \
-\cb3                 \cb1 \
-\cb3                 \cf6 \strokec6 \{(\cf4 \strokec4 form\cf6 \strokec6 .\cf2 \strokec2 type\cf4 \strokec4  \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'fixed'\cf4 \strokec4  \cf6 \strokec6 ||\cf4 \strokec4  form\cf6 \strokec6 .\cf2 \strokec2 type\cf4 \strokec4  \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'income'\cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 &&\cf4 \strokec4  \cf6 \strokec6 (\cf4 \cb1 \strokec4 \
-\cb3                   \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "flex items-center gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-100"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                     \cf6 \strokec6 <\cf5 \strokec5 Clock\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 16\cf6 \strokec6 \}\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "text-slate-400"\cf4 \strokec4  />\cb1 \
-\cb3                     \cf6 \strokec6 <\cf4 \strokec4 span className\cf6 \strokec6 =\cf7 \strokec7 "text-[10px] font-black uppercase text-slate-400"\cf6 \strokec6 >\cf5 \strokec5 Jour\cf4 \strokec4  :</span\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                     \cf6 \strokec6 <\cf4 \strokec4 input \cf2 \strokec2 type\cf6 \strokec6 =\cf7 \strokec7 "number"\cf4 \strokec4  min\cf6 \strokec6 =\cf7 \strokec7 "1"\cf4 \strokec4  max\cf6 \strokec6 =\cf7 \strokec7 "31"\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "bg-transparent font-black outline-none w-10 text-center"\cf4 \strokec4  value\cf6 \strokec6 =\{\cf4 \strokec4 form\cf6 \strokec6 .\cf4 \strokec4 day\cf6 \strokec6 \}\cf4 \strokec4  onChange\cf6 \strokec6 =\{\cf4 \strokec4 e \cf6 \strokec6 =>\cf4 \strokec4  setForm\cf6 \strokec6 (\{...\cf4 \strokec4 form\cf6 \strokec6 ,\cf4 \strokec4  day\cf6 \strokec6 :\cf4 \strokec4  e\cf6 \strokec6 .\cf4 \strokec4 target\cf6 \strokec6 .\cf4 \strokec4 value\cf6 \strokec6 \})\}\cf4 \strokec4  />\cb1 \
-\cb3                   \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                 \cf6 \strokec6 )\}\cf4 \cb1 \strokec4 \
-\
-\cb3                 \cf6 \strokec6 <\cf4 \strokec4 select className\cf6 \strokec6 =\cf7 \strokec7 "w-full p-4 rounded-2xl border-2 border-slate-50 font-bold outline-none"\cf4 \strokec4  value\cf6 \strokec6 =\{\cf4 \strokec4 form\cf6 \strokec6 .\cf4 \strokec4 cat\cf6 \strokec6 \}\cf4 \strokec4  onChange\cf6 \strokec6 =\{\cf4 \strokec4 e \cf6 \strokec6 =>\cf4 \strokec4  setForm\cf6 \strokec6 (\{...\cf4 \strokec4 form\cf6 \strokec6 ,\cf4 \strokec4  cat\cf6 \strokec6 :\cf4 \strokec4  e\cf6 \strokec6 .\cf4 \strokec4 target\cf6 \strokec6 .\cf4 \strokec4 value\cf6 \strokec6 \})\}>\cf4 \cb1 \strokec4 \
-\cb3                   \cf6 \strokec6 \{\cf4 \strokec4 form\cf6 \strokec6 .\cf2 \strokec2 type\cf4 \strokec4  \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'income'\cf4 \strokec4  \cf6 \strokec6 ?\cf4 \strokec4  \cf5 \strokec5 CAT_REVENUS\cf6 \strokec6 .\cf4 \strokec4 map\cf6 \strokec6 (\cf4 \strokec4 c \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 <\cf4 \strokec4 option key\cf6 \strokec6 =\{\cf4 \strokec4 c\cf6 \strokec6 \}\cf4 \strokec4  value\cf6 \strokec6 =\{\cf4 \strokec4 c\cf6 \strokec6 \}>\{\cf4 \strokec4 c\cf6 \strokec6 \}</\cf4 \strokec4 option\cf6 \strokec6 >)\cf4 \strokec4  \cf6 \strokec6 :\cf4 \cb1 \strokec4 \
-\cb3                    form\cf6 \strokec6 .\cf2 \strokec2 type\cf4 \strokec4  \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'fixed'\cf4 \strokec4  \cf6 \strokec6 ?\cf4 \strokec4  \cf5 \strokec5 CAT_ABONNEMENTS\cf6 \strokec6 .\cf4 \strokec4 map\cf6 \strokec6 (\cf4 \strokec4 c \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 <\cf4 \strokec4 option key\cf6 \strokec6 =\{\cf4 \strokec4 c\cf6 \strokec6 \}\cf4 \strokec4  value\cf6 \strokec6 =\{\cf4 \strokec4 c\cf6 \strokec6 \}>\{\cf4 \strokec4 c\cf6 \strokec6 \}</\cf4 \strokec4 option\cf6 \strokec6 >)\cf4 \strokec4  \cf6 \strokec6 :\cf4 \cb1 \strokec4 \
-\cb3                    \cf5 \strokec5 CAT_DEPENSES\cf6 \strokec6 .\cf4 \strokec4 map\cf6 \strokec6 (\cf4 \strokec4 c \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 <\cf4 \strokec4 option key\cf6 \strokec6 =\{\cf4 \strokec4 c\cf6 \strokec6 \}\cf4 \strokec4  value\cf6 \strokec6 =\{\cf4 \strokec4 c\cf6 \strokec6 \}>\{\cf4 \strokec4 c\cf6 \strokec6 \}</\cf4 \strokec4 option\cf6 \strokec6 >)\}\cf4 \cb1 \strokec4 \
-\cb3                 \cf6 \strokec6 </\cf4 \strokec4 select\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\
-\cb3               \cf6 \strokec6 <\cf4 \strokec4 input \cf2 \strokec2 type\cf6 \strokec6 =\cf7 \strokec7 "text"\cf4 \strokec4  placeholder\cf6 \strokec6 =\cf7 \strokec7 "Note (Commentaire)"\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "w-full p-4 rounded-2xl border-2 border-slate-50 outline-none"\cf4 \strokec4  value\cf6 \strokec6 =\{\cf4 \strokec4 form\cf6 \strokec6 .\cf4 \strokec4 label\cf6 \strokec6 \}\cf4 \strokec4  onChange\cf6 \strokec6 =\{\cf4 \strokec4 e \cf6 \strokec6 =>\cf4 \strokec4  setForm\cf6 \strokec6 (\{...\cf4 \strokec4 form\cf6 \strokec6 ,\cf4 \strokec4  label\cf6 \strokec6 :\cf4 \strokec4  e\cf6 \strokec6 .\cf4 \strokec4 target\cf6 \strokec6 .\cf4 \strokec4 value\cf6 \strokec6 \})\}\cf4 \strokec4  />\cb1 \
-\cb3               \cf6 \strokec6 <\cf5 \strokec5 Button\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "w-full py-4 text-sm font-black uppercase"\cf4 \strokec4  onClick\cf6 \strokec6 =\{\cf4 \strokec4 handleAdd\cf6 \strokec6 \}>\cf5 \strokec5 Valider\cf4 \strokec4  l\cf7 \strokec7 'entr\'e9e</Button>\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 </\cf5 \strokec5 Card\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 :\cf4 \strokec4  view \cf6 \strokec6 !==\cf4 \strokec4  \cf7 \strokec7 'settings'\cf4 \strokec4  \cf6 \strokec6 &&\cf4 \strokec4  \cf6 \strokec6 (\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "space-y-3"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 \{\cf4 \strokec4 financeStats\cf6 \strokec6 .\cf4 \strokec4 journalEntries\cf6 \strokec6 .\cf4 \strokec4 map\cf6 \strokec6 ((\cf4 \strokec4 item\cf6 \strokec6 ,\cf4 \strokec4  idx\cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \cb1 \strokec4 \
-\cb3               \cf2 \strokec2 const\cf4 \strokec4  isInc \cf6 \strokec6 =\cf4 \strokec4  item\cf6 \strokec6 .\cf2 \strokec2 type\cf4 \strokec4  \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'income'\cf6 \strokec6 ;\cf4 \cb1 \strokec4 \
-\cb3               \cf2 \strokec2 const\cf4 \strokec4  isFixed \cf6 \strokec6 =\cf4 \strokec4  item\cf6 \strokec6 .\cf2 \strokec2 type\cf4 \strokec4  \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'fixed'\cf6 \strokec6 ;\cf4 \cb1 \strokec4 \
-\cb3               \cf2 \strokec2 return\cf4 \strokec4  \cf6 \strokec6 (\cf4 \cb1 \strokec4 \
-\cb3                 \cf6 \strokec6 <\cf4 \strokec4 div key\cf6 \strokec6 =\{\cf4 \strokec4 item\cf6 \strokec6 .\cf4 \strokec4 id \cf6 \strokec6 ||\cf4 \strokec4  idx\cf6 \strokec6 \}\cf4 \strokec4  className\cf6 \strokec6 =\{\cf7 \strokec7 `flex justify-between items-center p-5 rounded-[28px] border shadow-sm transition-all \cf6 \strokec6 $\{\cf4 \strokec4 isFixed \cf6 \strokec6 ?\cf4 \strokec4  \cf7 \strokec7 'bg-slate-50/80 border-dashed border-slate-300'\cf4 \strokec4  \cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'bg-white border-slate-50'\cf6 \strokec6 \}\cf7 \strokec7 `\cf6 \strokec6 \}>\cf4 \cb1 \strokec4 \
-\cb3                   \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "flex items-center gap-4"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                     \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\{\cf7 \strokec7 `w-12 h-12 rounded-2xl flex items-center justify-center \cf6 \strokec6 $\{\cf4 \strokec4 isInc \cf6 \strokec6 ?\cf4 \strokec4  \cf7 \strokec7 'bg-green-50 text-green-600'\cf4 \strokec4  \cf6 \strokec6 :\cf4 \strokec4  isFixed \cf6 \strokec6 ?\cf4 \strokec4  \cf7 \strokec7 'bg-slate-100 text-slate-600'\cf4 \strokec4  \cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'bg-red-50 text-red-600'\cf6 \strokec6 \}\cf7 \strokec7 `\cf6 \strokec6 \}>\cf4 \cb1 \strokec4 \
-\cb3                       \cf6 \strokec6 \{\cf4 \strokec4 isInc \cf6 \strokec6 ?\cf4 \strokec4  \cf6 \strokec6 <\cf5 \strokec5 ArrowUpCircle\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 24\cf6 \strokec6 \}\cf4 \strokec4 /> \cf6 \strokec6 :\cf4 \strokec4  isFixed \cf6 \strokec6 ?\cf4 \strokec4  \cf6 \strokec6 <\cf5 \strokec5 Clock\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 24\cf6 \strokec6 \}\cf4 \strokec4 /> \cf6 \strokec6 :\cf4 \strokec4  \cf6 \strokec6 <\cf5 \strokec5 ArrowDownCircle\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 24\cf6 \strokec6 \}\cf4 \strokec4 />\cf6 \strokec6 \}\cf4 \cb1 \strokec4 \
-\cb3                     \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                     \cf6 \strokec6 <\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                       \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "flex items-center gap-2"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                         \cf6 \strokec6 <\cf4 \strokec4 p className\cf6 \strokec6 =\cf7 \strokec7 "font-black text-sm text-slate-800 truncate max-w-[150px]"\cf6 \strokec6 >\{\cf4 \strokec4 item\cf6 \strokec6 .\cf4 \strokec4 name\cf6 \strokec6 \}</\cf4 \strokec4 p\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                         \cf6 \strokec6 \{\cf4 \strokec4 item\cf6 \strokec6 .\cf4 \strokec4 isPlanned \cf6 \strokec6 &&\cf4 \strokec4  \cf6 \strokec6 <\cf4 \strokec4 span className\cf6 \strokec6 =\cf7 \strokec7 "bg-indigo-100 text-indigo-700 text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase"\cf6 \strokec6 >\cf5 \strokec5 Pr\cf10 \strokec10 \'e9\cf4 \strokec4 vu\cf6 \strokec6 </\cf4 \strokec4 span\cf6 \strokec6 >\}\cf4 \cb1 \strokec4 \
-\cb3                       \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                       \cf6 \strokec6 <\cf4 \strokec4 p className\cf6 \strokec6 =\cf7 \strokec7 "text-[10px] text-slate-400 font-black uppercase tracking-wider"\cf6 \strokec6 >\{\cf4 \strokec4 item\cf6 \strokec6 .\cf4 \strokec4 date\cf6 \strokec6 \}\cf4 \strokec4  \cf10 \strokec10 \'95\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \strokec4 item\cf6 \strokec6 .\cf4 \strokec4 category\cf6 \strokec6 \}</\cf4 \strokec4 p\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                     \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                   \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                   \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "flex items-center gap-3"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                     \cf6 \strokec6 <\cf4 \strokec4 span className\cf6 \strokec6 =\{\cf7 \strokec7 `font-black \cf6 \strokec6 $\{\cf4 \strokec4 isInc \cf6 \strokec6 ?\cf4 \strokec4  \cf7 \strokec7 'text-green-600'\cf4 \strokec4  \cf6 \strokec6 :\cf4 \strokec4  isFixed \cf6 \strokec6 ?\cf4 \strokec4  \cf7 \strokec7 'text-slate-500'\cf4 \strokec4  \cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'text-red-500'\cf6 \strokec6 \}\cf7 \strokec7 `\cf6 \strokec6 \}>\cf4 \cb1 \strokec4 \
-\cb3                       \cf6 \strokec6 \{\cf4 \strokec4 isInc \cf6 \strokec6 ?\cf4 \strokec4  \cf7 \strokec7 '+'\cf4 \strokec4  \cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 '-'\cf6 \strokec6 \}\{\cf5 \strokec5 Number\cf6 \strokec6 (\cf4 \strokec4 item\cf6 \strokec6 .\cf4 \strokec4 amount\cf6 \strokec6 ).\cf4 \strokec4 toFixed\cf6 \strokec6 (\cf9 \strokec9 2\cf6 \strokec6 )\}\cf4 \cb1 \strokec4 \
-\cb3                     \cf6 \strokec6 </\cf4 \strokec4 span\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                     \cf6 \strokec6 \{!\cf4 \strokec4 isFixed \cf6 \strokec6 &&\cf4 \strokec4  \cf6 \strokec6 <\cf5 \strokec5 Button\cf4 \strokec4  variant\cf6 \strokec6 =\cf7 \strokec7 "ghost"\cf4 \strokec4  onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  deleteItem\cf6 \strokec6 (\cf4 \strokec4 isInc \cf6 \strokec6 ?\cf4 \strokec4  \cf7 \strokec7 'incomes'\cf4 \strokec4  \cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'expenses'\cf6 \strokec6 ,\cf4 \strokec4  item\cf6 \strokec6 .\cf4 \strokec4 id\cf6 \strokec6 )\}\cf4 \strokec4 ><\cf5 \strokec5 Trash2\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 16\cf6 \strokec6 \}\cf4 \strokec4 /></\cf5 \strokec5 Button\cf6 \strokec6 >\}\cf4 \cb1 \strokec4 \
-\cb3                     \cf6 \strokec6 \{\cf4 \strokec4 isFixed \cf6 \strokec6 &&\cf4 \strokec4  \cf6 \strokec6 <\cf5 \strokec5 Button\cf4 \strokec4  variant\cf6 \strokec6 =\cf7 \strokec7 "ghost"\cf4 \strokec4  onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  setActiveTab\cf6 \strokec6 (\cf7 \strokec7 'budget'\cf6 \strokec6 )\}\cf4 \strokec4 ><\cf5 \strokec5 Settings\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 14\cf6 \strokec6 \}\cf4 \strokec4 /></\cf5 \strokec5 Button\cf6 \strokec6 >\}\cf4 \cb1 \strokec4 \
-\cb3                   \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                 \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 \})\}\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 )\}\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3     \cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3   \cf6 \strokec6 \};\cf4 \cb1 \strokec4 \
-\
-\cb3   \cf8 \strokec8 // --- Vue Sport (Sans changement majeur mais propre) ---\cf4 \cb1 \strokec4 \
-\cb3   \cf2 \strokec2 const\cf4 \strokec4  \cf5 \strokec5 ViewSport\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  \cf6 \strokec6 ()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 view\cf6 \strokec6 ,\cf4 \strokec4  setView\cf6 \strokec6 ]\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  useState\cf6 \strokec6 (\cf7 \strokec7 'bibliotheque'\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 selectedIds\cf6 \strokec6 ,\cf4 \strokec4  setSelectedIds\cf6 \strokec6 ]\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  useState\cf6 \strokec6 ([]);\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 search\cf6 \strokec6 ,\cf4 \strokec4  setSearch\cf6 \strokec6 ]\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  useState\cf6 \strokec6 (\cf7 \strokec7 ''\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 filterCat\cf6 \strokec6 ,\cf4 \strokec4  setFilterCat\cf6 \strokec6 ]\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  useState\cf6 \strokec6 (\cf7 \strokec7 'Tous'\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 exerciseDetails\cf6 \strokec6 ,\cf4 \strokec4  setExerciseDetails\cf6 \strokec6 ]\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  useState\cf6 \strokec6 (\{\});\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 newEx\cf6 \strokec6 ,\cf4 \strokec4  setNewEx\cf6 \strokec6 ]\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  useState\cf6 \strokec6 (\{\cf4 \strokec4  name\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 ''\cf6 \strokec6 ,\cf4 \strokec4  img\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 ''\cf6 \strokec6 ,\cf4 \strokec4  equipment\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 ''\cf6 \strokec6 ,\cf4 \strokec4  cat\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'Pectoraux'\cf4 \strokec4  \cf6 \strokec6 \});\cf4 \cb1 \strokec4 \
-\
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  cats \cf6 \strokec6 =\cf4 \strokec4  \cf6 \strokec6 [\cf7 \strokec7 'Tous'\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'Pectoraux'\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'Dos'\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'Jambes'\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 '\'c9paules'\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'Bras'\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'Abdos'\cf6 \strokec6 ];\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  filteredLib \cf6 \strokec6 =\cf4 \strokec4  fullLibrary\cf6 \strokec6 .\cf4 \strokec4 filter\cf6 \strokec6 (\cf4 \strokec4 ex \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 (\cf4 \strokec4 filterCat \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'Tous'\cf4 \strokec4  \cf6 \strokec6 ||\cf4 \strokec4  ex\cf6 \strokec6 .\cf4 \strokec4 cat \cf6 \strokec6 ===\cf4 \strokec4  filterCat\cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 &&\cf4 \strokec4  ex\cf6 \strokec6 .\cf4 \strokec4 name\cf6 \strokec6 .\cf4 \strokec4 toLowerCase\cf6 \strokec6 ().\cf4 \strokec4 includes\cf6 \strokec6 (\cf4 \strokec4 search\cf6 \strokec6 .\cf4 \strokec4 toLowerCase\cf6 \strokec6 ()));\cf4 \cb1 \strokec4 \
-\
-\cb3     \cf2 \strokec2 return\cf4 \strokec4  \cf6 \strokec6 (\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "space-y-6"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 <\cf4 \strokec4 h2 className\cf6 \strokec6 =\cf7 \strokec7 "text-2xl font-black"\cf6 \strokec6 >\cf5 \strokec5 Sport\cf4 \strokec4  \cf5 \strokec5 Pro\cf4 \strokec4  \cf10 \strokec10 \uc0\u55357 \u56490 \cf6 \strokec6 </\cf4 \strokec4 h2\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "flex gap-2 bg-white p-1.5 rounded-2xl border border-slate-100 shadow-sm"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 <\cf4 \strokec4 button onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  setView\cf6 \strokec6 (\cf7 \strokec7 'bibliotheque'\cf6 \strokec6 )\}\cf4 \strokec4  className\cf6 \strokec6 =\{\cf7 \strokec7 `flex-1 py-2.5 rounded-xl text-xs font-black transition-all \cf6 \strokec6 $\{\cf4 \strokec4 view \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'bibliotheque'\cf4 \strokec4  \cf6 \strokec6 ||\cf4 \strokec4  view \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'configurer'\cf4 \strokec4  \cf6 \strokec6 ?\cf4 \strokec4  \cf7 \strokec7 'bg-indigo-600 text-white shadow-lg'\cf4 \strokec4  \cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'text-slate-400'\cf6 \strokec6 \}\cf7 \strokec7 `\cf6 \strokec6 \}>\cf5 \strokec5 Biblioth\cf10 \strokec10 \'e8\cf4 \strokec4 que\cf6 \strokec6 </\cf4 \strokec4 button\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 <\cf4 \strokec4 button onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  setView\cf6 \strokec6 (\cf7 \strokec7 'historique'\cf6 \strokec6 )\}\cf4 \strokec4  className\cf6 \strokec6 =\{\cf7 \strokec7 `flex-1 py-2.5 rounded-xl text-xs font-black transition-all \cf6 \strokec6 $\{\cf4 \strokec4 view \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'historique'\cf4 \strokec4  \cf6 \strokec6 ?\cf4 \strokec4  \cf7 \strokec7 'bg-indigo-600 text-white shadow-lg'\cf4 \strokec4  \cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'text-slate-400'\cf6 \strokec6 \}\cf7 \strokec7 `\cf6 \strokec6 \}>\cf5 \strokec5 Historique\cf6 \strokec6 </\cf4 \strokec4 button\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cb1 \
-\cb3         \cf6 \strokec6 \{\cf4 \strokec4 view \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'bibliotheque'\cf4 \strokec4  \cf6 \strokec6 &&\cf4 \strokec4  \cf6 \strokec6 (\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "space-y-4"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "flex gap-2"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "flex-1 flex items-center bg-white p-2 rounded-2xl border border-slate-50 shadow-sm"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                 \cf6 \strokec6 <\cf5 \strokec5 Search\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "text-slate-300 ml-2"\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 18\cf6 \strokec6 \}\cf4 \strokec4  /><input \cf2 \strokec2 type\cf6 \strokec6 =\cf7 \strokec7 "text"\cf4 \strokec4  placeholder\cf6 \strokec6 =\cf7 \strokec7 "Rechercher..."\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "flex-1 outline-none font-bold text-sm ml-2"\cf4 \strokec4  value\cf6 \strokec6 =\{\cf4 \strokec4 search\cf6 \strokec6 \}\cf4 \strokec4  onChange\cf6 \strokec6 =\{\cf4 \strokec4 e \cf6 \strokec6 =>\cf4 \strokec4  setSearch\cf6 \strokec6 (\cf4 \strokec4 e\cf6 \strokec6 .\cf4 \strokec4 target\cf6 \strokec6 .\cf4 \strokec4 value\cf6 \strokec6 )\}\cf4 \strokec4  />\cb1 \
-\cb3               \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 <\cf5 \strokec5 Button\cf4 \strokec4  onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  setView\cf6 \strokec6 (\cf7 \strokec7 'creer'\cf6 \strokec6 )\}\cf4 \strokec4  variant\cf6 \strokec6 =\cf7 \strokec7 "secondary"\cf4 \strokec4 ><\cf5 \strokec5 PlusCircle\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 20\cf6 \strokec6 \}\cf4 \strokec4 /></\cf5 \strokec5 Button\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "flex gap-2 overflow-x-auto pb-2 no-scrollbar"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 \{\cf4 \strokec4 cats\cf6 \strokec6 .\cf4 \strokec4 map\cf6 \strokec6 (\cf4 \strokec4 c \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 (<\cf4 \strokec4 button key\cf6 \strokec6 =\{\cf4 \strokec4 c\cf6 \strokec6 \}\cf4 \strokec4  onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  setFilterCat\cf6 \strokec6 (\cf4 \strokec4 c\cf6 \strokec6 )\}\cf4 \strokec4  className\cf6 \strokec6 =\{\cf7 \strokec7 `px-4 py-2 rounded-xl text-[10px] font-black uppercase whitespace-nowrap transition-all \cf6 \strokec6 $\{\cf4 \strokec4 filterCat \cf6 \strokec6 ===\cf4 \strokec4  c \cf6 \strokec6 ?\cf4 \strokec4  \cf7 \strokec7 'bg-indigo-600 text-white shadow-md'\cf4 \strokec4  \cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'bg-white text-slate-400 border border-slate-100'\cf6 \strokec6 \}\cf7 \strokec7 `\cf6 \strokec6 \}>\{\cf4 \strokec4 c\cf6 \strokec6 \}</\cf4 \strokec4 button\cf6 \strokec6 >))\}\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "grid grid-cols-2 gap-3 pb-24"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 \{\cf4 \strokec4 filteredLib\cf6 \strokec6 .\cf4 \strokec4 map\cf6 \strokec6 (\cf4 \strokec4 ex \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \cb1 \strokec4 \
-\cb3                 \cf2 \strokec2 const\cf4 \strokec4  selected \cf6 \strokec6 =\cf4 \strokec4  selectedIds\cf6 \strokec6 .\cf4 \strokec4 includes\cf6 \strokec6 (\cf4 \strokec4 ex\cf6 \strokec6 .\cf4 \strokec4 id\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3                 \cf2 \strokec2 return\cf4 \strokec4  \cf6 \strokec6 (\cf4 \cb1 \strokec4 \
-\cb3                   \cf6 \strokec6 <\cf4 \strokec4 div key\cf6 \strokec6 =\{\cf4 \strokec4 ex\cf6 \strokec6 .\cf4 \strokec4 id\cf6 \strokec6 \}\cf4 \strokec4  onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  setSelectedIds\cf6 \strokec6 (\cf4 \strokec4 prev \cf6 \strokec6 =>\cf4 \strokec4  selected \cf6 \strokec6 ?\cf4 \strokec4  prev\cf6 \strokec6 .\cf4 \strokec4 filter\cf6 \strokec6 (\cf4 \strokec4 i \cf6 \strokec6 =>\cf4 \strokec4  i \cf6 \strokec6 !==\cf4 \strokec4  ex\cf6 \strokec6 .\cf4 \strokec4 id\cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 :\cf4 \strokec4  \cf6 \strokec6 [...\cf4 \strokec4 prev\cf6 \strokec6 ,\cf4 \strokec4  ex\cf6 \strokec6 .\cf4 \strokec4 id\cf6 \strokec6 ])\}\cf4 \strokec4  className\cf6 \strokec6 =\{\cf7 \strokec7 `bg-white rounded-[32px] overflow-hidden border transition-all relative \cf6 \strokec6 $\{\cf4 \strokec4 selected \cf6 \strokec6 ?\cf4 \strokec4  \cf7 \strokec7 'border-indigo-500 ring-4 ring-indigo-50 shadow-xl'\cf4 \strokec4  \cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'border-slate-50 shadow-sm'\cf6 \strokec6 \}\cf7 \strokec7 `\cf6 \strokec6 \}>\cf4 \cb1 \strokec4 \
-\cb3                     \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "h-32 relative"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                       \cf6 \strokec6 <\cf4 \strokec4 img src\cf6 \strokec6 =\{\cf4 \strokec4 ex\cf6 \strokec6 .\cf4 \strokec4 img \cf6 \strokec6 ||\cf4 \strokec4  \cf7 \strokec7 "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400"\cf6 \strokec6 \}\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "w-full h-full object-cover transition-transform duration-500 hover:scale-110"\cf4 \strokec4  alt\cf6 \strokec6 =\cf7 \strokec7 ""\cf4 \strokec4  />\cb1 \
-\cb3                       \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"\cf4 \strokec4  />\cb1 \
-\cb3                       \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "absolute bottom-3 left-3 right-3 text-white"\cf4 \strokec4 ><p className\cf6 \strokec6 =\cf7 \strokec7 "text-[8px] font-black uppercase opacity-70 mb-0.5 tracking-widest"\cf6 \strokec6 >\{\cf4 \strokec4 ex\cf6 \strokec6 .\cf4 \strokec4 equipment\cf6 \strokec6 \}</\cf4 \strokec4 p><p className\cf6 \strokec6 =\cf7 \strokec7 "text-xs font-black truncate"\cf6 \strokec6 >\{\cf4 \strokec4 ex\cf6 \strokec6 .\cf4 \strokec4 name\cf6 \strokec6 \}</\cf4 \strokec4 p></div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                     \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                     \cf6 \strokec6 \{\cf4 \strokec4 selected \cf6 \strokec6 &&\cf4 \strokec4  \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "absolute top-2 right-2 bg-indigo-600 text-white rounded-full p-1.5 shadow-xl"\cf4 \strokec4 ><\cf5 \strokec5 Check\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 12\cf6 \strokec6 \}\cf4 \strokec4  strokeWidth\cf6 \strokec6 =\{\cf9 \strokec9 4\cf6 \strokec6 \}\cf4 \strokec4 /></div\cf6 \strokec6 >\}\cf4 \cb1 \strokec4 \
-\cb3                   \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                 \cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 \})\}\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "fixed bottom-28 left-4 right-4 md:static md:bottom-0 z-40 bg-indigo-600 p-4 rounded-3xl flex items-center justify-between shadow-2xl"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 <\cf4 \strokec4 p className\cf6 \strokec6 =\cf7 \strokec7 "text-sm font-black text-white"\cf6 \strokec6 >\{\cf4 \strokec4 selectedIds\cf6 \strokec6 .\cf4 \strokec4 length\cf6 \strokec6 \}\cf4 \strokec4  s\cf10 \strokec10 \'e9\cf4 \strokec4 lectionn\cf10 \strokec10 \'e9\cf4 \strokec4 s\cf6 \strokec6 </\cf4 \strokec4 p\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 <\cf4 \strokec4 button disabled\cf6 \strokec6 =\{\cf4 \strokec4 selectedIds\cf6 \strokec6 .\cf4 \strokec4 length \cf6 \strokec6 ===\cf4 \strokec4  \cf9 \strokec9 0\cf6 \strokec6 \}\cf4 \strokec4  onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \cb1 \strokec4 \
-\cb3                 \cf2 \strokec2 const\cf4 \strokec4  initial \cf6 \strokec6 =\cf4 \strokec4  \cf6 \strokec6 \{\};\cf4 \strokec4  selectedIds\cf6 \strokec6 .\cf4 \strokec4 forEach\cf6 \strokec6 (\cf4 \strokec4 id \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \strokec4  initial\cf6 \strokec6 [\cf4 \strokec4 id\cf6 \strokec6 ]\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \strokec4  weight\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 ''\cf6 \strokec6 ,\cf4 \strokec4  reps\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 '12'\cf6 \strokec6 ,\cf4 \strokec4  sets\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 '4'\cf4 \strokec4  \cf6 \strokec6 \};\cf4 \strokec4  \cf6 \strokec6 \});\cf4 \cb1 \strokec4 \
-\cb3                 setExerciseDetails\cf6 \strokec6 (\cf4 \strokec4 initial\cf6 \strokec6 );\cf4 \strokec4  setView\cf6 \strokec6 (\cf7 \strokec7 'configurer'\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 \}\}\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "bg-white text-indigo-600 px-6 py-2 rounded-xl font-black text-xs uppercase flex items-center gap-2"\cf6 \strokec6 >\cf5 \strokec5 Suivant\cf4 \strokec4  \cf6 \strokec6 <\cf5 \strokec5 ChevronRight\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 14\cf6 \strokec6 \}\cf4 \strokec4 /></button\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 )\}\cf4 \cb1 \strokec4 \
-\
-\cb3         \cf6 \strokec6 \{\cf4 \strokec4 view \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'creer'\cf4 \strokec4  \cf6 \strokec6 &&\cf4 \strokec4  \cf6 \strokec6 (\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 <\cf5 \strokec5 Card\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "animate-in slide-in-from-right-8"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 <\cf4 \strokec4 button onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  setView\cf6 \strokec6 (\cf7 \strokec7 'bibliotheque'\cf6 \strokec6 )\}\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "text-[10px] font-black uppercase text-slate-400 mb-6 flex items-center gap-1"\cf4 \strokec4 ><\cf5 \strokec5 ArrowLeft\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 14\cf6 \strokec6 \}\cf4 \strokec4 /> \cf5 \strokec5 Retour\cf6 \strokec6 </\cf4 \strokec4 button\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 <\cf4 \strokec4 h3 className\cf6 \strokec6 =\cf7 \strokec7 "text-xl font-black mb-6"\cf6 \strokec6 >\cf5 \strokec5 Ajouter\cf4 \strokec4  un exercice personnalis\cf10 \strokec10 \'e9\cf4 \strokec4  \cf10 \strokec10 \uc0\u55357 \u57056 \u65039 \cf6 \strokec6 </\cf4 \strokec4 h3\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "space-y-4"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 <\cf4 \strokec4 input \cf2 \strokec2 type\cf6 \strokec6 =\cf7 \strokec7 "text"\cf4 \strokec4  placeholder\cf6 \strokec6 =\cf7 \strokec7 "Nom de l'exercice"\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "w-full p-4 bg-slate-50 rounded-2xl font-bold outline-none"\cf4 \strokec4  value\cf6 \strokec6 =\{\cf4 \strokec4 newEx\cf6 \strokec6 .\cf4 \strokec4 name\cf6 \strokec6 \}\cf4 \strokec4  onChange\cf6 \strokec6 =\{\cf4 \strokec4 e \cf6 \strokec6 =>\cf4 \strokec4  setNewEx\cf6 \strokec6 (\{...\cf4 \strokec4 newEx\cf6 \strokec6 ,\cf4 \strokec4  name\cf6 \strokec6 :\cf4 \strokec4  e\cf6 \strokec6 .\cf4 \strokec4 target\cf6 \strokec6 .\cf4 \strokec4 value\cf6 \strokec6 \})\}\cf4 \strokec4  />\cb1 \
-\cb3               \cf6 \strokec6 <\cf4 \strokec4 input \cf2 \strokec2 type\cf6 \strokec6 =\cf7 \strokec7 "text"\cf4 \strokec4  placeholder\cf6 \strokec6 =\cf7 \strokec7 "URL Image"\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "w-full p-4 bg-slate-50 rounded-2xl font-bold outline-none"\cf4 \strokec4  value\cf6 \strokec6 =\{\cf4 \strokec4 newEx\cf6 \strokec6 .\cf4 \strokec4 img\cf6 \strokec6 \}\cf4 \strokec4  onChange\cf6 \strokec6 =\{\cf4 \strokec4 e \cf6 \strokec6 =>\cf4 \strokec4  setNewEx\cf6 \strokec6 (\{...\cf4 \strokec4 newEx\cf6 \strokec6 ,\cf4 \strokec4  img\cf6 \strokec6 :\cf4 \strokec4  e\cf6 \strokec6 .\cf4 \strokec4 target\cf6 \strokec6 .\cf4 \strokec4 value\cf6 \strokec6 \})\}\cf4 \strokec4  />\cb1 \
-\cb3               \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "grid grid-cols-2 gap-2"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                 \cf6 \strokec6 <\cf4 \strokec4 select className\cf6 \strokec6 =\cf7 \strokec7 "w-full p-4 bg-slate-50 rounded-2xl font-bold outline-none"\cf4 \strokec4  value\cf6 \strokec6 =\{\cf4 \strokec4 newEx\cf6 \strokec6 .\cf4 \strokec4 cat\cf6 \strokec6 \}\cf4 \strokec4  onChange\cf6 \strokec6 =\{\cf4 \strokec4 e \cf6 \strokec6 =>\cf4 \strokec4  setNewEx\cf6 \strokec6 (\{...\cf4 \strokec4 newEx\cf6 \strokec6 ,\cf4 \strokec4  cat\cf6 \strokec6 :\cf4 \strokec4  e\cf6 \strokec6 .\cf4 \strokec4 target\cf6 \strokec6 .\cf4 \strokec4 value\cf6 \strokec6 \})\}>\cf4 \cb1 \strokec4 \
-\cb3                   \cf6 \strokec6 \{\cf4 \strokec4 cats\cf6 \strokec6 .\cf4 \strokec4 filter\cf6 \strokec6 (\cf4 \strokec4 c \cf6 \strokec6 =>\cf4 \strokec4  c \cf6 \strokec6 !==\cf4 \strokec4  \cf7 \strokec7 'Tous'\cf6 \strokec6 ).\cf4 \strokec4 map\cf6 \strokec6 (\cf4 \strokec4 c \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 <\cf4 \strokec4 option key\cf6 \strokec6 =\{\cf4 \strokec4 c\cf6 \strokec6 \}\cf4 \strokec4  value\cf6 \strokec6 =\{\cf4 \strokec4 c\cf6 \strokec6 \}>\{\cf4 \strokec4 c\cf6 \strokec6 \}</\cf4 \strokec4 option\cf6 \strokec6 >)\}\cf4 \cb1 \strokec4 \
-\cb3                 \cf6 \strokec6 </\cf4 \strokec4 select\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                 \cf6 \strokec6 <\cf4 \strokec4 input \cf2 \strokec2 type\cf6 \strokec6 =\cf7 \strokec7 "text"\cf4 \strokec4  placeholder\cf6 \strokec6 =\cf7 \strokec7 "\'c9quipement"\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "w-full p-4 bg-slate-50 rounded-2xl font-bold outline-none"\cf4 \strokec4  value\cf6 \strokec6 =\{\cf4 \strokec4 newEx\cf6 \strokec6 .\cf4 \strokec4 equipment\cf6 \strokec6 \}\cf4 \strokec4  onChange\cf6 \strokec6 =\{\cf4 \strokec4 e \cf6 \strokec6 =>\cf4 \strokec4  setNewEx\cf6 \strokec6 (\{...\cf4 \strokec4 newEx\cf6 \strokec6 ,\cf4 \strokec4  equipment\cf6 \strokec6 :\cf4 \strokec4  e\cf6 \strokec6 .\cf4 \strokec4 target\cf6 \strokec6 .\cf4 \strokec4 value\cf6 \strokec6 \})\}\cf4 \strokec4  />\cb1 \
-\cb3               \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 <\cf5 \strokec5 Button\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "w-full py-4 mt-6 uppercase tracking-widest text-xs"\cf4 \strokec4  onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \strokec4  \cf2 \strokec2 if\cf6 \strokec6 (!\cf4 \strokec4 newEx\cf6 \strokec6 .\cf4 \strokec4 name\cf6 \strokec6 )\cf4 \strokec4  \cf2 \strokec2 return\cf6 \strokec6 ;\cf4 \strokec4  addItem\cf6 \strokec6 (\cf7 \strokec7 'customExercises'\cf6 \strokec6 ,\cf4 \strokec4  newEx\cf6 \strokec6 );\cf4 \strokec4  setNewEx\cf6 \strokec6 (\{\cf4 \strokec4  name\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 ''\cf6 \strokec6 ,\cf4 \strokec4  img\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 ''\cf6 \strokec6 ,\cf4 \strokec4  equipment\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 ''\cf6 \strokec6 ,\cf4 \strokec4  cat\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'Pectoraux'\cf4 \strokec4  \cf6 \strokec6 \});\cf4 \strokec4  setView\cf6 \strokec6 (\cf7 \strokec7 'bibliotheque'\cf6 \strokec6 );\cf4 \strokec4  \cf6 \strokec6 \}\}>\cf5 \strokec5 Enregistrer\cf6 \strokec6 </\cf5 \strokec5 Button\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 </\cf5 \strokec5 Card\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 )\}\cf4 \cb1 \strokec4 \
-\
-\cb3         \cf6 \strokec6 \{\cf4 \strokec4 view \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'configurer'\cf4 \strokec4  \cf6 \strokec6 &&\cf4 \strokec4  \cf6 \strokec6 (\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "space-y-6 animate-in slide-in-from-right-8"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 <\cf5 \strokec5 Card\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 <\cf4 \strokec4 button onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  setView\cf6 \strokec6 (\cf7 \strokec7 'bibliotheque'\cf6 \strokec6 )\}\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "text-[10px] font-black uppercase text-slate-400 mb-6 flex items-center gap-1"\cf4 \strokec4 ><\cf5 \strokec5 ArrowLeft\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 14\cf6 \strokec6 \}\cf4 \strokec4 /> \cf5 \strokec5 Retour\cf6 \strokec6 </\cf4 \strokec4 button\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "space-y-6"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                 \cf6 \strokec6 \{\cf4 \strokec4 fullLibrary\cf6 \strokec6 .\cf4 \strokec4 filter\cf6 \strokec6 (\cf4 \strokec4 ex \cf6 \strokec6 =>\cf4 \strokec4  selectedIds\cf6 \strokec6 .\cf4 \strokec4 includes\cf6 \strokec6 (\cf4 \strokec4 ex\cf6 \strokec6 .\cf4 \strokec4 id\cf6 \strokec6 )).\cf4 \strokec4 map\cf6 \strokec6 (\cf4 \strokec4 ex \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 (\cf4 \cb1 \strokec4 \
-\cb3                   \cf6 \strokec6 <\cf4 \strokec4 div key\cf6 \strokec6 =\{\cf4 \strokec4 ex\cf6 \strokec6 .\cf4 \strokec4 id\cf6 \strokec6 \}\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "space-y-4 p-4 bg-slate-50 rounded-2xl"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                     \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "flex gap-4 items-center"\cf4 \strokec4 ><img src\cf6 \strokec6 =\{\cf4 \strokec4 ex\cf6 \strokec6 .\cf4 \strokec4 img\cf6 \strokec6 \}\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "w-14 h-14 rounded-xl object-cover shadow-sm"\cf4 \strokec4  alt\cf6 \strokec6 =\cf7 \strokec7 ""\cf4 \strokec4  /><div><h4 className\cf6 \strokec6 =\cf7 \strokec7 "font-black text-sm"\cf6 \strokec6 >\{\cf4 \strokec4 ex\cf6 \strokec6 .\cf4 \strokec4 name\cf6 \strokec6 \}</\cf4 \strokec4 h4><p className\cf6 \strokec6 =\cf7 \strokec7 "text-[9px] text-slate-400 uppercase font-bold"\cf6 \strokec6 >\{\cf4 \strokec4 ex\cf6 \strokec6 .\cf4 \strokec4 equipment\cf6 \strokec6 \}</\cf4 \strokec4 p></div></div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                     \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "grid grid-cols-3 gap-2"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                       \cf6 \strokec6 <\cf4 \strokec4 input \cf2 \strokec2 type\cf6 \strokec6 =\cf7 \strokec7 "number"\cf4 \strokec4  placeholder\cf6 \strokec6 =\cf7 \strokec7 "Kg"\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "p-3 bg-white rounded-xl text-center font-bold text-sm"\cf4 \strokec4  value\cf6 \strokec6 =\{\cf4 \strokec4 exerciseDetails\cf6 \strokec6 [\cf4 \strokec4 ex\cf6 \strokec6 .\cf4 \strokec4 id\cf6 \strokec6 ]?.\cf4 \strokec4 weight\cf6 \strokec6 \}\cf4 \strokec4  onChange\cf6 \strokec6 =\{\cf4 \strokec4 e \cf6 \strokec6 =>\cf4 \strokec4  setExerciseDetails\cf6 \strokec6 (\{...\cf4 \strokec4 exerciseDetails\cf6 \strokec6 ,\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 ex\cf6 \strokec6 .\cf4 \strokec4 id\cf6 \strokec6 ]:\cf4 \strokec4  \cf6 \strokec6 \{...\cf4 \strokec4 exerciseDetails\cf6 \strokec6 [\cf4 \strokec4 ex\cf6 \strokec6 .\cf4 \strokec4 id\cf6 \strokec6 ],\cf4 \strokec4  weight\cf6 \strokec6 :\cf4 \strokec4  e\cf6 \strokec6 .\cf4 \strokec4 target\cf6 \strokec6 .\cf4 \strokec4 value\cf6 \strokec6 \}\})\}\cf4 \strokec4  />\cb1 \
-\cb3                       \cf6 \strokec6 <\cf4 \strokec4 input \cf2 \strokec2 type\cf6 \strokec6 =\cf7 \strokec7 "number"\cf4 \strokec4  placeholder\cf6 \strokec6 =\cf7 \strokec7 "S\'e9ries"\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "p-3 bg-white rounded-xl text-center font-bold text-sm"\cf4 \strokec4  value\cf6 \strokec6 =\{\cf4 \strokec4 exerciseDetails\cf6 \strokec6 [\cf4 \strokec4 ex\cf6 \strokec6 .\cf4 \strokec4 id\cf6 \strokec6 ]?.\cf4 \strokec4 sets\cf6 \strokec6 \}\cf4 \strokec4  onChange\cf6 \strokec6 =\{\cf4 \strokec4 e \cf6 \strokec6 =>\cf4 \strokec4  setExerciseDetails\cf6 \strokec6 (\{...\cf4 \strokec4 exerciseDetails\cf6 \strokec6 ,\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 ex\cf6 \strokec6 .\cf4 \strokec4 id\cf6 \strokec6 ]:\cf4 \strokec4  \cf6 \strokec6 \{...\cf4 \strokec4 exerciseDetails\cf6 \strokec6 [\cf4 \strokec4 ex\cf6 \strokec6 .\cf4 \strokec4 id\cf6 \strokec6 ],\cf4 \strokec4  sets\cf6 \strokec6 :\cf4 \strokec4  e\cf6 \strokec6 .\cf4 \strokec4 target\cf6 \strokec6 .\cf4 \strokec4 value\cf6 \strokec6 \}\})\}\cf4 \strokec4  />\cb1 \
-\cb3                       \cf6 \strokec6 <\cf4 \strokec4 input \cf2 \strokec2 type\cf6 \strokec6 =\cf7 \strokec7 "number"\cf4 \strokec4  placeholder\cf6 \strokec6 =\cf7 \strokec7 "Reps"\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "p-3 bg-white rounded-xl text-center font-bold text-sm"\cf4 \strokec4  value\cf6 \strokec6 =\{\cf4 \strokec4 exerciseDetails\cf6 \strokec6 [\cf4 \strokec4 ex\cf6 \strokec6 .\cf4 \strokec4 id\cf6 \strokec6 ]?.\cf4 \strokec4 reps\cf6 \strokec6 \}\cf4 \strokec4  onChange\cf6 \strokec6 =\{\cf4 \strokec4 e \cf6 \strokec6 =>\cf4 \strokec4  setExerciseDetails\cf6 \strokec6 (\{...\cf4 \strokec4 exerciseDetails\cf6 \strokec6 ,\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 ex\cf6 \strokec6 .\cf4 \strokec4 id\cf6 \strokec6 ]:\cf4 \strokec4  \cf6 \strokec6 \{...\cf4 \strokec4 exerciseDetails\cf6 \strokec6 [\cf4 \strokec4 ex\cf6 \strokec6 .\cf4 \strokec4 id\cf6 \strokec6 ],\cf4 \strokec4  reps\cf6 \strokec6 :\cf4 \strokec4  e\cf6 \strokec6 .\cf4 \strokec4 target\cf6 \strokec6 .\cf4 \strokec4 value\cf6 \strokec6 \}\})\}\cf4 \strokec4  />\cb1 \
-\cb3                     \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                   \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                 \cf6 \strokec6 ))\}\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 <\cf5 \strokec5 Button\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "w-full py-5 mt-10 text-sm uppercase tracking-widest shadow-xl shadow-indigo-100"\cf4 \strokec4  onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \cb1 \strokec4 \
-\cb3                 \cf2 \strokec2 const\cf4 \strokec4  payload \cf6 \strokec6 =\cf4 \strokec4  fullLibrary\cf6 \strokec6 .\cf4 \strokec4 filter\cf6 \strokec6 (\cf4 \strokec4 ex \cf6 \strokec6 =>\cf4 \strokec4  selectedIds\cf6 \strokec6 .\cf4 \strokec4 includes\cf6 \strokec6 (\cf4 \strokec4 ex\cf6 \strokec6 .\cf4 \strokec4 id\cf6 \strokec6 )).\cf4 \strokec4 map\cf6 \strokec6 (\cf4 \strokec4 ex \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 (\{\cf4 \strokec4  \cf6 \strokec6 ...\cf4 \strokec4 ex\cf6 \strokec6 ,\cf4 \strokec4  \cf6 \strokec6 ...\cf4 \strokec4 exerciseDetails\cf6 \strokec6 [\cf4 \strokec4 ex\cf6 \strokec6 .\cf4 \strokec4 id\cf6 \strokec6 ]\cf4 \strokec4  \cf6 \strokec6 \}));\cf4 \cb1 \strokec4 \
-\cb3                 addItem\cf6 \strokec6 (\cf7 \strokec7 'workouts'\cf6 \strokec6 ,\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \strokec4  sessionName\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'S\'e9ance LIFE'\cf6 \strokec6 ,\cf4 \strokec4  date\cf6 \strokec6 :\cf4 \strokec4  \cf2 \strokec2 new\cf4 \strokec4  \cf5 \strokec5 Date\cf6 \strokec6 ().\cf4 \strokec4 toLocaleDateString\cf6 \strokec6 (\cf7 \strokec7 'fr-CH'\cf6 \strokec6 ),\cf4 \strokec4  exercises\cf6 \strokec6 :\cf4 \strokec4  payload \cf6 \strokec6 \});\cf4 \cb1 \strokec4 \
-\cb3                 setSelectedIds\cf6 \strokec6 ([]);\cf4 \strokec4  setView\cf6 \strokec6 (\cf7 \strokec7 'historique'\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 \}\}>\cf5 \strokec5 Sauvegarder\cf4 \strokec4  l\cf7 \strokec7 'entra\'eenement</Button>\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 </\cf5 \strokec5 Card\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 )\}\cf4 \cb1 \strokec4 \
-\
-\cb3         \cf6 \strokec6 \{\cf4 \strokec4 view \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'historique'\cf4 \strokec4  \cf6 \strokec6 &&\cf4 \strokec4  \cf6 \strokec6 (\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "space-y-4 animate-in fade-in pb-10"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 \{\cf4 \strokec4 workouts\cf6 \strokec6 .\cf4 \strokec4 sort\cf6 \strokec6 ((\cf4 \strokec4 a\cf6 \strokec6 ,\cf4 \strokec4 b\cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  b\cf6 \strokec6 .\cf4 \strokec4 createdAt \cf6 \strokec6 -\cf4 \strokec4  a\cf6 \strokec6 .\cf4 \strokec4 createdAt\cf6 \strokec6 ).\cf4 \strokec4 map\cf6 \strokec6 (\cf4 \strokec4 session \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 (\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 <\cf5 \strokec5 Card\cf4 \strokec4  key\cf6 \strokec6 =\{\cf4 \strokec4 session\cf6 \strokec6 .\cf4 \strokec4 id\cf6 \strokec6 \}\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "border-l-8 border-indigo-600 shadow-sm"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                 \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "flex justify-between items-start mb-4"\cf4 \strokec4 ><div><h3 className\cf6 \strokec6 =\cf7 \strokec7 "text-xl font-black"\cf6 \strokec6 >\{\cf4 \strokec4 session\cf6 \strokec6 .\cf4 \strokec4 sessionName\cf6 \strokec6 \}</\cf4 \strokec4 h3><p className\cf6 \strokec6 =\cf7 \strokec7 "text-xs font-bold text-slate-400 uppercase tracking-widest"\cf6 \strokec6 >\{\cf4 \strokec4 session\cf6 \strokec6 .\cf4 \strokec4 date\cf6 \strokec6 \}</\cf4 \strokec4 p></div><\cf5 \strokec5 Button\cf4 \strokec4  variant\cf6 \strokec6 =\cf7 \strokec7 "ghost"\cf4 \strokec4  onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  deleteItem\cf6 \strokec6 (\cf7 \strokec7 'workouts'\cf6 \strokec6 ,\cf4 \strokec4  session\cf6 \strokec6 .\cf4 \strokec4 id\cf6 \strokec6 )\}\cf4 \strokec4 ><\cf5 \strokec5 Trash2\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 16\cf6 \strokec6 \}\cf4 \strokec4 /></\cf5 \strokec5 Button\cf4 \strokec4 ></div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3                 \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "divide-y divide-slate-50"\cf6 \strokec6 >\{\cf4 \strokec4 session\cf6 \strokec6 .\cf4 \strokec4 exercises\cf6 \strokec6 ?.\cf4 \strokec4 map\cf6 \strokec6 ((\cf4 \strokec4 ex\cf6 \strokec6 ,\cf4 \strokec4  idx\cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 (<\cf4 \strokec4 div key\cf6 \strokec6 =\{\cf4 \strokec4 idx\cf6 \strokec6 \}\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "py-3 flex items-center justify-between"\cf4 \strokec4 ><div className\cf6 \strokec6 =\cf7 \strokec7 "flex items-center gap-3"\cf4 \strokec4 ><img src\cf6 \strokec6 =\{\cf4 \strokec4 ex\cf6 \strokec6 .\cf4 \strokec4 img\cf6 \strokec6 \}\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "w-10 h-10 rounded-lg object-cover"\cf4 \strokec4  alt\cf6 \strokec6 =\cf7 \strokec7 ""\cf4 \strokec4  /><div><p className\cf6 \strokec6 =\cf7 \strokec7 "text-sm font-bold text-slate-700"\cf6 \strokec6 >\{\cf4 \strokec4 ex\cf6 \strokec6 .\cf4 \strokec4 name\cf6 \strokec6 \}</\cf4 \strokec4 p><p className\cf6 \strokec6 =\cf7 \strokec7 "text-[10px] text-slate-400 font-bold uppercase"\cf6 \strokec6 >\{\cf4 \strokec4 ex\cf6 \strokec6 .\cf4 \strokec4 equipment\cf6 \strokec6 \}</\cf4 \strokec4 p></div></div><div className\cf6 \strokec6 =\cf7 \strokec7 "text-right"\cf4 \strokec4 ><p className\cf6 \strokec6 =\cf7 \strokec7 "text-xs font-black text-indigo-600"\cf6 \strokec6 >\{\cf4 \strokec4 ex\cf6 \strokec6 .\cf4 \strokec4 sets\cf6 \strokec6 \}\cf4 \strokec4  \cf10 \strokec10 \'d7\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \strokec4 ex\cf6 \strokec6 .\cf4 \strokec4 reps\cf6 \strokec6 \}</\cf4 \strokec4 p><p className\cf6 \strokec6 =\cf7 \strokec7 "text-[10px] font-bold text-slate-400"\cf6 \strokec6 >\{\cf4 \strokec4 ex\cf6 \strokec6 .\cf4 \strokec4 weight \cf6 \strokec6 ?\cf4 \strokec4  \cf7 \strokec7 `\cf6 \strokec6 $\{\cf4 \strokec4 ex\cf6 \strokec6 .\cf4 \strokec4 weight\cf6 \strokec6 \}\cf7 \strokec7  kg`\cf4 \strokec4  \cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'Poids corps'\cf6 \strokec6 \}</\cf4 \strokec4 p></div></div\cf6 \strokec6 >))\}</\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3               \cf6 \strokec6 </\cf5 \strokec5 Card\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3             \cf6 \strokec6 ))\}\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 )\}\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3     \cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3   \cf6 \strokec6 \};\cf4 \cb1 \strokec4 \
-\
-\cb3   \cf2 \strokec2 const\cf4 \strokec4  \cf5 \strokec5 ViewNutrition\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  \cf6 \strokec6 ()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 n\cf6 \strokec6 ,\cf4 \strokec4  setN\cf6 \strokec6 ]\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  useState\cf6 \strokec6 (\cf7 \strokec7 ''\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 i\cf6 \strokec6 ,\cf4 \strokec4  setI\cf6 \strokec6 ]\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  useState\cf6 \strokec6 (\cf7 \strokec7 ''\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 return\cf4 \strokec4  \cf6 \strokec6 (\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "space-y-6"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 <\cf4 \strokec4 h2 className\cf6 \strokec6 =\cf7 \strokec7 "text-2xl font-black"\cf6 \strokec6 >\cf5 \strokec5 Nutrition\cf4 \strokec4  \cf10 \strokec10 \uc0\u55356 \u57201 \cf6 \strokec6 </\cf4 \strokec4 h2\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 <\cf5 \strokec5 Card\cf4 \strokec4 ><input \cf2 \strokec2 type\cf6 \strokec6 =\cf7 \strokec7 "text"\cf4 \strokec4  placeholder\cf6 \strokec6 =\cf7 \strokec7 "Nom du plat..."\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "w-full p-4 rounded-2xl border-2 border-slate-50 mb-3 font-bold"\cf4 \strokec4  value\cf6 \strokec6 =\{\cf4 \strokec4 n\cf6 \strokec6 \}\cf4 \strokec4  onChange\cf6 \strokec6 =\{\cf4 \strokec4 e \cf6 \strokec6 =>\cf4 \strokec4  setN\cf6 \strokec6 (\cf4 \strokec4 e\cf6 \strokec6 .\cf4 \strokec4 target\cf6 \strokec6 .\cf4 \strokec4 value\cf6 \strokec6 )\}\cf4 \strokec4  /><input \cf2 \strokec2 type\cf6 \strokec6 =\cf7 \strokec7 "text"\cf4 \strokec4  placeholder\cf6 \strokec6 =\cf7 \strokec7 "Lien Image..."\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "w-full p-4 rounded-2xl border-2 border-slate-50 mb-3"\cf4 \strokec4  value\cf6 \strokec6 =\{\cf4 \strokec4 i\cf6 \strokec6 \}\cf4 \strokec4  onChange\cf6 \strokec6 =\{\cf4 \strokec4 e \cf6 \strokec6 =>\cf4 \strokec4  setI\cf6 \strokec6 (\cf4 \strokec4 e\cf6 \strokec6 .\cf4 \strokec4 target\cf6 \strokec6 .\cf4 \strokec4 value\cf6 \strokec6 )\}\cf4 \strokec4  /><\cf5 \strokec5 Button\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "w-full py-4 text-sm font-black uppercase"\cf4 \strokec4  onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \strokec4  \cf2 \strokec2 if\cf6 \strokec6 (!\cf4 \strokec4 n\cf6 \strokec6 )\cf4 \strokec4  \cf2 \strokec2 return\cf6 \strokec6 ;\cf4 \strokec4  addItem\cf6 \strokec6 (\cf7 \strokec7 'menus'\cf6 \strokec6 ,\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \strokec4  name\cf6 \strokec6 :\cf4 \strokec4  n\cf6 \strokec6 ,\cf4 \strokec4  image\cf6 \strokec6 :\cf4 \strokec4  i \cf6 \strokec6 \});\cf4 \strokec4  setN\cf6 \strokec6 (\cf7 \strokec7 ''\cf6 \strokec6 );\cf4 \strokec4  setI\cf6 \strokec6 (\cf7 \strokec7 ''\cf6 \strokec6 );\cf4 \strokec4  \cf6 \strokec6 \}\}>\cf5 \strokec5 Ajouter\cf6 \strokec6 </\cf5 \strokec5 Button\cf4 \strokec4 ></\cf5 \strokec5 Card\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "grid grid-cols-2 gap-4"\cf6 \strokec6 >\{\cf4 \strokec4 menus\cf6 \strokec6 .\cf4 \strokec4 map\cf6 \strokec6 (\cf4 \strokec4 m \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 (<\cf4 \strokec4 div key\cf6 \strokec6 =\{\cf4 \strokec4 m\cf6 \strokec6 .\cf4 \strokec4 id\cf6 \strokec6 \}\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "bg-white rounded-[32px] overflow-hidden border border-slate-100 relative shadow-sm active:scale-95 transition-all"\cf4 \strokec4 ><img src\cf6 \strokec6 =\{\cf4 \strokec4 m\cf6 \strokec6 .\cf4 \strokec4 image \cf6 \strokec6 ||\cf4 \strokec4  \cf7 \strokec7 "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400"\cf6 \strokec6 \}\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "w-full h-40 object-cover"\cf4 \strokec4  alt\cf6 \strokec6 =\cf7 \strokec7 ""\cf4 \strokec4  /><div className\cf6 \strokec6 =\cf7 \strokec7 "p-4 flex justify-between items-center"\cf4 \strokec4 ><p className\cf6 \strokec6 =\cf7 \strokec7 "text-sm font-black truncate"\cf6 \strokec6 >\{\cf4 \strokec4 m\cf6 \strokec6 .\cf4 \strokec4 name\cf6 \strokec6 \}</\cf4 \strokec4 p><\cf5 \strokec5 Button\cf4 \strokec4  variant\cf6 \strokec6 =\cf7 \strokec7 "ghost"\cf4 \strokec4  onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  deleteItem\cf6 \strokec6 (\cf7 \strokec7 'menus'\cf6 \strokec6 ,\cf4 \strokec4  m\cf6 \strokec6 .\cf4 \strokec4 id\cf6 \strokec6 )\}\cf4 \strokec4 ><\cf5 \strokec5 Trash2\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 14\cf6 \strokec6 \}\cf4 \strokec4 /></\cf5 \strokec5 Button\cf4 \strokec4 ></div></div\cf6 \strokec6 >))\}</\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3     \cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3   \cf6 \strokec6 \};\cf4 \cb1 \strokec4 \
-\
-\cb3   \cf2 \strokec2 const\cf4 \strokec4  \cf5 \strokec5 ViewAgenda\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  \cf6 \strokec6 ()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 t\cf6 \strokec6 ,\cf4 \strokec4  setT\cf6 \strokec6 ]\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  useState\cf6 \strokec6 (\cf7 \strokec7 ''\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 const\cf4 \strokec4  \cf6 \strokec6 [\cf4 \strokec4 e\cf6 \strokec6 ,\cf4 \strokec4  setE\cf6 \strokec6 ]\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  useState\cf6 \strokec6 (\cf7 \strokec7 'Moyenne'\cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3     \cf2 \strokec2 return\cf4 \strokec4  \cf6 \strokec6 (\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "space-y-6"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 <\cf4 \strokec4 h2 className\cf6 \strokec6 =\cf7 \strokec7 "text-2xl font-black"\cf6 \strokec6 >\cf5 \strokec5 Agenda\cf4 \strokec4  \cf10 \strokec10 \uc0\u55357 \u56517 \cf6 \strokec6 </\cf4 \strokec4 h2\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 <\cf5 \strokec5 Card\cf4 \strokec4 ><div className\cf6 \strokec6 =\cf7 \strokec7 "flex gap-2"\cf4 \strokec4 ><input \cf2 \strokec2 type\cf6 \strokec6 =\cf7 \strokec7 "text"\cf4 \strokec4  placeholder\cf6 \strokec6 =\cf7 \strokec7 "Action du jour..."\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "flex-1 p-4 rounded-2xl border-2 border-slate-50 font-bold outline-none focus:border-indigo-500"\cf4 \strokec4  value\cf6 \strokec6 =\{\cf4 \strokec4 t\cf6 \strokec6 \}\cf4 \strokec4  onChange\cf6 \strokec6 =\{\cf4 \strokec4 x \cf6 \strokec6 =>\cf4 \strokec4  setT\cf6 \strokec6 (\cf4 \strokec4 x\cf6 \strokec6 .\cf4 \strokec4 target\cf6 \strokec6 .\cf4 \strokec4 value\cf6 \strokec6 )\}\cf4 \strokec4  /><\cf5 \strokec5 Button\cf4 \strokec4  onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \strokec4  \cf2 \strokec2 if\cf6 \strokec6 (!\cf4 \strokec4 t\cf6 \strokec6 )\cf4 \strokec4  \cf2 \strokec2 return\cf6 \strokec6 ;\cf4 \strokec4  addItem\cf6 \strokec6 (\cf7 \strokec7 'tasks'\cf6 \strokec6 ,\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \strokec4  title\cf6 \strokec6 :\cf4 \strokec4  t\cf6 \strokec6 ,\cf4 \strokec4  energy\cf6 \strokec6 :\cf4 \strokec4  e\cf6 \strokec6 ,\cf4 \strokec4  completed\cf6 \strokec6 :\cf4 \strokec4  \cf2 \strokec2 false\cf4 \strokec4  \cf6 \strokec6 \});\cf4 \strokec4  setT\cf6 \strokec6 (\cf7 \strokec7 ''\cf6 \strokec6 );\cf4 \strokec4  \cf6 \strokec6 \}\}\cf4 \strokec4 ><\cf5 \strokec5 Plus\cf4 \strokec4 /></\cf5 \strokec5 Button\cf4 \strokec4 ></div><div className\cf6 \strokec6 =\cf7 \strokec7 "flex gap-2 mt-4"\cf6 \strokec6 >\{[\cf7 \strokec7 'Basse'\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'Moyenne'\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'Haute'\cf6 \strokec6 ].\cf4 \strokec4 map\cf6 \strokec6 (\cf4 \strokec4 lvl \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 (<\cf4 \strokec4 button key\cf6 \strokec6 =\{\cf4 \strokec4 lvl\cf6 \strokec6 \}\cf4 \strokec4  onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  setE\cf6 \strokec6 (\cf4 \strokec4 lvl\cf6 \strokec6 )\}\cf4 \strokec4  className\cf6 \strokec6 =\{\cf7 \strokec7 `flex-1 py-2 text-[10px] font-black uppercase rounded-xl transition-all \cf6 \strokec6 $\{\cf4 \strokec4 e \cf6 \strokec6 ===\cf4 \strokec4  lvl \cf6 \strokec6 ?\cf4 \strokec4  \cf7 \strokec7 'bg-indigo-600 text-white shadow-lg'\cf4 \strokec4  \cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'bg-slate-50 text-slate-400'\cf6 \strokec6 \}\cf7 \strokec7 `\cf6 \strokec6 \}>\cf10 \strokec10 \'c9\cf4 \strokec4 nergie \cf6 \strokec6 \{\cf4 \strokec4 lvl\cf6 \strokec6 \}</\cf4 \strokec4 button\cf6 \strokec6 >))\}</\cf4 \strokec4 div></\cf5 \strokec5 Card\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "space-y-3"\cf6 \strokec6 >\{\cf4 \strokec4 tasks\cf6 \strokec6 .\cf4 \strokec4 sort\cf6 \strokec6 ((\cf4 \strokec4 a\cf6 \strokec6 ,\cf4 \strokec4 b\cf6 \strokec6 )\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  a\cf6 \strokec6 .\cf4 \strokec4 completed \cf6 \strokec6 -\cf4 \strokec4  b\cf6 \strokec6 .\cf4 \strokec4 completed\cf6 \strokec6 ).\cf4 \strokec4 map\cf6 \strokec6 (\cf4 \strokec4 task \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 (<\cf4 \strokec4 div key\cf6 \strokec6 =\{\cf4 \strokec4 task\cf6 \strokec6 .\cf4 \strokec4 id\cf6 \strokec6 \}\cf4 \strokec4  className\cf6 \strokec6 =\{\cf7 \strokec7 `flex items-center justify-between p-5 rounded-[28px] border transition-all \cf6 \strokec6 $\{\cf4 \strokec4 task\cf6 \strokec6 .\cf4 \strokec4 completed \cf6 \strokec6 ?\cf4 \strokec4  \cf7 \strokec7 'opacity-40 grayscale bg-slate-50 border-transparent'\cf4 \strokec4  \cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'bg-white shadow-sm border-slate-50'\cf6 \strokec6 \}\cf7 \strokec7 `\cf6 \strokec6 \}\cf4 \strokec4 ><div className\cf6 \strokec6 =\cf7 \strokec7 "flex items-center gap-4"\cf4 \strokec4 ><button onClick\cf6 \strokec6 =\{\cf2 \strokec2 async\cf4 \strokec4  \cf6 \strokec6 ()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \strokec4  \cf2 \strokec2 if\cf6 \strokec6 (!\cf4 \strokec4 user\cf6 \strokec6 )\cf4 \strokec4  \cf2 \strokec2 return\cf6 \strokec6 ;\cf4 \strokec4  \cf2 \strokec2 await\cf4 \strokec4  updateDoc\cf6 \strokec6 (\cf4 \strokec4 doc\cf6 \strokec6 (\cf4 \strokec4 db\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'artifacts'\cf6 \strokec6 ,\cf4 \strokec4  appId\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'users'\cf6 \strokec6 ,\cf4 \strokec4  user\cf6 \strokec6 .\cf4 \strokec4 uid\cf6 \strokec6 ,\cf4 \strokec4  \cf7 \strokec7 'tasks'\cf6 \strokec6 ,\cf4 \strokec4  task\cf6 \strokec6 .\cf4 \strokec4 id\cf6 \strokec6 ),\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \strokec4  completed\cf6 \strokec6 :\cf4 \strokec4  \cf6 \strokec6 !\cf4 \strokec4 task\cf6 \strokec6 .\cf4 \strokec4 completed \cf6 \strokec6 \});\cf4 \strokec4  \cf6 \strokec6 \}\}>\{\cf4 \strokec4 task\cf6 \strokec6 .\cf4 \strokec4 completed \cf6 \strokec6 ?\cf4 \strokec4  \cf6 \strokec6 <\cf5 \strokec5 CheckCircle2\cf4 \strokec4  className\cf6 \strokec6 =\cf7 \strokec7 "text-green-500 w-7 h-7"\cf4 \strokec4 /> \cf6 \strokec6 :\cf4 \strokec4  \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "w-7 h-7 rounded-full border-2 border-slate-200"\cf4 \strokec4 />\cf6 \strokec6 \}</\cf4 \strokec4 button><div><p className\cf6 \strokec6 =\{\cf7 \strokec7 `font-black text-slate-800 \cf6 \strokec6 $\{\cf4 \strokec4 task\cf6 \strokec6 .\cf4 \strokec4 completed \cf6 \strokec6 ?\cf4 \strokec4  \cf7 \strokec7 'line-through text-slate-400'\cf4 \strokec4  \cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 ''\cf6 \strokec6 \}\cf7 \strokec7 `\cf6 \strokec6 \}>\{\cf4 \strokec4 task\cf6 \strokec6 .\cf4 \strokec4 title\cf6 \strokec6 \}</\cf4 \strokec4 p><span className\cf6 \strokec6 =\cf7 \strokec7 "text-[10px] font-black uppercase text-indigo-400 tracking-widest"\cf6 \strokec6 >\cf10 \strokec10 \'c9\cf4 \strokec4 nergie \cf6 \strokec6 \{\cf4 \strokec4 task\cf6 \strokec6 .\cf4 \strokec4 energy\cf6 \strokec6 \}</\cf4 \strokec4 span></div></div><\cf5 \strokec5 Button\cf4 \strokec4  variant\cf6 \strokec6 =\cf7 \strokec7 "ghost"\cf4 \strokec4  onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  deleteItem\cf6 \strokec6 (\cf7 \strokec7 'tasks'\cf6 \strokec6 ,\cf4 \strokec4  task\cf6 \strokec6 .\cf4 \strokec4 id\cf6 \strokec6 )\}\cf4 \strokec4 ><\cf5 \strokec5 Trash2\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 16\cf6 \strokec6 \}\cf4 \strokec4 /></\cf5 \strokec5 Button\cf4 \strokec4 ></div\cf6 \strokec6 >))\}</\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3     \cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\cb3   \cf6 \strokec6 \};\cf4 \cb1 \strokec4 \
-\
-\cb3   \cf2 \strokec2 if\cf4 \strokec4  \cf6 \strokec6 (\cf4 \strokec4 loading\cf6 \strokec6 )\cf4 \strokec4  \cf2 \strokec2 return\cf4 \strokec4  \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-6 font-sans"\cf4 \strokec4 ><div className\cf6 \strokec6 =\cf7 \strokec7 "w-16 h-16 bg-indigo-600 rounded-[32px] animate-bounce flex items-center justify-center text-white font-black text-2xl shadow-2xl shadow-indigo-200"\cf6 \strokec6 >\cf5 \strokec5 L\cf6 \strokec6 </\cf4 \strokec4 div><p className\cf6 \strokec6 =\cf7 \strokec7 "font-black text-indigo-600 tracking-widest text-[10px] uppercase"\cf6 \strokec6 >\cf5 \strokec5 Initialisation\cf4 \strokec4  \cf5 \strokec5 LIFE\cf6 \strokec6 .\cf5 \strokec5 CH\cf6 \strokec6 </\cf4 \strokec4 p></div\cf6 \strokec6 >;\cf4 \cb1 \strokec4 \
-\
-\cb3   \cf2 \strokec2 return\cf4 \strokec4  \cf6 \strokec6 (\cf4 \cb1 \strokec4 \
-\cb3     \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "min-h-screen bg-slate-50 text-slate-900 pb-28 md:pb-0 md:pl-72 font-sans antialiased selection:bg-indigo-100"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 <\cf4 \strokec4 aside className\cf6 \strokec6 =\cf7 \strokec7 "fixed left-0 top-0 bottom-0 w-72 bg-white border-r border-slate-100 p-8 hidden md:flex flex-col"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 <\cf4 \strokec4 div className\cf6 \strokec6 =\cf7 \strokec7 "text-3xl font-black tracking-tighter mb-12 flex items-center gap-3 text-indigo-600"\cf4 \strokec4 ><div className\cf6 \strokec6 =\cf7 \strokec7 "w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white text-xl shadow-lg shadow-indigo-100"\cf6 \strokec6 >\cf5 \strokec5 L\cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \strokec4  \cf5 \strokec5 LIFE\cf6 \strokec6 .</\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 <\cf4 \strokec4 nav className\cf6 \strokec6 =\cf7 \strokec7 "space-y-2 flex-1"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3           \cf6 \strokec6 <\cf5 \strokec5 SidebarItem\cf4 \strokec4  active\cf6 \strokec6 =\{\cf4 \strokec4 activeTab \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'accueil'\cf6 \strokec6 \}\cf4 \strokec4  onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  setActiveTab\cf6 \strokec6 (\cf7 \strokec7 'accueil'\cf6 \strokec6 )\}\cf4 \strokec4  icon\cf6 \strokec6 =\{<\cf5 \strokec5 LayoutDashboard\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 20\cf6 \strokec6 \}\cf4 \strokec4 />\cf6 \strokec6 \}\cf4 \strokec4  label\cf6 \strokec6 =\cf7 \strokec7 "Accueil"\cf4 \strokec4  />\cb1 \
-\cb3           \cf6 \strokec6 <\cf5 \strokec5 SidebarItem\cf4 \strokec4  active\cf6 \strokec6 =\{\cf4 \strokec4 activeTab \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'budget'\cf6 \strokec6 \}\cf4 \strokec4  onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  setActiveTab\cf6 \strokec6 (\cf7 \strokec7 'budget'\cf6 \strokec6 )\}\cf4 \strokec4  icon\cf6 \strokec6 =\{<\cf5 \strokec5 Wallet\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 20\cf6 \strokec6 \}\cf4 \strokec4 />\cf6 \strokec6 \}\cf4 \strokec4  label\cf6 \strokec6 =\cf7 \strokec7 "Finances"\cf4 \strokec4  />\cb1 \
-\cb3           \cf6 \strokec6 <\cf5 \strokec5 SidebarItem\cf4 \strokec4  active\cf6 \strokec6 =\{\cf4 \strokec4 activeTab \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'sport'\cf6 \strokec6 \}\cf4 \strokec4  onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  setActiveTab\cf6 \strokec6 (\cf7 \strokec7 'sport'\cf6 \strokec6 )\}\cf4 \strokec4  icon\cf6 \strokec6 =\{<\cf5 \strokec5 GymIcon\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 20\cf6 \strokec6 \}\cf4 \strokec4 />\cf6 \strokec6 \}\cf4 \strokec4  label\cf6 \strokec6 =\cf7 \strokec7 "Sport Pro"\cf4 \strokec4  />\cb1 \
-\cb3           \cf6 \strokec6 <\cf5 \strokec5 SidebarItem\cf4 \strokec4  active\cf6 \strokec6 =\{\cf4 \strokec4 activeTab \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'alimentation'\cf6 \strokec6 \}\cf4 \strokec4  onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  setActiveTab\cf6 \strokec6 (\cf7 \strokec7 'alimentation'\cf6 \strokec6 )\}\cf4 \strokec4  icon\cf6 \strokec6 =\{<\cf5 \strokec5 Utensils\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 20\cf6 \strokec6 \}\cf4 \strokec4 />\cf6 \strokec6 \}\cf4 \strokec4  label\cf6 \strokec6 =\cf7 \strokec7 "Nutrition"\cf4 \strokec4  />\cb1 \
-\cb3           \cf6 \strokec6 <\cf5 \strokec5 SidebarItem\cf4 \strokec4  active\cf6 \strokec6 =\{\cf4 \strokec4 activeTab \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'agenda'\cf6 \strokec6 \}\cf4 \strokec4  onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  setActiveTab\cf6 \strokec6 (\cf7 \strokec7 'agenda'\cf6 \strokec6 )\}\cf4 \strokec4  icon\cf6 \strokec6 =\{<\cf5 \strokec5 Calendar\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 20\cf6 \strokec6 \}\cf4 \strokec4 />\cf6 \strokec6 \}\cf4 \strokec4  label\cf6 \strokec6 =\cf7 \strokec7 "Agenda"\cf4 \strokec4  />\cb1 \
-\cb3         \cf6 \strokec6 </\cf4 \strokec4 nav\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 </\cf4 \strokec4 aside\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 <\cf4 \strokec4 main className\cf6 \strokec6 =\cf7 \strokec7 "max-w-2xl mx-auto p-4 md:max-w-4xl md:p-12"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 \{\cf4 \strokec4 activeTab \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'accueil'\cf4 \strokec4  \cf6 \strokec6 &&\cf4 \strokec4  \cf6 \strokec6 <\cf5 \strokec5 ViewAccueil\cf4 \strokec4  />\cf6 \strokec6 \}\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 \{\cf4 \strokec4 activeTab \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'budget'\cf4 \strokec4  \cf6 \strokec6 &&\cf4 \strokec4  \cf6 \strokec6 <\cf5 \strokec5 ViewBudget\cf4 \strokec4  />\cf6 \strokec6 \}\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 \{\cf4 \strokec4 activeTab \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'sport'\cf4 \strokec4  \cf6 \strokec6 &&\cf4 \strokec4  \cf6 \strokec6 <\cf5 \strokec5 ViewSport\cf4 \strokec4  />\cf6 \strokec6 \}\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 \{\cf4 \strokec4 activeTab \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'alimentation'\cf4 \strokec4  \cf6 \strokec6 &&\cf4 \strokec4  \cf6 \strokec6 <\cf5 \strokec5 ViewNutrition\cf4 \strokec4  />\cf6 \strokec6 \}\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 \{\cf4 \strokec4 activeTab \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'agenda'\cf4 \strokec4  \cf6 \strokec6 &&\cf4 \strokec4  \cf6 \strokec6 <\cf5 \strokec5 ViewAgenda\cf4 \strokec4  />\cf6 \strokec6 \}\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 </\cf4 \strokec4 main\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 <\cf4 \strokec4 nav className\cf6 \strokec6 =\cf7 \strokec7 "fixed bottom-0 left-0 right-0 h-24 bg-white/90 backdrop-blur-2xl border-t border-slate-100 flex items-center justify-around px-4 md:hidden z-50 rounded-t-[40px] shadow-2xl"\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3         \cf6 \strokec6 <\cf5 \strokec5 MobileItem\cf4 \strokec4  active\cf6 \strokec6 =\{\cf4 \strokec4 activeTab \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'accueil'\cf6 \strokec6 \}\cf4 \strokec4  onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  setActiveTab\cf6 \strokec6 (\cf7 \strokec7 'accueil'\cf6 \strokec6 )\}\cf4 \strokec4  icon\cf6 \strokec6 =\{<\cf5 \strokec5 LayoutDashboard\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 24\cf6 \strokec6 \}\cf4 \strokec4 />\cf6 \strokec6 \}\cf4 \strokec4  />\cb1 \
-\cb3         \cf6 \strokec6 <\cf5 \strokec5 MobileItem\cf4 \strokec4  active\cf6 \strokec6 =\{\cf4 \strokec4 activeTab \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'budget'\cf6 \strokec6 \}\cf4 \strokec4  onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  setActiveTab\cf6 \strokec6 (\cf7 \strokec7 'budget'\cf6 \strokec6 )\}\cf4 \strokec4  icon\cf6 \strokec6 =\{<\cf5 \strokec5 Wallet\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 24\cf6 \strokec6 \}\cf4 \strokec4 />\cf6 \strokec6 \}\cf4 \strokec4  />\cb1 \
-\cb3         \cf6 \strokec6 <\cf5 \strokec5 MobileItem\cf4 \strokec4  active\cf6 \strokec6 =\{\cf4 \strokec4 activeTab \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'sport'\cf6 \strokec6 \}\cf4 \strokec4  onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  setActiveTab\cf6 \strokec6 (\cf7 \strokec7 'sport'\cf6 \strokec6 )\}\cf4 \strokec4  icon\cf6 \strokec6 =\{<\cf5 \strokec5 GymIcon\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 24\cf6 \strokec6 \}\cf4 \strokec4 />\cf6 \strokec6 \}\cf4 \strokec4  />\cb1 \
-\cb3         \cf6 \strokec6 <\cf5 \strokec5 MobileItem\cf4 \strokec4  active\cf6 \strokec6 =\{\cf4 \strokec4 activeTab \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'alimentation'\cf6 \strokec6 \}\cf4 \strokec4  onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  setActiveTab\cf6 \strokec6 (\cf7 \strokec7 'alimentation'\cf6 \strokec6 )\}\cf4 \strokec4  icon\cf6 \strokec6 =\{<\cf5 \strokec5 Utensils\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 24\cf6 \strokec6 \}\cf4 \strokec4 />\cf6 \strokec6 \}\cf4 \strokec4  />\cb1 \
-\cb3         \cf6 \strokec6 <\cf5 \strokec5 MobileItem\cf4 \strokec4  active\cf6 \strokec6 =\{\cf4 \strokec4 activeTab \cf6 \strokec6 ===\cf4 \strokec4  \cf7 \strokec7 'agenda'\cf6 \strokec6 \}\cf4 \strokec4  onClick\cf6 \strokec6 =\{()\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  setActiveTab\cf6 \strokec6 (\cf7 \strokec7 'agenda'\cf6 \strokec6 )\}\cf4 \strokec4  icon\cf6 \strokec6 =\{<\cf5 \strokec5 Calendar\cf4 \strokec4  size\cf6 \strokec6 =\{\cf9 \strokec9 24\cf6 \strokec6 \}\cf4 \strokec4 />\cf6 \strokec6 \}\cf4 \strokec4  />\cb1 \
-\cb3       \cf6 \strokec6 </\cf4 \strokec4 nav\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3       \cf6 \strokec6 <\cf4 \strokec4 style dangerouslySetInnerHTML\cf6 \strokec6 =\{\{\cf4 \strokec4  __html\cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 `.no-scrollbar::-webkit-scrollbar \{ display: none; \} .no-scrollbar \{ -ms-overflow-style: none; scrollbar-width: none; \}`\cf4 \strokec4  \cf6 \strokec6 \}\}\cf4 \strokec4  />\cb1 \
-\cb3     \cf6 \strokec6 </\cf4 \strokec4 div\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\cb3   \cf6 \strokec6 );\cf4 \cb1 \strokec4 \
-\pard\pardeftab720\partightenfactor0
-\cf6 \cb3 \strokec6 \}\cf4 \cb1 \strokec4 \
-\
-\pard\pardeftab720\partightenfactor0
-\cf2 \cb3 \strokec2 const\cf4 \strokec4  \cf5 \strokec5 SidebarItem\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  \cf6 \strokec6 (\{\cf4 \strokec4  active\cf6 \strokec6 ,\cf4 \strokec4  onClick\cf6 \strokec6 ,\cf4 \strokec4  icon\cf6 \strokec6 ,\cf4 \strokec4  label \cf6 \strokec6 \})\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 (\cf4 \cb1 \strokec4 \
-\pard\pardeftab720\partightenfactor0
-\cf4 \cb3   \cf6 \strokec6 <\cf4 \strokec4 button onClick\cf6 \strokec6 =\{\cf4 \strokec4 onClick\cf6 \strokec6 \}\cf4 \strokec4  className\cf6 \strokec6 =\{\cf7 \strokec7 `w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 \cf6 \strokec6 $\{\cf4 \strokec4 active \cf6 \strokec6 ?\cf4 \strokec4  \cf7 \strokec7 'bg-indigo-600 text-white shadow-xl shadow-indigo-200 font-bold translate-x-1'\cf4 \strokec4  \cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'text-slate-400 hover:text-slate-900 hover:bg-slate-50'\cf6 \strokec6 \}\cf7 \strokec7 `\cf6 \strokec6 \}>\cf4 \cb1 \strokec4 \
-\cb3     \cf6 \strokec6 \{\cf4 \strokec4 icon\cf6 \strokec6 \}\cf4 \strokec4  \cf6 \strokec6 \{\cf4 \strokec4 label\cf6 \strokec6 \}\cf4 \cb1 \strokec4 \
-\cb3   \cf6 \strokec6 </\cf4 \strokec4 button\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\pard\pardeftab720\partightenfactor0
-\cf6 \cb3 \strokec6 );\cf4 \cb1 \strokec4 \
-\
-\pard\pardeftab720\partightenfactor0
-\cf2 \cb3 \strokec2 const\cf4 \strokec4  \cf5 \strokec5 MobileItem\cf4 \strokec4  \cf6 \strokec6 =\cf4 \strokec4  \cf6 \strokec6 (\{\cf4 \strokec4  active\cf6 \strokec6 ,\cf4 \strokec4  onClick\cf6 \strokec6 ,\cf4 \strokec4  icon \cf6 \strokec6 \})\cf4 \strokec4  \cf6 \strokec6 =>\cf4 \strokec4  \cf6 \strokec6 (\cf4 \cb1 \strokec4 \
-\pard\pardeftab720\partightenfactor0
-\cf4 \cb3   \cf6 \strokec6 <\cf4 \strokec4 button onClick\cf6 \strokec6 =\{\cf4 \strokec4 onClick\cf6 \strokec6 \}\cf4 \strokec4  className\cf6 \strokec6 =\{\cf7 \strokec7 `p-4 rounded-[24px] transition-all duration-300 \cf6 \strokec6 $\{\cf4 \strokec4 active \cf6 \strokec6 ?\cf4 \strokec4  \cf7 \strokec7 'bg-indigo-600 text-white shadow-2xl shadow-indigo-100 -translate-y-4 scale-110'\cf4 \strokec4  \cf6 \strokec6 :\cf4 \strokec4  \cf7 \strokec7 'text-slate-300'\cf6 \strokec6 \}\cf7 \strokec7 `\cf6 \strokec6 \}>\cf4 \cb1 \strokec4 \
-\cb3     \cf6 \strokec6 \{\cf4 \strokec4 icon\cf6 \strokec6 \}\cf4 \cb1 \strokec4 \
-\cb3   \cf6 \strokec6 </\cf4 \strokec4 button\cf6 \strokec6 >\cf4 \cb1 \strokec4 \
-\pard\pardeftab720\partightenfactor0
-\cf6 \cb3 \strokec6 );\cf4 \cb1 \strokec4 \
+// --- CONFIGURATION VERCEL ---
+const firebaseConfig = JSON.parse(import.meta.env.VITE_FIREBASE_CONFIG || "{}");
+const appId = import.meta.env.VITE_APP_ID || 'life-dashboard-suisse-v5';
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// --- Bibliothèque d'exercices Standard ---
+const STATIC_EXERCICES = [
+  { id: 'p1', name: 'Développé Couché (Barre)', img: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400', equipment: 'Barre & Banc', cat: 'Pectoraux' },
+  { id: 'p2', name: 'Développé Couché (Haltères)', img: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=400', equipment: 'Haltères', cat: 'Pectoraux' },
+  { id: 'd1', name: 'Tractions Pronation', img: 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=400', equipment: 'Barre fixe', cat: 'Dos' },
+  { id: 'j1', name: 'Squat Arrière', img: 'https://images.unsplash.com/photo-1534367507873-d2d7e24c797f?w=400', equipment: 'Cage à squat', cat: 'Jambes' },
+  { id: 'b1', name: 'Curl Biceps EZ', img: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=400', equipment: 'Barre EZ', cat: 'Bras' },
+  { id: 'a1', name: 'Crunch Abdominaux', img: 'https://images.unsplash.com/photo-1571019613531-fbea97494436?w=400', equipment: 'Tapis', cat: 'Abdos' },
+];
+
+const CAT_DEPENSES = ['Nourriture', 'Loisirs', 'Transport', 'Santé', 'Shopping', 'Cadeaux', 'Autres'];
+const CAT_ABONNEMENTS = ['Loyer', 'Assurance Maladie', 'Télécom', 'Streaming', 'Fitness', 'Autres'];
+const CAT_REVENUS = ['Salaire', 'Bonus', 'Freelance', 'Cadeau', 'Remboursement', 'Autres'];
+
+const Card = ({ children, className = "" }) => (
+  <div className={`bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 ${className}`}>
+    {children}
+  </div>
+);
+
+const Button = ({ children, onClick, variant = "primary", className = "", disabled = false }) => {
+  const variants = {
+    primary: "bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-slate-300 shadow-md shadow-indigo-100",
+    secondary: "bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-white",
+    outline: "border-2 border-slate-100 text-slate-500 hover:border-indigo-500 hover:text-indigo-600",
+    danger: "bg-red-50 text-red-600 hover:bg-red-100",
+    ghost: "text-slate-400 hover:text-red-500 transition-colors"
+  };
+  return (
+    <button disabled={disabled} onClick={onClick} className={`px-4 py-2.5 rounded-2xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2 ${variants[variant]} ${className}`}>
+      {children}
+    </button>
+  );
+};
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState('accueil');
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
+  const [expenses, setExpenses] = useState([]);
+  const [subscriptions, setSubscriptions] = useState([]);
+  const [incomes, setIncomes] = useState([]);
+  const [workouts, setWorkouts] = useState([]);
+  const [menus, setMenus] = useState([]);
+  const [tasks, setTasks] = useState([]);
+  const [customExercises, setCustomExercises] = useState([]);
+  const [budgetGoal, setBudgetGoal] = useState(0);
+
+  useEffect(() => {
+    signInAnonymously(auth).catch(err => console.error("Auth Error", err));
+    return onAuthStateChanged(auth, (u) => { setUser(u); setLoading(false); });
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    const collections = [
+      { n: 'expenses', s: setExpenses },
+      { n: 'subscriptions', s: setSubscriptions },
+      { n: 'incomes', s: setIncomes },
+      { n: 'workouts', s: setWorkouts },
+      { n: 'menus', s: setMenus },
+      { n: 'tasks', s: setTasks },
+      { n: 'customExercises', s: setCustomExercises }
+    ];
+    const unsubscribes = collections.map(({ n, s }) => 
+      onSnapshot(query(collection(db, 'artifacts', appId, 'users', user.uid, n)), 
+      (snap) => s(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+      (err) => console.error(err))
+    );
+    const unsubGoal = onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'budget'), (d) => {
+      if(d.exists()) setBudgetGoal(d.data().monthlyGoal || 0);
+    });
+    return () => { unsubscribes.forEach(u => u()); unsubGoal(); };
+  }, [user]);
+
+  const addItem = async (col, data) => {
+    if (!user) return;
+    await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, col), { ...data, createdAt: Date.now() });
+  };
+
+  const deleteItem = async (col, id) => {
+    if (!user) return;
+    await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, col, id));
+  };
+
+  const updateBudgetGoal = async (val) => {
+    if (!user) return;
+    await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'budget'), { monthlyGoal: Number(val) });
+  };
+
+  const financeStats = useMemo(() => {
+    const parseDate = (dateStr) => {
+      if (!dateStr) return null;
+      const parts = dateStr.includes('.') ? dateStr.split('.') : dateStr.split('/');
+      if (parts.length === 3) return { day: parseInt(parts[0]), month: parseInt(parts[1]) - 1, year: parseInt(parts[2]) };
+      return null;
+    };
+    const isCurrentMonth = (dStr) => {
+      const p = parseDate(dStr);
+      return p && p.month === selectedMonth && p.year === selectedYear;
+    };
+    
+    const fIncomes = incomes.filter(i => isCurrentMonth(i.date));
+    const fExpenses = expenses.filter(e => isCurrentMonth(e.date));
+    
+    const totalInc = fIncomes.reduce((acc, c) => acc + Number(c.amount), 0);
+    const totalSubs = subscriptions.reduce((acc, c) => acc + Number(c.amount), 0);
+    const totalExp = fExpenses.reduce((acc, c) => acc + Number(c.amount), 0);
+    
+    const realBalance = totalInc - (totalSubs + totalExp);
+    const goalRemaining = budgetGoal > 0 ? budgetGoal - totalExp : realBalance;
+    
+    const journalEntries = [
+      ...fIncomes.map(i => ({ ...i, type: 'income' })),
+      ...fExpenses.map(e => ({ ...e, type: 'expense' })),
+      ...subscriptions.map(s => ({
+        ...s, type: 'fixed', isPlanned: true,
+        date: `${String(s.day || '01').padStart(2, '0')}.${String(selectedMonth + 1).padStart(2, '0')}.${selectedYear}`
+      }))
+    ].sort((a, b) => b.createdAt - a.createdAt);
+    
+    const catTotals = fExpenses.reduce((acc, c) => {
+      acc[c.category] = (acc[c.category] || 0) + Number(c.amount);
+      return acc;
+    }, {});
+
+    return { totalInc, totalSubs, totalExp, realBalance, goalRemaining, journalEntries, catTotals };
+  }, [expenses, incomes, subscriptions, selectedMonth, selectedYear, budgetGoal]);
+
+  const fullLibrary = useMemo(() => [...STATIC_EXERCICES, ...customExercises], [customExercises]);
+
+  const ViewAccueil = () => (
+    <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+      <header className="flex justify-between items-end">
+        <div>
+          <h1 className="text-4xl font-black tracking-tighter">LIFE.</h1>
+          <p className="text-slate-500 font-medium text-sm">Bonjour 👋 État actuel 🇨🇭</p>
+        </div>
+        <div className="text-right">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Balance Réelle</p>
+          <p className={`text-2xl font-black ${financeStats.realBalance >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            {financeStats.realBalance.toFixed(2)} CHF
+          </p>
+        </div>
+      </header>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="bg-indigo-600 text-white border-none shadow-xl shadow-indigo-100 overflow-hidden relative">
+          <div className="z-10 relative">
+            <p className="text-indigo-200 text-xs font-black uppercase tracking-wider">Reste à dépenser</p>
+            <h2 className="text-4xl font-black mt-1">
+              {financeStats.goalRemaining.toFixed(2)} <span className="text-xl">CHF</span>
+            </h2>
+            {budgetGoal > 0 && (
+              <div className="mt-3 bg-indigo-500/30 rounded-full h-1.5 w-full overflow-hidden">
+                <div className="bg-white h-full transition-all duration-700" style={{ width: `${Math.min(100, (financeStats.totalExp / budgetGoal) * 100)}%` }} />
+              </div>
+            )}
+            <p className="text-[10px] text-indigo-100 font-bold mt-2 opacity-80 uppercase tracking-wider">
+              {budgetGoal > 0 ? `Objectif : ${budgetGoal} CHF` : "Aucun objectif défini"}
+            </p>
+          </div>
+          <Wallet className="absolute -right-6 -bottom-6 opacity-10 w-32 h-32 rotate-12" />
+        </Card>
+        
+        <Card className="flex flex-col justify-between border-slate-100 shadow-sm">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Charges Fixes</p>
+              <h2 className="text-2xl font-black mt-1 text-slate-800">{financeStats.totalSubs.toFixed(2)} CHF</h2>
+            </div>
+            <div className="p-2 bg-slate-50 rounded-xl text-slate-400"><CreditCard size={20} /></div>
+          </div>
+          <div className="mt-4 space-y-1">
+             {subscriptions.slice(0, 2).map(s => (
+               <div key={s.id} className="flex justify-between text-[10px] font-bold text-slate-500">
+                 <span>{s.name} (le {s.day || '1'})</span>
+                 <span>{Number(s.amount).toFixed(2)}</span>
+               </div>
+             ))}
+          </div>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2"><PieChart size={14}/> Dépenses</h3>
+          <div className="space-y-4">
+            {Object.entries(financeStats.catTotals).sort((a,b) => b[1]-a[1]).slice(0, 3).map(([cat, val]) => (
+              <div key={cat}>
+                <div className="flex justify-between text-xs font-bold mb-1"><span>{cat}</span><span>{val.toFixed(2)} CHF</span></div>
+                <div className="w-full bg-slate-50 h-1 rounded-full overflow-hidden"><div className="bg-indigo-500 h-full" style={{width: `${(val/financeStats.totalExp)*100}%`}}></div></div>
+              </div>
+            ))}
+          </div>
+        </Card>
+        <Card>
+          <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2"><GymIcon size={14}/> Sport</h3>
+          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+            <p className="text-xs italic text-slate-400 text-center">Utilisez Sport Pro pour suivre vos entraînements.</p>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+
+  const ViewBudget = () => {
+    const [view, setView] = useState('journal');
+    const [form, setForm] = useState({ amount: '', label: '', cat: 'Nourriture', type: 'variable', day: '1' });
+    const months = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+
+    useEffect(() => {
+      if (form.type === 'income') setForm(f => ({ ...f, cat: 'Salaire' }));
+      else if (form.type === 'fixed') setForm(f => ({ ...f, cat: 'Loyer' }));
+      else setForm(f => ({ ...f, cat: 'Nourriture' }));
+    }, [form.type]);
+
+    const handleAdd = () => {
+      if(!form.amount) return;
+      const data = { amount: form.amount, name: form.label || form.cat, category: form.cat, date: new Date().toLocaleDateString('fr-CH') };
+      if (form.type === 'fixed' || form.type === 'income') data.day = form.day;
+      addItem(form.type === 'income' ? 'incomes' : (form.type === 'fixed' ? 'subscriptions' : 'expenses'), data);
+      setForm({ amount: '', label: '', cat: 'Nourriture', type: 'variable', day: '1' });
+      setView('journal');
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-black text-slate-800">Mes Finances</h2>
+          <select className="bg-white border-none rounded-xl text-[10px] font-black p-2 shadow-sm outline-none" value={selectedMonth} onChange={e => setSelectedMonth(Number(e.target.value))}>
+            {months.map((m, i) => <option key={m} value={i}>{m}</option>)}
+          </select>
+        </div>
+
+        <div className="flex gap-2 bg-white p-1.5 rounded-2xl border border-slate-100 shadow-sm">
+          <button onClick={() => setView('journal')} className={`flex-1 py-2.5 rounded-xl text-xs font-black transition-all ${view === 'journal' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'text-slate-400'}`}>Journal</button>
+          <button onClick={() => setView('ajouter')} className={`flex-1 py-2.5 rounded-xl text-xs font-black transition-all ${view === 'ajouter' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'text-slate-400'}`}>Ajouter</button>
+          <button onClick={() => setView('settings')} className={`p-2.5 rounded-xl transition-all ${view === 'settings' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400'}`}><Settings size={18}/></button>
+        </div>
+
+        {view === 'settings' && (
+          <Card className="animate-in slide-in-from-right-4 border-indigo-100 bg-indigo-50/30">
+            <h3 className="text-sm font-black uppercase tracking-widest text-indigo-600 mb-4 flex items-center gap-2"><Target size={16}/> Budget Mensuel</h3>
+            <div className="flex gap-2">
+              <input type="number" placeholder="Objectif CHF" className="flex-1 p-4 rounded-2xl font-black text-lg outline-none focus:border-indigo-500 bg-white" value={budgetGoal || ''} onChange={e => updateBudgetGoal(e.target.value)} />
+              <div className="bg-indigo-600 text-white p-4 rounded-2xl flex items-center justify-center font-black text-xs">CHF</div>
+            </div>
+          </Card>
+        )}
+
+        {view === 'ajouter' ? (
+          <Card className="animate-in slide-in-from-bottom-6">
+            <div className="space-y-4">
+              <div className="flex gap-1 bg-slate-50 p-1 rounded-2xl">
+                {[['variable', 'Dépense'], ['fixed', 'Fixe'], ['income', 'Revenu']].map(([id, label]) => (
+                  <button key={id} onClick={() => setForm({...form, type: id})} className={`flex-1 py-2 text-[9px] font-black uppercase rounded-xl transition-all ${form.type === id ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400'}`}>{label}</button>
+                ))}
+              </div>
+              <input type="number" placeholder="Montant CHF" className="w-full p-4 rounded-2xl border-2 border-slate-50 font-black text-xl outline-none focus:border-indigo-500" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} />
+              {(form.type === 'fixed' || form.type === 'income') && (
+                <div className="flex items-center gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                  <span className="text-[10px] font-black uppercase text-slate-400">Jour (ex: 25) :</span>
+                  <input type="number" min="1" max="31" className="bg-transparent font-black outline-none w-10 text-center text-indigo-600" value={form.day} onChange={e => setForm({...form, day: e.target.value})} />
+                </div>
+              )}
+              <select className="w-full p-4 rounded-2xl border-2 border-slate-50 font-bold outline-none" value={form.cat} onChange={e => setForm({...form, cat: e.target.value})}>
+                {form.type === 'income' ? CAT_REVENUS.map(c => <option key={c} value={c}>{c}</option>) :
+                 form.type === 'fixed' ? CAT_ABONNEMENTS.map(c => <option key={c} value={c}>{c}</option>) :
+                 CAT_DEPENSES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <input type="text" placeholder="Note..." className="w-full p-4 rounded-2xl border-2 border-slate-50 outline-none" value={form.label} onChange={e => setForm({...form, label: e.target.value})} />
+              <Button className="w-full py-4 text-sm font-black uppercase" onClick={handleAdd}>Valider</Button>
+            </div>
+          </Card>
+        ) : view !== 'settings' && (
+          <div className="space-y-3">
+            {financeStats.journalEntries.map((item, idx) => (
+              <div key={item.id || idx} className={`flex justify-between items-center p-5 rounded-[28px] border shadow-sm ${item.type === 'fixed' ? 'bg-slate-50/80 border-dashed border-slate-300' : 'bg-white border-slate-50'}`}>
+                <div className="flex items-center gap-4">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${item.type === 'income' ? 'bg-green-50 text-green-600' : item.type === 'fixed' ? 'bg-slate-100 text-slate-600' : 'bg-red-50 text-red-600'}`}>
+                    {item.type === 'income' ? <ArrowUpCircle size={20}/> : item.type === 'fixed' ? <Clock size={20}/> : <ArrowDownCircle size={20}/>}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-black text-sm text-slate-800">{item.name}</p>
+                      {item.isPlanned && <span className="bg-indigo-100 text-indigo-700 text-[7px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter shadow-sm">Prévu</span>}
+                    </div>
+                    <p className="text-[10px] text-slate-400 font-black uppercase">{item.date}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className={`font-black ${item.type === 'income' ? 'text-green-600' : item.type === 'fixed' ? 'text-slate-500' : 'text-red-600'}`}>
+                    {item.type === 'income' ? '+' : '-'}{Number(item.amount).toFixed(2)}
+                  </span>
+                  {!item.isPlanned && <Button variant="ghost" onClick={() => deleteItem(item.type === 'income' ? 'incomes' : 'expenses', item.id)}><Trash2 size={16}/></Button>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const ViewSport = () => {
+    return <div className="p-10 text-center italic text-slate-400">Bibliothèque et programmation accessibles dans la version complète.</div>;
+  };
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-50 font-sans"><div className="w-12 h-12 bg-indigo-600 rounded-3xl animate-bounce"></div></div>;
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900 pb-28 md:pb-0 md:pl-72 font-sans antialiased">
+      <aside className="fixed left-0 top-0 bottom-0 w-72 bg-white border-r border-slate-100 p-8 hidden md:flex flex-col">
+        <div className="text-3xl font-black mb-12 text-indigo-600">LIFE.</div>
+        <nav className="space-y-2 flex-1">
+          <SidebarItem active={activeTab === 'accueil'} onClick={() => setActiveTab('accueil')} icon={<LayoutDashboard size={20}/>} label="Accueil" />
+          <SidebarItem active={activeTab === 'budget'} onClick={() => setActiveTab('budget')} icon={<Wallet size={20}/>} label="Finances" />
+          <SidebarItem active={activeTab === 'sport'} onClick={() => setActiveTab('sport')} icon={<GymIcon size={20}/>} label="Sport Pro" />
+          <SidebarItem active={activeTab === 'alimentation'} onClick={() => setActiveTab('alimentation')} icon={<Utensils size={20}/>} label="Nutrition" />
+          <SidebarItem active={activeTab === 'agenda'} onClick={() => setActiveTab('agenda')} icon={<Calendar size={20}/>} label="Agenda" />
+        </nav>
+      </aside>
+      <main className="max-w-2xl mx-auto p-4 md:max-w-4xl md:p-12">{activeTab === 'accueil' && <ViewAccueil />}{activeTab === 'budget' && <ViewBudget />}{activeTab === 'sport' && <ViewSport />}{activeTab === 'alimentation' && <div>Nutrition</div>}{activeTab === 'agenda' && <div>Agenda</div>}</main>
+      <nav className="fixed bottom-0 left-0 right-0 h-24 bg-white/90 backdrop-blur-xl border-t border-slate-100 flex items-center justify-around px-4 md:hidden z-50 rounded-t-[40px] shadow-2xl">
+        <MobileItem active={activeTab === 'accueil'} onClick={() => setActiveTab('accueil')} icon={<LayoutDashboard size={24}/>} />
+        <MobileItem active={activeTab === 'budget'} onClick={() => setActiveTab('budget')} icon={<Wallet size={24}/>} />
+        <MobileItem active={activeTab === 'sport'} onClick={() => setActiveTab('sport')} icon={<GymIcon size={24}/>} />
+        <MobileItem active={activeTab === 'alimentation'} onClick={() => setActiveTab('alimentation')} icon={<Utensils size={24}/>} />
+        <MobileItem active={activeTab === 'agenda'} onClick={() => setActiveTab('agenda')} icon={<Calendar size={24}/>} />
+      </nav>
+    </div>
+  );
 }
+
+const SidebarItem = ({ active, onClick, icon, label }) => (
+  <button onClick={onClick} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 ${active ? 'bg-indigo-600 text-white shadow-xl font-bold translate-x-1' : 'text-slate-400 hover:text-slate-900 hover:bg-slate-50'}`}>
+    {icon} {label}
+  </button>
+);
+
+const MobileItem = ({ active, onClick, icon }) => (
+  <button onClick={onClick} className={`p-4 rounded-[24px] transition-all duration-300 ${active ? 'bg-indigo-600 text-white shadow-2xl -translate-y-4 scale-110' : 'text-slate-300'}`}>
+    {icon}
+  </button>
+);
