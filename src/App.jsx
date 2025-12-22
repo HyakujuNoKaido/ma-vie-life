@@ -18,7 +18,7 @@ import {
 /**
  * Application LIFE Dashboard
  * Gère les finances, le sport, la nutrition et l'agenda.
- * Compatible Vercel (Variables d'environnement) et Canvas.
+ * Version composant pur compatible avec le rendu automatique.
  */
 export default function App() {
   // --- ÉTATS ---
@@ -52,7 +52,7 @@ export default function App() {
             const vId = import.meta.env.VITE_APP_ID;
             
             if (vConfig) {
-              // Nettoyage de sécurité si le JSON a été collé avec des guillemets extérieurs
+              // Nettoyage des guillemets si le JSON a été collé avec des guillemets extérieurs
               const cleanedConfig = vConfig.trim().replace(/^['"]|['"]$/g, '');
               config = JSON.parse(cleanedConfig);
             }
@@ -60,17 +60,17 @@ export default function App() {
             if (vId) setAppId(vId);
           }
         } catch (e) {
-          console.warn("Erreur lecture variables Vercel:", e.message);
+          console.warn("Environnement Vercel non détecté.");
         }
 
-        // 2. Fallback pour l'aperçu local Gemini
+        // 2. Fallback pour l'aperçu local Gemini (Canvas)
         if (!config && typeof __firebase_config !== 'undefined') {
           config = JSON.parse(__firebase_config);
         }
 
         // 3. Vérification finale
         if (!config || !config.apiKey) {
-          throw new Error("Configuration Firebase introuvable. L'application est en ligne mais ne trouve pas ses réglages Vercel.");
+          throw new Error("Configuration Firebase introuvable. Vérifiez VITE_FIREBASE_CONFIG sur Vercel.");
         }
 
         const firebaseApp = getApps().length === 0 ? initializeApp(config) : getApps()[0];
@@ -81,7 +81,7 @@ export default function App() {
 
         onAuthStateChanged(firebaseAuth, (u) => {
           if (!u) {
-            signInAnonymously(firebaseAuth).catch(err => setInitError("Auth Error: " + err.message));
+            signInAnonymously(firebaseAuth).catch(err => setInitError("Erreur Auth: " + err.message));
           } else {
             setUser(u);
             setLoading(false);
@@ -109,7 +109,7 @@ export default function App() {
     const unsubs = collections.map(({ n, s }) => 
       onSnapshot(query(collection(db, 'artifacts', appId, 'users', user.uid, n)), 
       (snap) => s(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
-      (err) => console.error(`Erreur synchro ${n}:`, err))
+      (err) => console.error(`Sync Error ${n}:`, err))
     );
 
     const unsubGoal = onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'budget'), (d) => {
@@ -119,16 +119,13 @@ export default function App() {
     return () => { unsubs.forEach(u => u()); unsubGoal(); };
   }, [user, db, appId]);
 
-  // --- CALCULS STATISTIQUES ---
+  // --- CALCULS ---
   const stats = useMemo(() => {
-    const parseDate = (d) => {
-      if (!d) return null;
-      const p = d.includes('.') ? d.split('.') : d.split('/');
-      return { month: parseInt(p[1]) - 1, year: parseInt(p[2]) };
-    };
     const isCurrent = (d) => {
-      const p = parseDate(d);
-      return p && p.month === selectedMonth && p.year === selectedYear;
+      if (!d) return false;
+      const p = d.includes('.') ? d.split('.') : d.split('/');
+      if (p.length < 3) return false;
+      return parseInt(p[1]) - 1 === selectedMonth && parseInt(p[2]) === selectedYear;
     };
 
     const fInc = incomes.filter(i => isCurrent(i.date));
@@ -173,15 +170,14 @@ export default function App() {
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6 font-sans">
       <div className="bg-white p-8 rounded-[32px] shadow-2xl border border-red-100 max-w-md text-center">
         <AlertCircle className="text-red-500 mx-auto mb-4" size={48} />
-        <h2 className="text-xl font-black text-slate-800 mb-2">Presque prêt !</h2>
+        <h2 className="text-xl font-black text-slate-800 mb-2">Erreur Détectée</h2>
         <p className="text-sm text-red-600 mb-6">{initError}</p>
         <div className="text-left bg-slate-50 p-4 rounded-2xl text-[10px] font-mono text-slate-400 mb-6 leading-relaxed">
-          1. Sur Vercel, allez dans <strong>Settings {' > '} Environment Variables</strong>.<br/>
-          2. Vérifiez que <strong>VITE_FIREBASE_CONFIG</strong> contient le bloc JSON.<br/>
-          3. <strong>Attention :</strong> Ne mettez pas de guillemets avant le {"{"} et après le {"}"}.<br/>
-          4. Dans l'onglet <strong>Deployments</strong>, faites un "Redeploy" manuel.
+          1. Vérifiez vos variables sur Vercel.<br/>
+          2. Allez dans <strong>Settings {' > '} Env Variables</strong>.<br/>
+          3. Refaites un <strong>Commit</strong> sur GitHub pour forcer la mise à jour.
         </div>
-        <button onClick={() => window.location.reload()} className="w-full bg-indigo-600 text-white py-3 rounded-2xl font-bold">Rafraîchir la page</button>
+        <button onClick={() => window.location.reload()} className="w-full bg-indigo-600 text-white py-3 rounded-2xl font-bold shadow-lg">Vérifier à nouveau</button>
       </div>
     </div>
   );
@@ -189,7 +185,7 @@ export default function App() {
   if (loading) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4 font-sans text-center">
       <div className="w-12 h-12 bg-indigo-600 rounded-[24px] animate-bounce shadow-2xl"></div>
-      <p className="font-black text-indigo-600 text-[10px] uppercase tracking-widest animate-pulse">Synchronisation LIFE Dashboard</p>
+      <p className="font-black text-indigo-600 text-[10px] uppercase tracking-widest animate-pulse">Chargement LIFE Dashboard</p>
     </div>
   );
 
@@ -197,7 +193,9 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-28 md:pb-0 md:pl-72 font-sans antialiased">
       {/* Sidebar Desktop */}
       <aside className="fixed left-0 top-0 bottom-0 w-72 bg-white border-r border-slate-100 p-8 hidden md:flex flex-col">
-        <div className="text-3xl font-black text-indigo-600 tracking-tighter mb-12">LIFE.</div>
+        <div className="text-3xl font-black text-indigo-600 tracking-tighter mb-12 flex items-center gap-2">
+          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white text-lg font-bold">L</div> LIFE.
+        </div>
         <nav className="space-y-2 flex-1">
           <button onClick={() => setActiveTab('accueil')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all ${activeTab === 'accueil' ? 'bg-indigo-600 text-white shadow-xl font-bold' : 'text-slate-400 hover:text-slate-900'}`}><LayoutDashboard size={20}/> Accueil</button>
           <button onClick={() => setActiveTab('budget')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all ${activeTab === 'budget' ? 'bg-indigo-600 text-white shadow-xl font-bold' : 'text-slate-400 hover:text-slate-900'}`}><Wallet size={20}/> Finances</button>
@@ -209,7 +207,7 @@ export default function App() {
         {activeTab === 'accueil' ? (
           <div className="space-y-6 animate-in fade-in duration-500">
             <header className="flex justify-between items-end">
-              <div><h1 className="text-4xl font-black tracking-tighter">LIFE.</h1><p className="text-slate-500 font-medium text-sm italic">Mon dashboard 🇨🇭</p></div>
+              <div><h1 className="text-4xl font-black tracking-tighter">LIFE.</h1><p className="text-slate-500 font-medium text-sm italic">Suivi personnel 🇨🇭</p></div>
               <div className="text-right">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Solde Réel</p>
                 <p className={`text-2xl font-black ${stats.realBalance >= 0 ? 'text-green-500' : 'text-red-500'}`}>{stats.realBalance.toFixed(2)} CHF</p>
