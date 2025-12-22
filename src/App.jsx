@@ -15,68 +15,12 @@ import {
   getAuth, signInAnonymously, onAuthStateChanged 
 } from 'firebase/auth';
 
-// --- FONCTION DE PARSING SECURISEE ---
-const safeJsonParse = (str) => {
-  try {
-    if (!str) return null;
-    // Nettoyage des éventuels guillemets superflus si collé avec des quotes
-    const cleaned = str.trim().replace(/^['"]|['"]$/g, '');
-    return JSON.parse(cleaned);
-  } catch (e) {
-    console.error("Erreur de parsing JSON:", e);
-    return null;
-  }
-};
-
-// --- GESTION DE LA CONFIGURATION (HORS COMPOSANT POUR INITIALISATION) ---
-let firebaseConfig = null;
-let appId = 'life-dashboard-suisse-v5';
-let configErrorMessage = null;
-
-try {
-  // 1. Tentative avec les variables Vercel (Vite)
-  // On accède à import.meta.env de manière très prudente
-  const env = typeof import.meta !== 'undefined' ? import.meta.env : {};
-  
-  const vConfig = env?.VITE_FIREBASE_CONFIG;
-  const vId = env?.VITE_APP_ID;
-
-  if (vConfig) {
-    firebaseConfig = safeJsonParse(vConfig);
-  } 
-  
-  // 2. Fallback pour l'aperçu Gemini si les variables Vercel sont absentes
-  if (!firebaseConfig && typeof __firebase_config !== 'undefined') {
-    firebaseConfig = safeJsonParse(__firebase_config);
-  }
-
-  if (vId) appId = vId;
-
-  // 3. Validation
-  if (!firebaseConfig || !firebaseConfig.apiKey) {
-    configErrorMessage = "Configuration Firebase introuvable ou mal formatée. Vérifiez VITE_FIREBASE_CONFIG sur Vercel.";
-  }
-} catch (e) {
-  configErrorMessage = "Erreur fatale de configuration : " + e.message;
-}
-
-// Initialisation Firebase (uniquement si la config est valide)
-let app, auth, db;
-if (!configErrorMessage) {
-  try {
-    app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-    auth = getAuth(app);
-    db = getFirestore(app);
-  } catch (e) {
-    configErrorMessage = "Échec du démarrage de Firebase : " + e.message;
-  }
-}
-
 // --- Listes de Catégories ---
 const CAT_DEPENSES = ['Nourriture', 'Loisirs', 'Transport', 'Santé', 'Shopping', 'Cadeaux', 'Autres'];
 const CAT_ABONNEMENTS = ['Loyer', 'Assurance Maladie', 'Télécom', 'Streaming', 'Fitness', 'Autres'];
 const CAT_REVENUS = ['Salaire', 'Bonus', 'Freelance', 'Cadeau', 'Remboursement', 'Autres'];
 
+// --- Composants UI ---
 const Card = ({ children, className = "" }) => (
   <div className={`bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 ${className}`}>
     {children}
@@ -102,78 +46,91 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('accueil');
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [error, setError] = useState(null);
+  
+  // Firebase instances
+  const [db, setDb] = useState(null);
+  const [auth, setAuth] = useState(null);
+  const [appId, setAppId] = useState('life-dashboard-suisse-v5');
 
+  // Données
   const [expenses, setExpenses] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
   const [incomes, setIncomes] = useState([]);
   const [workouts, setWorkouts] = useState([]);
   const [budgetGoal, setBudgetGoal] = useState(0);
 
-  // --- RENDU D'ERREUR PRECOCE (EVITE L'ECRAN BLANC) ---
-  if (configErrorMessage) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6 font-sans">
-        <Card className="max-w-md border-red-200 bg-red-50 shadow-2xl text-center">
-          <AlertCircle className="text-red-500 mx-auto mb-4" size={56} />
-          <h2 className="text-2xl font-black text-red-700 mb-2">Erreur de Configuration</h2>
-          <p className="text-sm text-red-600 mb-6 leading-relaxed">{configErrorMessage}</p>
-          <div className="text-left bg-white p-4 rounded-2xl text-[10px] font-mono text-slate-400 border border-red-100 break-all mb-4">
-            <strong>Conseil :</strong> Sur Vercel, la valeur de VITE_FIREBASE_CONFIG doit commencer par {"{"} et finir par {"}"} sans guillemets autour du bloc.
-          </div>
-          <Button onClick={() => window.location.reload()} className="w-full">Réessayer</Button>
-        </Card>
-      </div>
-    );
-  }
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
+  // 1. Initialisation sécurisée au chargement
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
-      if (!u) {
-        signInAnonymously(auth).catch(err => console.error("Erreur Auth", err));
-      } else {
-        setUser(u);
-        setLoading(false);
+    try {
+      // Récupération prudente des variables d'environnement
+      const configStr = import.meta.env?.VITE_FIREBASE_CONFIG;
+      const customAppId = import.meta.env?.VITE_APP_ID;
+
+      if (!configStr && typeof __firebase_config === 'undefined') {
+        throw new Error("Configuration Firebase introuvable. Vérifiez VITE_FIREBASE_CONFIG.");
       }
-    });
-    return () => unsub();
+
+      const config = JSON.parse(configStr || __firebase_config);
+      
+      if (!config.apiKey) {
+        throw new Error("Clé API Firebase manquante dans la configuration.");
+      }
+
+      if (customAppId) setAppId(customAppId);
+
+      const firebaseApp = getApps().length === 0 ? initializeApp(config) : getApps()[0];
+      const firebaseAuth = getAuth(firebaseApp);
+      const firebaseDb = getFirestore(firebaseApp);
+
+      setAuth(firebaseAuth);
+      setDb(firebaseDb);
+
+      const unsubAuth = onAuthStateChanged(firebaseAuth, (u) => {
+        if (!u) {
+          signInAnonymously(firebaseAuth).catch(e => setError("Échec connexion anonyme: " + e.message));
+        } else {
+          setUser(u);
+          setLoading(false);
+        }
+      });
+
+      return () => unsubAuth();
+    } catch (e) {
+      console.error(e);
+      setError(e.message);
+      setLoading(false);
+    }
   }, []);
 
+  // 2. Synchronisation des données (seulement si Firebase est prêt)
   useEffect(() => {
-    if (!user) return;
+    if (!user || !db) return;
+
     const collections = [
       { n: 'expenses', s: setExpenses },
       { n: 'subscriptions', s: setSubscriptions },
       { n: 'incomes', s: setIncomes },
       { n: 'workouts', s: setWorkouts }
     ];
-    const unsubscribes = collections.map(({ n, s }) => 
+
+    const unsubs = collections.map(({ n, s }) => 
       onSnapshot(query(collection(db, 'artifacts', appId, 'users', user.uid, n)), 
       (snap) => s(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
-      (err) => console.error(err))
+      (err) => console.error(`Erreur sur ${n}:`, err))
     );
+
     const unsubGoal = onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'budget'), (d) => {
       if(d.exists()) setBudgetGoal(d.data().monthlyGoal || 0);
     });
-    return () => { unsubscribes.forEach(u => u()); unsubGoal(); };
-  }, [user]);
 
-  const addItem = async (col, data) => {
-    if (!user) return;
-    await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, col), { ...data, createdAt: Date.now() });
-  };
+    return () => { unsubs.forEach(u => u()); unsubGoal(); };
+  }, [user, db, appId]);
 
-  const deleteItem = async (col, id) => {
-    if (!user) return;
-    await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, col, id));
-  };
-
-  const updateBudgetGoal = async (val) => {
-    if (!user) return;
-    await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'budget'), { monthlyGoal: Number(val) });
-  };
-
+  // 3. Logique Finance
   const stats = useMemo(() => {
     const parseDate = (d) => {
       if (!d) return null;
@@ -181,15 +138,19 @@ export default function App() {
       if (p.length < 3) return null;
       return { month: parseInt(p[1]) - 1, year: parseInt(p[2]) };
     };
+
     const isCurrent = (d) => {
       const p = parseDate(d);
       return p && p.month === selectedMonth && p.year === selectedYear;
     };
+
     const fInc = incomes.filter(i => isCurrent(i.date));
     const fExp = expenses.filter(e => isCurrent(e.date));
+    
     const totalInc = fInc.reduce((a, c) => a + Number(c.amount), 0);
     const totalSub = subscriptions.reduce((a, c) => a + Number(c.amount), 0);
     const totalExp = fExp.reduce((a, c) => a + Number(c.amount), 0);
+    
     const realBalance = totalInc - (totalSub + totalExp);
     const goalRemaining = budgetGoal > 0 ? budgetGoal - totalExp : realBalance;
 
@@ -200,10 +161,39 @@ export default function App() {
         ...s, type: 'fixed', isPlanned: true,
         date: `${String(s.day || '01').padStart(2, '0')}.${String(selectedMonth + 1).padStart(2, '0')}.${selectedYear}`
       }))
-    ].sort((a, b) => b.createdAt - a.createdAt);
+    ].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
     return { totalInc, totalSub, totalExp, realBalance, goalRemaining, journal };
   }, [expenses, incomes, subscriptions, selectedMonth, selectedYear, budgetGoal]);
+
+  // Actions
+  const addItem = async (col, data) => {
+    if (!user || !db) return;
+    await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, col), { ...data, createdAt: Date.now() });
+  };
+
+  const deleteItem = async (col, id) => {
+    if (!user || !db) return;
+    await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, col, id));
+  };
+
+  const updateBudgetGoal = async (val) => {
+    if (!user || !db) return;
+    await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'budget'), { monthlyGoal: Number(val) });
+  };
+
+  // --- RENDUS SPÉCIAUX ---
+
+  if (error) return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6 font-sans">
+      <Card className="max-w-md border-red-200 bg-red-50 text-center">
+        <AlertCircle className="text-red-500 mx-auto mb-4" size={48} />
+        <h2 className="text-xl font-black text-red-700 mb-2">Erreur Fatale</h2>
+        <p className="text-sm text-red-600 mb-6">{error}</p>
+        <Button onClick={() => window.location.reload()} className="w-full">Réessayer</Button>
+      </Card>
+    </div>
+  );
 
   if (loading) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4 font-sans">
@@ -228,7 +218,7 @@ export default function App() {
         {activeTab === 'accueil' ? (
           <div className="space-y-6 animate-in fade-in duration-500">
             <header className="flex justify-between items-end">
-              <div><h1 className="text-4xl font-black tracking-tighter">LIFE.</h1><p className="text-slate-500 font-medium text-sm italic">Tableau de bord 🇨🇭</p></div>
+              <div><h1 className="text-4xl font-black tracking-tighter text-slate-900">LIFE.</h1><p className="text-slate-500 font-medium text-sm italic">Mon tableau de bord 🇨🇭</p></div>
               <div className="text-right">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Solde Réel</p>
                 <p className={`text-2xl font-black ${stats.realBalance >= 0 ? 'text-indigo-600' : 'text-red-500'}`}>{stats.realBalance.toFixed(2)} CHF</p>
@@ -240,7 +230,7 @@ export default function App() {
                 <div className="z-10 relative">
                   <p className="text-indigo-200 text-xs font-black uppercase">Reste à dépenser</p>
                   <h2 className="text-4xl font-black mt-1">{stats.goalRemaining.toFixed(2)} CHF</h2>
-                  <p className="text-[10px] text-indigo-100 font-bold mt-2 opacity-80 uppercase">{budgetGoal > 0 ? `Objectif : ${budgetGoal} CHF` : "Définissez un objectif dans Finances"}</p>
+                  <p className="text-[10px] text-indigo-100 font-bold mt-2 opacity-80 uppercase">{budgetGoal > 0 ? `Objectif : ${budgetGoal} CHF` : "Fixez un objectif dans Finances"}</p>
                 </div>
                 <Wallet className="absolute -right-6 -bottom-6 opacity-10 w-32 h-32 rotate-12" />
               </Card>
@@ -255,13 +245,13 @@ export default function App() {
         ) : (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-black">Finances</h2>
+              <h2 className="text-2xl font-black text-slate-800">Finances</h2>
               <select className="bg-white border-none rounded-xl text-[10px] font-black p-2 shadow-sm outline-none" value={selectedMonth} onChange={e => setSelectedMonth(Number(e.target.value))}>
                 {["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"].map((m, i) => <option key={m} value={i}>{m}</option>)}
               </select>
             </div>
 
-            <Card className="bg-indigo-50 border-indigo-100">
+            <Card className="bg-indigo-50 border-indigo-100 text-slate-800">
               <div className="flex items-center gap-2 text-indigo-600 mb-2"><Target size={18}/><h3 className="text-xs font-black uppercase tracking-widest">Objectif Mensuel</h3></div>
               <div className="flex gap-2">
                 <input type="number" placeholder="Budget Max (ex: 800)" className="flex-1 p-3 rounded-xl border-none font-black text-lg outline-none focus:ring-2 focus:ring-indigo-500" value={budgetGoal || ''} onChange={e => updateBudgetGoal(e.target.value)} />
@@ -271,6 +261,10 @@ export default function App() {
 
             <div className="space-y-3">
               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-8">Journal & Prévisions</h3>
+              <div className="flex gap-2 bg-white p-1.5 rounded-2xl mb-4 shadow-sm border border-slate-100">
+                 <button onClick={() => setActiveTab('add_expense')} className="flex-1 py-2 text-[10px] font-black uppercase bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-100">Ajouter Dépense</button>
+              </div>
+              
               {stats.journal.map((item, idx) => (
                 <div key={item.id || idx} className={`flex justify-between items-center p-5 rounded-[28px] border shadow-sm ${item.type === 'fixed' ? 'bg-slate-50/80 border-dashed border-slate-300' : 'bg-white border-slate-50'}`}>
                   <div className="flex items-center gap-4">
@@ -278,12 +272,12 @@ export default function App() {
                       {item.type === 'income' ? <ArrowUpCircle size={20}/> : item.type === 'fixed' ? <Clock size={20}/> : <ArrowDownCircle size={20}/>}
                     </div>
                     <div>
-                      <div className="flex items-center gap-2"><p className="font-black text-sm">{item.name}</p>{item.isPlanned && <span className="bg-indigo-100 text-indigo-700 text-[7px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter shadow-sm">Prévu</span>}</div>
+                      <div className="flex items-center gap-2 text-slate-800"><p className="font-black text-sm">{item.name}</p>{item.isPlanned && <span className="bg-indigo-100 text-indigo-700 text-[7px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter shadow-sm">Prévu</span>}</div>
                       <p className="text-[10px] text-slate-400 font-black uppercase">{item.date}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className={`font-black ${item.type === 'income' ? 'text-green-600' : item.type === 'fixed' ? 'text-slate-500' : 'text-red-500'}`}>{item.type === 'income' ? '+' : '-'}{Number(item.amount).toFixed(2)}</span>
+                    <span className={`font-black ${item.type === 'income' ? 'text-green-600' : item.type === 'fixed' ? 'text-slate-500' : 'text-red-600'}`}>{item.type === 'income' ? '+' : '-'}{Number(item.amount).toFixed(2)}</span>
                     {!item.isPlanned && <Button variant="ghost" onClick={() => deleteItem(item.type === 'income' ? 'incomes' : 'expenses', item.id)}><Trash2 size={16}/></Button>}
                   </div>
                 </div>
