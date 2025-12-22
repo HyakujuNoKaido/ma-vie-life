@@ -15,36 +15,33 @@ import {
   getAuth, signInAnonymously, onAuthStateChanged 
 } from 'firebase/auth';
 
-// --- CONFIGURATION SECURISEE POUR VERCEL ---
-// On utilise des vérifications très prudentes pour éviter l'écran blanc (crash JS)
+// --- GESTION DE LA CONFIGURATION ---
 let firebaseConfig = null;
 let appId = 'life-dashboard-suisse-v5';
 let configError = null;
 
 try {
-  // Tentative sécurisée de lecture des variables d'environnement Vite/Vercel
-  // Le ?. évite de crasher si import.meta ou env n'existent pas
-  const envConfig = import.meta?.env?.VITE_FIREBASE_CONFIG;
-  const envId = import.meta?.env?.VITE_APP_ID;
-
-  if (envConfig) {
-    firebaseConfig = JSON.parse(envConfig);
+  // Syntaxe standard Vite pour Vercel
+  const env = import.meta.env;
+  
+  if (env && env.VITE_FIREBASE_CONFIG) {
+    firebaseConfig = JSON.parse(env.VITE_FIREBASE_CONFIG);
   } else if (typeof __firebase_config !== 'undefined') {
-    // Fallback pour l'aperçu local Gemini
     firebaseConfig = JSON.parse(__firebase_config);
   }
 
-  if (envId) appId = envId;
+  if (env && env.VITE_APP_ID) {
+    appId = env.VITE_APP_ID;
+  }
 
-  // Si après tout ça on n'a toujours rien, on prépare un message d'erreur clair
   if (!firebaseConfig || !firebaseConfig.apiKey) {
-    configError = "Configuration Firebase non détectée. Vérifiez VITE_FIREBASE_CONFIG dans Vercel > Settings > Environment Variables.";
+    configError = "Configuration Firebase introuvable. Vérifiez la variable VITE_FIREBASE_CONFIG sur Vercel.";
   }
 } catch (e) {
-  configError = "Erreur fatale lors de la lecture de la configuration : " + e.message;
+  configError = "Erreur de configuration : " + e.message;
 }
 
-// Initialisation de Firebase avec protection contre les doubles initialisations
+// Initialisation Firebase
 let app, auth, db;
 if (!configError) {
   try {
@@ -52,16 +49,15 @@ if (!configError) {
     auth = getAuth(app);
     db = getFirestore(app);
   } catch (e) {
-    configError = "Erreur lors du démarrage de Firebase : " + e.message;
+    configError = "Erreur d'initialisation Firebase : " + e.message;
   }
 }
 
-// --- Listes de Categories ---
+// --- Listes de Catégories ---
 const CAT_DEPENSES = ['Nourriture', 'Loisirs', 'Transport', 'Santé', 'Shopping', 'Cadeaux', 'Autres'];
 const CAT_ABONNEMENTS = ['Loyer', 'Assurance Maladie', 'Télécom', 'Streaming', 'Fitness', 'Autres'];
 const CAT_REVENUS = ['Salaire', 'Bonus', 'Freelance', 'Cadeau', 'Remboursement', 'Autres'];
 
-// --- Composants UI de base ---
 const Card = ({ children, className = "" }) => (
   <div className={`bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 ${className}`}>
     {children}
@@ -96,15 +92,15 @@ export default function App() {
   const [workouts, setWorkouts] = useState([]);
   const [budgetGoal, setBudgetGoal] = useState(0);
 
-  // Écran d'erreur robuste (Remplace l'écran blanc si la config échoue)
+  // Écran d'erreur si la config échoue
   if (configError) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-100 p-6 font-sans">
-        <Card className="max-w-md border-red-200 bg-red-50 shadow-xl text-center">
+        <Card className="max-w-md border-red-200 bg-red-50 shadow-xl text-center text-slate-800">
           <AlertCircle className="text-red-500 mx-auto mb-4" size={48} />
           <h2 className="text-xl font-black text-red-700 mb-2">Erreur de Démarrage</h2>
           <p className="text-sm text-red-600 mb-4">{configError}</p>
-          <p className="text-[10px] text-red-400 uppercase font-bold">Action requise : Vérifiez vos variables sur Vercel et faites un nouveau commit sur GitHub.</p>
+          <p className="text-[10px] text-red-400 uppercase font-bold">Vérifiez vos clés sur Vercel et enregistrez à nouveau sur GitHub.</p>
         </Card>
       </div>
     );
@@ -199,7 +195,7 @@ export default function App() {
       {/* Sidebar Desktop */}
       <aside className="fixed left-0 top-0 bottom-0 w-72 bg-white border-r border-slate-100 p-8 hidden md:flex flex-col">
         <div className="text-3xl font-black text-indigo-600 tracking-tighter mb-12">LIFE.</div>
-        <nav className="space-y-2 flex-1">
+        <nav className="space-y-2 flex-1 text-slate-800">
           <button onClick={() => setActiveTab('accueil')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all ${activeTab === 'accueil' ? 'bg-indigo-600 text-white shadow-xl font-bold' : 'text-slate-400 hover:text-slate-900'}`}><LayoutDashboard size={20}/> Accueil</button>
           <button onClick={() => setActiveTab('budget')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all ${activeTab === 'budget' ? 'bg-indigo-600 text-white shadow-xl font-bold' : 'text-slate-400 hover:text-slate-900'}`}><Wallet size={20}/> Finances</button>
         </nav>
@@ -210,7 +206,7 @@ export default function App() {
         {activeTab === 'accueil' ? (
           <div className="space-y-6 animate-in fade-in duration-500">
             <header className="flex justify-between items-end">
-              <div><h1 className="text-4xl font-black tracking-tighter">LIFE.</h1><p className="text-slate-500 font-medium text-sm italic">Mon tableau de bord 🇨🇭</p></div>
+              <div><h1 className="text-4xl font-black tracking-tighter text-slate-900">LIFE.</h1><p className="text-slate-500 font-medium text-sm italic">Mon tableau de bord 🇨🇭</p></div>
               <div className="text-right">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Solde Réel</p>
                 <p className={`text-2xl font-black ${stats.realBalance >= 0 ? 'text-indigo-600' : 'text-red-500'}`}>{stats.realBalance.toFixed(2)} CHF</p>
@@ -226,8 +222,8 @@ export default function App() {
                 </div>
                 <Wallet className="absolute -right-6 -bottom-6 opacity-10 w-32 h-32 rotate-12" />
               </Card>
-              <Card className="border-slate-100 shadow-sm flex flex-col justify-between bg-white">
-                <div><p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Charges Fixes</p><h2 className="text-2xl font-black mt-1 text-slate-800">{stats.totalSub.toFixed(2)} CHF</h2></div>
+              <Card className="border-slate-100 shadow-sm flex flex-col justify-between bg-white text-slate-800">
+                <div><p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Charges Fixes</p><h2 className="text-2xl font-black mt-1">{stats.totalSub.toFixed(2)} CHF</h2></div>
                 <div className="mt-4 flex gap-2 overflow-x-auto no-scrollbar">
                   {subscriptions.length > 0 ? subscriptions.map(s => <span key={s.id} className="bg-slate-50 px-3 py-1 rounded-full text-[9px] font-bold text-slate-500 whitespace-nowrap border border-slate-100">{s.name} (le {s.day})</span>) : <p className="text-[10px] text-slate-300 italic">Aucune charge fixe</p>}
                 </div>
@@ -243,7 +239,7 @@ export default function App() {
               </select>
             </div>
 
-            <Card className="bg-indigo-50 border-indigo-100">
+            <Card className="bg-indigo-50 border-indigo-100 text-slate-800">
               <div className="flex items-center gap-2 text-indigo-600 mb-2"><Target size={18}/><h3 className="text-xs font-black uppercase tracking-widest">Objectif Mensuel</h3></div>
               <div className="flex gap-2">
                 <input type="number" placeholder="Budget Max (ex: 800)" className="flex-1 p-3 rounded-xl border-none font-black text-lg outline-none focus:ring-2 focus:ring-indigo-500" value={budgetGoal || ''} onChange={e => updateBudgetGoal(e.target.value)} />
@@ -260,7 +256,7 @@ export default function App() {
                       {item.type === 'income' ? <ArrowUpCircle size={20}/> : item.type === 'fixed' ? <Clock size={20}/> : <ArrowDownCircle size={20}/>}
                     </div>
                     <div>
-                      <div className="flex items-center gap-2"><p className="font-black text-sm text-slate-800">{item.name}</p>{item.isPlanned && <span className="bg-indigo-100 text-indigo-700 text-[7px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter shadow-sm">Prévu</span>}</div>
+                      <div className="flex items-center gap-2 text-slate-800"><p className="font-black text-sm">{item.name}</p>{item.isPlanned && <span className="bg-indigo-100 text-indigo-700 text-[7px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter shadow-sm">Prévu</span>}</div>
                       <p className="text-[10px] text-slate-400 font-black uppercase">{item.date}</p>
                     </div>
                   </div>
