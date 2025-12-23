@@ -1,10 +1,4 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App.ts'
+import { bootstrapApplication } from '@angular/platform-browser';
+import App from './app'; // Importe le 'export default' de votre fichier app.ts
 
-// Ce fichier fait le lien entre votre HTML (balise #root) et votre code React (App.jsx)
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
+bootstrapApplication(App).catch((err) => console.error(err));
