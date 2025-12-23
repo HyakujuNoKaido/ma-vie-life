@@ -1,11 +1,12 @@
-import { Component, computed, signal, effect, Injectable, inject, Pipe, PipeTransform } from '@angular/core';
+import { Component, computed, signal, effect, Injectable, inject, Pipe } from '@angular/core';
 import { CommonModule, DecimalPipe, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 // --- CUSTOM PIPE: DATES FRANÇAISES ---
-// Note: Removed 'export' to ensure bootstrapping picks the App component, not the pipe.
+// Note: Removed 'export' to ensure bootstrapping picks the App component.
+// Removed 'implements PipeTransform' to avoid esbuild/JSX parsing errors.
 @Pipe({ name: 'dateFr', standalone: true })
-class DateFrPipe implements PipeTransform {
+class DateFrPipe {
   transform(value: string | Date, format: 'full' | 'short' | 'month' = 'full'): string {
     const date = new Date(value);
     if (isNaN(date.getTime())) return '';
