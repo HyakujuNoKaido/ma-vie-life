@@ -1,7 +1,8 @@
-import 'zone.js'; // Obligatoire pour Angular standard
+import 'zone.js';
 import { bootstrapApplication } from '@angular/platform-browser';
-import { App } from './app'; // Notez les accolades {} car c'est un export nommé maintenant
+import { App } from './app';
 
-bootstrapApplication(App).catch((err) => console.error(err));
+// Démarre l'app et affiche les erreurs dans la console si ça plante
+bootstrapApplication(App).catch((err) => console.error("Erreur démarrage Angular:", err));
 
 
