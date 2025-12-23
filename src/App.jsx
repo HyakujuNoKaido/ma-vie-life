@@ -1,6 +1,34 @@
-import { Component, computed, signal, effect, Injectable, inject } from '@angular/core';
-import { CommonModule, DatePipe, DecimalPipe, CurrencyPipe } from '@angular/common';
+import { Component, computed, signal, effect, Injectable, inject, Pipe, PipeTransform } from '@angular/core';
+import { CommonModule, DecimalPipe, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+
+// --- CUSTOM PIPE: DATES FRANÇAISES ---
+// Note: Removed 'export' to ensure bootstrapping picks the App component, not the pipe.
+@Pipe({ name: 'dateFr', standalone: true })
+class DateFrPipe implements PipeTransform {
+  transform(value: string | Date, format: 'full' | 'short' | 'month' = 'full'): string {
+    const date = new Date(value);
+    if (isNaN(date.getTime())) return '';
+
+    let options: Intl.DateTimeFormatOptions;
+    
+    if (format === 'short') {
+        options = { day: 'numeric', month: 'short' }; // 23 déc.
+    } else if (format === 'month') {
+        options = { month: 'long', year: 'numeric' }; // Décembre 2025
+    } else {
+        options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }; // Mardi 23 décembre 2025
+    }
+
+    try {
+        const str = date.toLocaleDateString('fr-FR', options);
+        // Mettre la première lettre en majuscule (ex: "Mardi...")
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    } catch (e) {
+        return date.toDateString(); // Fallback
+    }
+  }
+}
 
 // --- INTERFACES ---
 
@@ -63,11 +91,13 @@ interface ScheduledMeal {
   mealId: string;
   mealName: string;
   type: 'Petit-déjeuner' | 'Déjeuner' | 'Dîner' | 'Collation';
-  // Snapshot des valeurs au moment de l'ajout pour l'historique
+  // Snapshot
   caloriesSnapshot: number;
   proteinSnapshot: number;
   carbsSnapshot: number;
   fatSnapshot: number;
+  // Nouveau champ
+  consumed: boolean;
 }
 
 // FINANCE
@@ -175,12 +205,26 @@ class DataService {
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
     
-    // Ajout de données sur plusieurs mois pour tester le filtre
     const f: FinanceEntry[] = [
       { id: 'f1', date: todayStr, description: 'Salaire', amount: 5000, type: 'revenu', category: 'Salaire' },
       { id: 'f2', date: todayStr, description: 'Loyer', amount: 1500, type: 'fixe', category: 'Logement' }
     ];
     this.finances.set(f);
+
+    // Initial scheduled meal
+    const sm: ScheduledMeal = {
+        id: 'sm1',
+        date: todayStr,
+        mealId: meal.id,
+        mealName: meal.name,
+        type: 'Déjeuner',
+        caloriesSnapshot: meal.totalCalories,
+        proteinSnapshot: meal.totalProtein,
+        carbsSnapshot: meal.totalCarbs,
+        fatSnapshot: meal.totalFat,
+        consumed: false
+    };
+    this.scheduledMeals.set([sm]);
 
     this.save();
   }
@@ -202,7 +246,7 @@ class DataService {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe, DecimalPipe, CurrencyPipe],
+  imports: [CommonModule, FormsModule, DateFrPipe, DecimalPipe, CurrencyPipe],
   template: `
     <div class="flex h-screen bg-slate-950 text-slate-200 font-sans overflow-hidden selection:bg-blue-600 selection:text-white">
       
@@ -252,7 +296,7 @@ class DataService {
         <div *ngIf="activeTab() === 'home'" class="max-w-7xl mx-auto space-y-8 animate-fade">
           <header class="border-b border-slate-800 pb-6">
             <h2 class="text-3xl font-bold text-white mb-1">Tableau de bord</h2>
-            <p class="text-slate-400">{{ today | date:'EEEE dd MMMM yyyy' }}</p>
+            <p class="text-slate-400 capitalize">{{ today | dateFr:'full' }}</p>
           </header>
 
           <!-- 1. FINANCES -->
@@ -289,7 +333,7 @@ class DataService {
                   <div *ngFor="let p of upcomingPayments()" class="flex justify-between items-center bg-slate-800/50 p-2 rounded border border-slate-800">
                      <div class="min-w-0">
                         <div class="text-white font-bold truncate text-sm">{{ p.description }}</div>
-                        <div class="text-[10px] text-slate-500">{{ p.date | date:'dd/MM' }} • {{ p.category }}</div>
+                        <div class="text-[10px] text-slate-500">{{ p.date | dateFr:'short' }} • {{ p.category }}</div>
                      </div>
                      <span class="text-rose-400 font-bold text-sm ml-2">CHF {{ p.amount | number:'1.0-0' }}</span>
                   </div>
@@ -309,7 +353,7 @@ class DataService {
                </div>
                <div *ngIf="nextSession(); else noSession" class="p-6 cursor-pointer hover:bg-slate-800/50 transition flex-1 flex flex-col justify-center" (click)="openSessionDetail(nextSession()!)">
                   <p class="text-2xl font-bold text-white mb-1">{{ nextSession()!.sessionName }}</p>
-                  <p class="text-sm text-blue-400 uppercase font-bold tracking-widest">{{ nextSession()!.date | date:'EEEE dd MMMM' }}</p>
+                  <p class="text-sm text-blue-400 uppercase font-bold tracking-widest capitalize">{{ nextSession()!.date | dateFr:'full' }}</p>
                   <div class="mt-4 text-xs text-slate-500 flex items-center gap-2">
                      <span class="w-2 h-2 rounded-full bg-blue-500"></span> Voir les détails
                   </div>
@@ -317,30 +361,42 @@ class DataService {
                <ng-template #noSession><div class="p-8 text-center text-slate-500 italic">Aucune séance planifiée.</div></ng-template>
             </div>
 
-            <!-- Widget Nutrition -->
+            <!-- Widget Nutrition (To Eat List) -->
             <div class="bg-slate-900 border border-slate-800 rounded-xl p-0 overflow-hidden shadow-lg">
                <div class="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
                   <h3 class="text-lg font-bold text-white flex items-center gap-2">
                      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 17h11"/><path d="M6 20h12a1 1 0 0 0 1-1v-5c0-2.5-2-6.5-7-8-5 1.5-7 5.5-7 8v5a1 1 0 0 0 1 1Z"/><path d="M6 9v5"/></svg>
-                     Total Journalier
+                     Repas du Jour
                   </h3>
                </div>
-               <div class="p-6 text-center">
-                  <div class="text-5xl font-extrabold text-white mb-2 tracking-tight">{{ todaysMacros().cal | number:'1.0-0' }} <span class="text-lg font-normal text-slate-500">kcal</span></div>
-                  <div class="flex justify-center gap-6 mt-4">
-                     <div class="text-center">
-                        <div class="text-emerald-400 font-bold text-xl">{{ todaysMacros().prot | number:'1.0-0' }}g</div>
-                        <div class="text-[10px] text-slate-500 uppercase tracking-wider">Prot</div>
+               <div class="p-0">
+                  <div *ngIf="todaysMealsUnconsumed().length === 0" class="p-8 text-center text-slate-500 italic">
+                     Tout a été consommé ! ({{ todaysCalories() | number:'1.0-0' }} kcal)
+                  </div>
+                  
+                  <div *ngFor="let m of todaysMealsUnconsumed()" 
+                       class="flex items-center justify-between p-4 border-b border-slate-800 hover:bg-slate-900/50 transition cursor-pointer group"
+                       (click)="openMealDetail(m)">
+                     <div class="flex items-center gap-4">
+                        <!-- Checkbox: Stop propagation to prevent opening details when checking -->
+                        <div class="relative flex items-center" (click)="$event.stopPropagation()">
+                           <input type="checkbox" [checked]="m.consumed" (change)="toggleMealConsumed(m.id)" 
+                                  class="w-5 h-5 appearance-none border border-slate-600 rounded bg-slate-800 checked:bg-emerald-500 checked:border-emerald-500 cursor-pointer transition">
+                           <svg class="absolute w-3 h-3 text-white pointer-events-none left-1 top-1 hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <div>
+                           <p class="text-xs text-slate-500 uppercase font-bold tracking-wider">{{ m.type }}</p>
+                           <p class="text-white font-bold">{{ m.mealName }}</p>
+                        </div>
                      </div>
-                     <div class="text-center">
-                        <div class="text-amber-400 font-bold text-xl">{{ todaysMacros().carb | number:'1.0-0' }}g</div>
-                        <div class="text-[10px] text-slate-500 uppercase tracking-wider">Gluc</div>
-                     </div>
-                     <div class="text-center">
-                        <div class="text-rose-400 font-bold text-xl">{{ todaysMacros().fat | number:'1.0-0' }}g</div>
-                        <div class="text-[10px] text-slate-500 uppercase tracking-wider">Lip</div>
+                     <div class="text-right">
+                        <p class="text-emerald-400 font-mono text-sm">{{ m.caloriesSnapshot | number:'1.0-0' }} kcal</p>
+                        <p class="text-xs text-slate-600 group-hover:text-blue-400 transition">Détails ›</p>
                      </div>
                   </div>
+               </div>
+               <div class="p-3 bg-slate-900/30 text-center border-t border-slate-800">
+                  <p class="text-xs text-slate-500">Total Journalier: <span class="text-emerald-400 font-bold">{{ todaysCalories() | number:'1.0-0' }} kcal</span></p>
                </div>
             </div>
           </section>
@@ -413,7 +469,7 @@ class DataService {
                        </tr>
                        <tr *ngFor="let t of filteredTransactions()" class="hover:bg-slate-900 transition">
                           <td class="p-3">
-                             <div class="text-white">{{ t.date | date:'dd/MM' }}</div>
+                             <div class="text-white capitalize">{{ t.date | dateFr:'short' }}</div>
                              <div class="text-[10px] uppercase font-bold mt-1" [class]="t.type === 'revenu' ? 'text-emerald-500' : (t.type === 'fixe' ? 'text-rose-500' : 'text-orange-500')">{{ t.type }}</div>
                           </td>
                           <td class="p-3">
@@ -449,7 +505,7 @@ class DataService {
               <h3 class="text-white font-bold mb-4 pt-6 border-t border-slate-800">Calendrier des Séances</h3>
               <div class="space-y-2">
                  <div *ngFor="let s of sortedScheduledSessions()" class="flex items-center bg-slate-900 border border-slate-800 p-4 rounded hover:border-slate-700 transition">
-                    <div class="w-16 text-center border-r border-slate-800 pr-4 mr-4"><div class="text-xs text-slate-500 uppercase font-bold">{{ s.date | date:'MMM' }}</div><div class="text-2xl font-bold text-white">{{ s.date | date:'dd' }}</div></div>
+                    <div class="w-16 text-center border-r border-slate-800 pr-4 mr-4"><div class="text-xs text-slate-500 uppercase font-bold">{{ s.date | dateFr:'short' }}</div><div class="text-2xl font-bold text-white">{{ s.date | date:'dd' }}</div></div>
                     <div class="flex-1 cursor-pointer" (click)="openSessionDetail(s)"><div class="text-white font-bold text-lg">{{ s.sessionName }}</div><div class="text-xs text-blue-400">Voir le détail</div></div>
                     <button (click)="removeScheduledSession(s.id)" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-rose-900/50 text-slate-600 hover:text-rose-500 transition">×</button>
                  </div>
@@ -513,11 +569,12 @@ class DataService {
               </div>
               <h3 class="text-white font-bold mb-4 pt-6 border-t border-slate-800">Menu Planifié</h3>
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                 <div *ngFor="let m of sortedScheduledMeals()" (click)="openMealDetail(m)" class="bg-slate-900 border border-slate-800 p-4 rounded hover:border-emerald-500 cursor-pointer transition relative group">
+                 <div *ngFor="let m of sortedScheduledMeals()" (click)="openMealDetail(m)" class="bg-slate-900 border border-slate-800 p-4 rounded hover:border-emerald-500 cursor-pointer transition relative group" [class.opacity-50]="m.consumed">
                     <button (click)="removeScheduledMeal(m.id); $event.stopPropagation()" class="absolute top-2 right-2 text-rose-500 opacity-0 group-hover:opacity-100 transition">×</button>
-                    <div class="text-xs text-slate-500 uppercase font-bold">{{ m.date | date:'dd/MM' }} - {{ m.type }}</div>
-                    <div class="text-white font-bold text-lg mt-1 truncate">{{ m.mealName }}</div>
+                    <div class="text-xs text-slate-500 uppercase font-bold">{{ m.date | dateFr:'short' }} - {{ m.type }}</div>
+                    <div class="text-white font-bold text-lg mt-1 truncate" [class.line-through]="m.consumed">{{ m.mealName }}</div>
                     <div class="text-emerald-400 text-sm font-mono mt-2">{{ m.caloriesSnapshot | number:'1.0-0' }} kcal</div>
+                    <div *ngIf="m.consumed" class="absolute bottom-2 right-2 text-[10px] bg-emerald-900 text-emerald-300 px-2 rounded">Mangé</div>
                  </div>
               </div>
            </div>
@@ -591,7 +648,7 @@ class DataService {
       <div *ngIf="sessionModalData" class="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade">
          <div class="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
             <div class="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-950">
-               <div><h3 class="text-2xl font-bold text-white">{{ sessionModalData.name }}</h3><p class="text-blue-400 uppercase font-bold text-sm" *ngIf="planningMode">Planification</p><p class="text-blue-400 uppercase font-bold text-sm" *ngIf="!planningMode">{{ sessionModalData.date | date:'EEEE dd MMMM' }}</p></div>
+               <div><h3 class="text-2xl font-bold text-white">{{ sessionModalData.name }}</h3><p class="text-blue-400 uppercase font-bold text-sm" *ngIf="planningMode">Planification</p><p class="text-blue-400 uppercase font-bold text-sm" *ngIf="!planningMode capitalize">{{ sessionModalData.date | dateFr:'full' }}</p></div>
                <button (click)="closeSessionModal()" class="w-8 h-8 rounded-full bg-slate-800 text-white hover:bg-rose-600 transition">✕</button>
             </div>
             <div class="p-6 overflow-y-auto space-y-4 flex-1">
@@ -635,6 +692,11 @@ class DataService {
                </div>
                <button (click)="confirmScheduleMeal()" class="w-full bg-emerald-600 text-white py-3 rounded font-bold uppercase">Ajouter au Menu</button>
             </div>
+            
+            <!-- Detail Mode Action (Nav to Nutrition) -->
+            <div *ngIf="!planningMode" class="p-6 border-t border-slate-800 bg-slate-950">
+               <button (click)="closeMealModal(); activeTab.set('nutrition'); nutriView='schedule'" class="w-full border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 py-3 rounded font-bold uppercase transition">Voir Planning Complet</button>
+            </div>
          </div>
       </div>
 
@@ -647,6 +709,7 @@ class DataService {
     ::-webkit-scrollbar-track { background: #020617; }
     ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #334155; }
+    .capitalize { text-transform: capitalize; }
   `]
 })
 export class App {
@@ -703,9 +766,8 @@ export class App {
   // --- FINANCE ---
   newTransaction: Partial<FinanceEntry> = { type: 'fixe', date: new Date().toISOString().split('T')[0], category: '' };
   
-  // Date Filtering
   months = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
-  years = Array.from({length: 11}, (_, i) => new Date().getFullYear() - 5 + i); // Current -5 to +5
+  years = Array.from({length: 11}, (_, i) => new Date().getFullYear() - 5 + i); 
   
   selectedFinanceMonth = signal(new Date().getMonth());
   selectedFinanceYear = signal(new Date().getFullYear());
@@ -735,26 +797,19 @@ export class App {
     }
   }
   deleteTransaction(id: string) { this.dataService.finances.update(prev => prev.filter(x => x.id !== id)); this.dataService.save(); }
-  
-  // Computeds for Finance
   sortedTransactions = computed(() => this.dataService.finances().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-  
-  // Filtered by Selected Month/Year
   filteredTransactions = computed(() => {
      return this.sortedTransactions().filter(t => {
         const d = new Date(t.date);
         return d.getMonth() == this.selectedFinanceMonth() && d.getFullYear() == this.selectedFinanceYear();
      });
   });
-
   monthlyStats = computed(() => {
      const txs = this.filteredTransactions();
      const income = txs.filter(t => t.type === 'revenu').reduce((acc, t) => acc + t.amount, 0);
      const expenses = txs.filter(t => t.type !== 'revenu').reduce((acc, t) => acc + t.amount, 0);
      return { income, expenses, balance: income - expenses };
   });
-
-  // Global Dashboard Stats (Current/Global View)
   totalBalance = computed(() => this.dataService.finances().reduce((acc, cur) => cur.type === 'revenu' ? acc + cur.amount : acc - cur.amount, 0));
   totalExpenses = computed(() => this.dataService.finances().filter(f => f.type !== 'revenu').reduce((acc, cur) => acc + cur.amount, 0));
   remainingBudget = computed(() => this.dataService.monthlyBudget() - this.totalExpenses());
@@ -892,7 +947,8 @@ export class App {
         caloriesSnapshot: mDef.totalCalories,
         proteinSnapshot: mDef.totalProtein,
         carbsSnapshot: mDef.totalCarbs,
-        fatSnapshot: mDef.totalFat
+        fatSnapshot: mDef.totalFat,
+        consumed: false
       };
       this.dataService.scheduledMeals.update(prev => [...prev, sm]);
       this.dataService.save();
@@ -901,8 +957,20 @@ export class App {
   }
   sortedScheduledMeals = computed(() => this.dataService.scheduledMeals().sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
   removeScheduledMeal(id: string) { this.dataService.scheduledMeals.update(prev => prev.filter(x => x.id !== id)); this.dataService.save(); }
+  toggleMealConsumed(id: string) {
+    this.dataService.scheduledMeals.update(prev => prev.map(m => m.id === id ? { ...m, consumed: !m.consumed } : m));
+    this.dataService.save();
+  }
   
-  todaysMeals = computed(() => { const d = this.today.toISOString().split('T')[0]; return this.dataService.scheduledMeals().filter(s => s.date === d); });
+  todaysMealsUnconsumed = computed(() => { 
+      const d = this.today.toISOString().split('T')[0]; 
+      return this.dataService.scheduledMeals().filter(s => s.date === d && !s.consumed); 
+  });
+  todaysCalories = computed(() => {
+     const d = this.today.toISOString().split('T')[0];
+     const meals = this.dataService.scheduledMeals().filter(s => s.date === d);
+     return meals.reduce((acc, c) => acc + c.caloriesSnapshot, 0);
+  });
   todaysMacros = computed(() => {
      const d = this.today.toISOString().split('T')[0];
      const meals = this.dataService.scheduledMeals().filter(s => s.date === d);
