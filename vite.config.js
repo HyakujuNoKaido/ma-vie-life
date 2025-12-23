@@ -1,13 +1,11 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite';
+import angular from '@analogjs/vite-plugin-angular';
 
-// Ce fichier indique à Vercel d'utiliser le moteur React
 export default defineConfig({
-  plugins: [react()],
-  build: {
-    outDir: 'dist',
+  plugins: [angular()],
+  resolve: {
+    mainFields: ['module'],
   },
-  server: {
-    port: 3000,
-  }
-})
+});
+
+
