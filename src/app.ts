@@ -3,12 +3,12 @@ import { CommonModule, DecimalPipe, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 // --- 1. CUSTOM PIPE ---
-// Defined first for availability, but NOT exported yet to avoid bootstrapping precedence issues.
+// L'export est obligatoire pour que la compilation AOT (Vercel) fonctionne
 @Pipe({
   name: 'dateFr',
   standalone: true
 })
-class DateFrPipe implements PipeTransform {
+export class DateFrPipe implements PipeTransform {
   transform(value: string | Date, format: string = 'full'): string {
     const date = new Date(value);
     if (isNaN(date.getTime())) return '';
@@ -32,11 +32,10 @@ class DateFrPipe implements PipeTransform {
 }
 
 // --- 2. DATA SERVICE ---
-// Defined before App so 'inject(DataService)' works. Not exported in-place.
 @Injectable({
   providedIn: 'root'
 })
-class DataService {
+export class DataService {
   exercises = signal<any[]>([]);
   sessions = signal<any[]>([]);
   ingredients = signal<any[]>([]);
@@ -50,7 +49,6 @@ class DataService {
     this.loadFromStorage();
   }
 
-  // Safe helper to check for browser environment
   private isBrowser(): boolean {
     return typeof window !== 'undefined' && typeof localStorage !== 'undefined';
   }
@@ -172,7 +170,6 @@ class DataService {
 }
 
 // --- 3. MAIN COMPONENT ---
-// Exported as a named export FIRST (or as the primary visible export) to guide the bootstrapper.
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -585,5 +582,3 @@ export class App {
   }
 }
 
-// Ensure these are available for build tools expecting exported symbols
-export { DateFrPipe, DataService };
