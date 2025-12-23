@@ -1,5 +1,5 @@
 import { Component, computed, signal, Injectable, inject, Pipe, PipeTransform } from '@angular/core';
-import { CommonModule, DecimalPipe, CurrencyPipe, DatePipe } from '@angular/common';
+import { CommonModule, DecimalPipe, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 // --- 1. PIPE ---
@@ -192,7 +192,7 @@ export class DataService {
                     <div>
                        <p class="text-white font-bold">{{ ex.name }}</p>
                        <p class="text-xs text-slate-500 uppercase">{{ ex.bodyPart }} • {{ ex.equipment }}</p>
-                       <p class="text-xs text-blue-400 mt-1">{{ ex.sets }} x {{ ex.reps }} @ {{ ex.weight }}kg</p>
+                       <p class="text-xs text-blue-400 mt-1">{{ ex.sets }} x {{ ex.reps }} &#64; {{ ex.weight }}kg</p>
                     </div>
                     <button (click)="editExercise(ex)" class="text-slate-600 hover:text-white px-3 py-1 border border-slate-700 rounded text-xs">Edit</button>
                  </div>
@@ -372,7 +372,7 @@ export class DataService {
             <div class="p-4 overflow-y-auto flex-1 space-y-3">
                <div *ngFor="let ex of sessionModalData.exercises" class="bg-slate-950 p-3 rounded border border-slate-800">
                   <p class="text-white font-bold">{{ ex.name }}</p>
-                  <p class="text-xs text-slate-500">{{ ex.sets }} x {{ ex.reps }} @ {{ ex.weight }}kg</p>
+                  <p class="text-xs text-slate-500">{{ ex.sets }} x {{ ex.reps }} &#64; {{ ex.weight }}kg</p>
                </div>
             </div>
             <div *ngIf="planningMode" class="p-4 border-t border-slate-800 bg-slate-900 flex gap-2">
