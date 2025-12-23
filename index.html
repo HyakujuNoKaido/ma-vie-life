@@ -5,10 +5,15 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LifeTrack</title>
+    <!-- Patch pour éviter le crash "global is not defined" -->
+    <script>window.global = window;</script>
+    <!-- Ajout de Tailwind via CDN pour que le design s'affiche tout de suite -->
+    <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body>
     <app-root></app-root>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
+
 
