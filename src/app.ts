@@ -2,7 +2,7 @@ import { Component, computed, signal, Injectable, inject, Pipe, PipeTransform } 
 import { CommonModule, DecimalPipe, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-// --- 1. PIPE ---
+// --- 1. PIPE (Date Français) ---
 @Pipe({ name: 'dateFr', standalone: true })
 export class DateFrPipe implements PipeTransform {
   transform(value: string | Date, format: string = 'full'): string {
@@ -11,7 +11,7 @@ export class DateFrPipe implements PipeTransform {
     let options: Intl.DateTimeFormatOptions;
     if (format === 'short') options = { day: 'numeric', month: 'short' };
     else if (format === 'month') options = { month: 'long', year: 'numeric' };
-    else options = { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' };
+    else options = { weekday: 'long', day: 'numeric', month: 'long' };
     try {
       const str = date.toLocaleDateString('fr-FR', options);
       return str.charAt(0).toUpperCase() + str.slice(1);
@@ -19,7 +19,7 @@ export class DateFrPipe implements PipeTransform {
   }
 }
 
-// --- 2. SERVICE ---
+// --- 2. SERVICE (Données) ---
 @Injectable({ providedIn: 'root' })
 export class DataService {
   exercises = signal<any[]>([]);
@@ -56,12 +56,14 @@ export class DataService {
   }
 
   injectData() {
+    // Données de démo
     const exs = [
-      { id: 'ex1', name: 'Développé Couché', bodyPart: 'Pectoraux', equipment: 'Barre', sets: 4, reps: 10, weight: 80, imageUrl: "https://placehold.co/60x60/3b82f6/white?text=Bench" },
-      { id: 'ex2', name: 'Squat', bodyPart: 'Jambes', equipment: 'Barre', sets: 4, reps: 8, weight: 100, imageUrl: "https://placehold.co/60x60/3b82f6/white?text=Squat" }
+      { id: 'ex1', name: 'Développé Couché', bodyPart: 'Pectoraux', equipment: 'Barre', sets: 4, reps: 10, weight: 80 },
+      { id: 'ex2', name: 'Squat', bodyPart: 'Jambes', equipment: 'Barre', sets: 4, reps: 8, weight: 100 },
+      { id: 'ex3', name: 'Tractions', bodyPart: 'Dos', equipment: 'Poids du corps', sets: 3, reps: 12, weight: 0 }
     ];
     this.exercises.set(exs);
-    const sess = { id: 'sess1', name: 'Full Body A', exercises: [exs[0], exs[1]], totalDuration: 60 };
+    const sess = { id: 'sess1', name: 'Full Body A', exercises: [exs[0], exs[1], exs[2]], totalDuration: 60 };
     this.sessions.set([sess]);
     const ings = [
       { id: 'ing1', name: 'Poulet (cru)', baseUnit: '100g', calories: 120, protein: 23, carbs: 0, fat: 2.5 },
@@ -71,8 +73,12 @@ export class DataService {
     const meal = { id: 'meal1', name: 'Post-Workout', items: [{ ingredient: ings[0], quantity: 150 }, { ingredient: ings[1], quantity: 200 }], totalCalories: 440, totalProtein: 40, totalCarbs: 56, totalFat: 4 };
     this.meals.set([meal]);
     const today = new Date().toISOString().split('T')[0];
-    this.finances.set([{ id: 'f1', date: today, description: 'Salaire', amount: 5000, type: 'revenu', category: 'Salaire' }]);
+    this.finances.set([
+        { id: 'f1', date: today, description: 'Salaire', amount: 5000, type: 'revenu', category: 'Salaire' },
+        { id: 'f2', date: today, description: 'Loyer', amount: 1600, type: 'fixe', category: 'Logement' }
+    ]);
     this.scheduledMeals.set([{ id: 'sm1', date: today, mealId: meal.id, mealName: meal.name, type: 'Déjeuner', caloriesSnapshot: meal.totalCalories, proteinSnapshot: meal.totalProtein, carbsSnapshot: meal.totalCarbs, fatSnapshot: meal.totalFat, consumed: false }]);
+    this.scheduledSessions.set([{ id: 'ss1', date: today, sessionId: sess.id, sessionName: sess.name, completed: false }]);
     this.save();
   }
 
@@ -89,8 +95,9 @@ export class DataService {
       
       <!-- NAV MOBILE (Bottom) -->
       <nav class="md:hidden fixed bottom-0 w-full bg-slate-900/95 backdrop-blur border-t border-slate-800 flex justify-around items-center z-50 h-16 pb-safe">
-        <button *ngFor="let t of tabs" (click)="activeTab.set(t.id)" class="flex flex-col items-center justify-center w-full h-full space-y-1" [class.text-blue-500]="activeTab() === t.id" [class.text-slate-500]="activeTab() !== t.id">
-           <span class="text-xl">{{t.icon}}</span><span class="text-[10px] font-bold uppercase">{{t.label}}</span>
+        <button *ngFor="let t of tabs" (click)="activeTab.set(t.id)" class="flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors" [class.text-blue-500]="activeTab() === t.id" [class.text-slate-500]="activeTab() !== t.id">
+           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" [innerHTML]="t.svg"></svg>
+           <span class="text-[10px] font-bold uppercase">{{t.label}}</span>
         </button>
       </nav>
 
@@ -99,10 +106,10 @@ export class DataService {
         <div class="p-6 border-b border-slate-800"><h1 class="text-2xl font-bold text-white uppercase tracking-tighter">Life<span class="text-blue-500">Track</span></h1></div>
         <nav class="flex-1 py-6 space-y-2">
           <button *ngFor="let t of tabs" (click)="activeTab.set(t.id)" [class]="activeTab() === t.id ? 'bg-blue-600/10 text-blue-400 border-r-4 border-blue-600' : 'text-slate-400 hover:bg-slate-800 border-r-4 border-transparent'" class="w-full flex items-center space-x-4 px-6 py-3 transition-all hover:pl-7">
-             <span class="text-xl">{{t.icon}}</span><span class="text-sm font-bold uppercase tracking-wider">{{t.label}}</span>
+             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" [innerHTML]="t.svg"></svg>
+             <span class="text-sm font-bold uppercase tracking-wider">{{t.label}}</span>
           </button>
         </nav>
-        <div class="p-4 border-t border-slate-800"><button (click)="activeTab.set('data')" class="text-xs text-slate-500 hover:text-white transition w-full flex items-center gap-2 px-4 py-2 rounded hover:bg-slate-800"><span>⚙️</span><span>Système</span></button></div>
       </aside>
 
       <!-- MAIN CONTENT -->
@@ -118,27 +125,65 @@ export class DataService {
         <div *ngIf="activeTab() === 'home'" class="animate-fade space-y-6">
           <header class="hidden md:block border-b border-slate-800 pb-6"><h2 class="text-3xl font-bold text-white mb-1">Tableau de bord</h2><p class="text-slate-400 capitalize">{{ today | dateFr:'full' }}</p></header>
           
+          <!-- Solde Card -->
           <div class="bg-gradient-to-br from-slate-900 to-slate-800 p-6 rounded-2xl border border-slate-800 shadow-xl relative overflow-hidden">
-             <p class="text-slate-400 uppercase text-xs font-bold tracking-widest mb-1">Solde Disponible</p>
-             <p [class]="totalBalance() >= 0 ? 'text-white' : 'text-rose-400'" class="text-4xl md:text-5xl font-black tracking-tight">CHF {{ totalBalance() | number:'1.2-2' }}</p>
+             <div class="flex justify-between items-start">
+               <div>
+                 <p class="text-slate-400 uppercase text-xs font-bold tracking-widest mb-1">Solde Disponible</p>
+                 <p [class]="totalBalance() >= 0 ? 'text-white' : 'text-rose-400'" class="text-4xl md:text-5xl font-black tracking-tight">CHF {{ totalBalance() | number:'1.2-2' }}</p>
+               </div>
+               <div class="text-right">
+                 <p class="text-slate-500 text-[10px] uppercase font-bold">Budget</p>
+                 <p class="text-slate-300 font-mono font-bold">CHF {{ dataService.monthlyBudget() }}</p>
+               </div>
+             </div>
              <div class="h-4 bg-slate-700/50 rounded-full mt-4 overflow-hidden"><div class="h-full bg-blue-500 transition-all" [style.width.%]="budgetPercent()"></div></div>
              <p class="text-xs text-right mt-1 text-slate-400">Budget utilisé: {{ budgetPercent() | number:'1.0-0' }}%</p>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
-                <h3 class="text-white font-bold mb-4 flex items-center gap-2"><span class="text-orange-400">⚡️</span> Prochaine Séance</h3>
-                <div *ngIf="nextSession(); else noSession" (click)="openSessionDetail(nextSession())" class="cursor-pointer bg-slate-800/50 p-4 rounded-lg hover:bg-slate-800 transition">
-                   <p class="text-xl font-bold text-white">{{ nextSession().sessionName }}</p>
-                   <p class="text-xs text-blue-400 uppercase font-bold mt-1">{{ nextSession().date | dateFr:'short' }}</p>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+             <!-- Next Session -->
+             <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg flex flex-col">
+                <h3 class="text-white font-bold mb-4 flex items-center gap-2">
+                   <svg class="text-orange-400" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 11 11"/><path d="m21 21-1-1"/><path d="m3 3 1 1"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/></svg>
+                   Prochaine Séance
+                </h3>
+                <div *ngIf="nextSession(); else noSession" class="flex-1 flex flex-col">
+                   <div (click)="openSessionDetail(nextSession())" class="cursor-pointer bg-slate-800/50 p-4 rounded-lg hover:bg-slate-800 transition mb-3 flex-1 border border-slate-800 hover:border-blue-500/50">
+                      <div class="flex justify-between items-start">
+                        <div>
+                           <p class="text-xl font-bold text-white">{{ nextSession().sessionName }}</p>
+                           <p class="text-xs text-blue-400 uppercase font-bold mt-1">{{ nextSession().date | dateFr:'short' }}</p>
+                        </div>
+                        <span class="text-xs bg-slate-900 px-2 py-1 rounded text-slate-400 border border-slate-700">Détails ›</span>
+                      </div>
+                      <div class="mt-3 flex flex-wrap gap-1">
+                         <span class="text-[10px] text-slate-500 bg-slate-900 px-2 py-1 rounded">Cliquez pour voir les exercices</span>
+                      </div>
+                   </div>
+                   <button (click)="goToSportEdit(nextSession())" class="w-full py-2 bg-slate-800 text-slate-300 text-xs font-bold uppercase rounded hover:text-white hover:bg-slate-700 transition">Modifier la séance</button>
                 </div>
-                <ng-template #noSession><p class="text-slate-500 text-sm italic">Rien de prévu.</p></ng-template>
+                <ng-template #noSession><div class="flex-1 flex items-center justify-center text-slate-500 text-sm italic min-h-[100px]">Aucune séance planifiée.</div></ng-template>
              </div>
-             <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
-                <h3 class="text-white font-bold mb-4 flex items-center gap-2"><span class="text-emerald-400">🥗</span> Calories du Jour</h3>
-                <div class="flex justify-between items-end">
-                   <div><span class="text-3xl font-bold text-white">{{ todaysCalories() | number:'1.0-0' }}</span> <span class="text-xs text-slate-500">kcal</span></div>
-                   <div class="text-right text-xs"><div class="text-blue-400 font-bold">{{ todaysMacros().prot | number:'1.0-0' }}g Prot</div></div>
+
+             <!-- Daily Meals -->
+             <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                   <h3 class="text-white font-bold flex items-center gap-2">
+                      <svg class="text-emerald-400" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 10.5a1.5 1.5 0 0 1 3 0v2.8a2 2 0 0 1-2 2H12a2 2 0 0 1-2-2v-2.8Z"/><path d="M7 10.5a1.5 1.5 0 0 1 3 0v2.8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-2.8Z"/><path d="M15 10.5a1.5 1.5 0 0 1 3 0v2.8a2 2 0 0 1-2 2H16a2 2 0 0 1-2-2v-2.8Z"/><rect width="18" height="14" x="3" y="6" rx="2"/><path d="M7 6V4a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v2"/></svg>
+                      Repas du Jour
+                   </h3>
+                   <span class="text-xs font-mono text-emerald-400 font-bold">{{ todaysCalories() | number:'1.0-0' }} kcal</span>
+                </div>
+                <div class="space-y-2 flex-1 overflow-y-auto max-h-[200px]">
+                   <p *ngIf="todaysMealsUnconsumed().length === 0" class="text-slate-600 text-sm italic text-center py-4">Tout est consommé.</p>
+                   <div *ngFor="let m of todaysMealsUnconsumed()" class="flex items-center gap-3 bg-slate-800/30 p-2 rounded-lg border border-slate-800 hover:border-slate-700 transition">
+                      <input type="checkbox" (change)="toggleMealConsumed(m.id)" class="w-5 h-5 rounded border-slate-600 bg-slate-900 text-emerald-500 focus:ring-emerald-500 cursor-pointer">
+                      <div (click)="openMealDetail(m)" class="flex-1 cursor-pointer">
+                         <p class="text-white text-sm font-bold">{{ m.mealName }}</p>
+                         <p class="text-[10px] text-slate-500 uppercase">{{ m.type }} • {{ m.caloriesSnapshot }} kcal</p>
+                      </div>
+                   </div>
                 </div>
              </div>
           </div>
@@ -147,46 +192,49 @@ export class DataService {
         <!-- --- SPORT TAB --- -->
         <div *ngIf="activeTab() === 'sport'" class="space-y-6 animate-fade">
            <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-              <button *ngFor="let v of ['schedule', 'library', 'sessions']" (click)="sportView = v" [class]="sportView === v ? 'bg-blue-600 text-white' : 'bg-slate-900 text-slate-400'" class="px-4 py-2 rounded-full text-xs font-bold uppercase whitespace-nowrap transition border border-slate-800">{{ v === 'schedule' ? 'Planning' : v === 'library' ? 'Exercices' : 'Séances' }}</button>
+              <button *ngFor="let v of ['schedule', 'library', 'sessions']" (click)="sportView = v" [class]="sportView === v ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-900 text-slate-400 border-slate-800'" class="px-4 py-2 rounded-full text-xs font-bold uppercase whitespace-nowrap transition border shadow-sm">{{ v === 'schedule' ? 'Planning' : v === 'library' ? 'Exercices' : 'Séances' }}</button>
            </div>
 
-           <div *ngIf="sportView === 'schedule'">
-              <h3 class="text-white font-bold mb-4">Planning</h3>
-              <div class="grid gap-3">
-                 <div *ngFor="let s of sortedScheduledSessions()" class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex items-center justify-between">
-                    <div (click)="openSessionDetail(s)" class="flex-1 cursor-pointer">
-                       <p class="text-xs text-blue-400 font-bold uppercase">{{ s.date | dateFr:'short' }}</p>
-                       <p class="text-white font-bold text-lg">{{ s.sessionName }}</p>
-                    </div>
-                    <button (click)="removeScheduledSession(s.id)" class="text-slate-600 hover:text-rose-500 p-2">✕</button>
-                 </div>
-              </div>
-              <div class="mt-8 pt-6 border-t border-slate-800">
-                 <h3 class="text-slate-400 text-xs font-bold uppercase mb-4">Planifier une séance</h3>
-                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div *ngFor="let s of dataService.sessions()" (click)="selectSessionForPlanning(s)" class="bg-slate-900 border border-slate-800 p-4 rounded-xl hover:border-blue-500 cursor-pointer transition">
-                       <p class="text-white font-bold">{{ s.name }}</p>
-                       <p class="text-xs text-slate-500">{{ s.totalDuration }} min • {{ s.exercises.length }} exos</p>
-                    </div>
-                 </div>
-              </div>
-           </div>
-
+           <!-- Library with Filters -->
            <div *ngIf="sportView === 'library'">
               <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 mb-6">
-                 <h3 class="text-white font-bold mb-4 text-sm uppercase">Ajouter / Modifier</h3>
-                 <input [(ngModel)]="exerciseForm.name" placeholder="Nom de l'exercice" class="w-full bg-slate-950 border border-slate-700 text-white p-3 rounded-lg mb-2 text-sm">
-                 <div class="grid grid-cols-2 gap-2 mb-2">
-                    <input [(ngModel)]="exerciseForm.bodyPart" placeholder="Muscle" class="bg-slate-950 border border-slate-700 text-white p-3 rounded-lg text-sm">
-                    <input [(ngModel)]="exerciseForm.equipment" placeholder="Matériel" class="bg-slate-950 border border-slate-700 text-white p-3 rounded-lg text-sm">
+                 <h3 class="text-white font-bold mb-4 text-sm uppercase flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg> Filtres & Ajout</h3>
+                 
+                 <!-- Filters -->
+                 <div class="grid grid-cols-2 gap-2 mb-4">
+                    <div>
+                        <label class="text-[10px] uppercase text-slate-500 font-bold mb-1 block">Corps</label>
+                        <select [ngModel]="filterBodyPart" (ngModelChange)="filterBodyPart.set($event)" class="w-full bg-slate-950 border border-slate-700 text-white p-2 rounded-lg text-sm">
+                            <option value="">Tout</option>
+                            <option *ngFor="let p of uniqueBodyParts()" [value]="p">{{ p }}</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] uppercase text-slate-500 font-bold mb-1 block">Matériel</label>
+                        <select [ngModel]="filterEquipment" (ngModelChange)="filterEquipment.set($event)" class="w-full bg-slate-950 border border-slate-700 text-white p-2 rounded-lg text-sm">
+                            <option value="">Tout</option>
+                            <option *ngFor="let e of uniqueEquipment()" [value]="e">{{ e }}</option>
+                        </select>
+                    </div>
                  </div>
-                 <div class="grid grid-cols-3 gap-2 mb-4">
-                    <input type="number" [(ngModel)]="exerciseForm.sets" placeholder="Séries" class="bg-slate-950 border border-slate-700 text-white p-2 rounded-lg text-center text-sm">
-                    <input type="number" [(ngModel)]="exerciseForm.reps" placeholder="Reps" class="bg-slate-950 border border-slate-700 text-white p-2 rounded-lg text-center text-sm">
-                    <input type="number" [(ngModel)]="exerciseForm.weight" placeholder="Kg" class="bg-slate-950 border border-slate-700 text-white p-2 rounded-lg text-center text-sm">
+
+                 <!-- Add Form -->
+                 <div class="pt-4 border-t border-slate-800">
+                    <input [(ngModel)]="exerciseForm.name" placeholder="Nom de l'exercice" class="w-full bg-slate-950 border border-slate-700 text-white p-3 rounded-lg mb-2 text-sm">
+                    <div class="grid grid-cols-2 gap-2 mb-2">
+                        <input [(ngModel)]="exerciseForm.bodyPart" placeholder="Muscle (ex: Dos)" class="bg-slate-950 border border-slate-700 text-white p-3 rounded-lg text-sm">
+                        <input [(ngModel)]="exerciseForm.equipment" placeholder="Matériel (ex: Barre)" class="bg-slate-950 border border-slate-700 text-white p-3 rounded-lg text-sm">
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 mb-4">
+                        <input type="number" [(ngModel)]="exerciseForm.sets" placeholder="Séries" class="bg-slate-950 border border-slate-700 text-white p-2 rounded-lg text-center text-sm">
+                        <input type="number" [(ngModel)]="exerciseForm.reps" placeholder="Reps" class="bg-slate-950 border border-slate-700 text-white p-2 rounded-lg text-center text-sm">
+                        <input type="number" [(ngModel)]="exerciseForm.weight" placeholder="Kg" class="bg-slate-950 border border-slate-700 text-white p-2 rounded-lg text-center text-sm">
+                    </div>
+                    <button (click)="saveExercise()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold uppercase text-xs hover:bg-blue-500 transition">{{ editingExercise ? 'Mettre à jour' : 'Ajouter' }}</button>
                  </div>
-                 <button (click)="saveExercise()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold uppercase text-xs">{{ editingExercise ? 'Mettre à jour' : 'Ajouter' }}</button>
               </div>
+
+              <!-- Exercise List -->
               <div class="grid gap-3">
                  <div *ngFor="let ex of filteredExercises()" class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex justify-between items-center group">
                     <div>
@@ -195,6 +243,29 @@ export class DataService {
                        <p class="text-xs text-blue-400 mt-1">{{ ex.sets }} x {{ ex.reps }} &#64; {{ ex.weight }}kg</p>
                     </div>
                     <button (click)="editExercise(ex)" class="text-slate-600 hover:text-white px-3 py-1 border border-slate-700 rounded text-xs">Edit</button>
+                 </div>
+              </div>
+           </div>
+
+           <!-- Schedule & Sessions views remain similar but polished -->
+           <div *ngIf="sportView === 'schedule'">
+              <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl mb-6">
+                 <h3 class="text-slate-400 text-xs font-bold uppercase mb-4">Planifier une séance</h3>
+                 <div class="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+                    <div *ngFor="let s of dataService.sessions()" (click)="selectSessionForPlanning(s)" class="min-w-[150px] bg-slate-950 border border-slate-700 p-3 rounded-xl hover:border-blue-500 cursor-pointer transition">
+                       <p class="text-white font-bold text-sm truncate">{{ s.name }}</p>
+                       <p class="text-[10px] text-slate-500">{{ s.totalDuration }} min • {{ s.exercises.length }} exos</p>
+                    </div>
+                 </div>
+              </div>
+              <h3 class="text-white font-bold mb-4">Calendrier</h3>
+              <div class="grid gap-3">
+                 <div *ngFor="let s of sortedScheduledSessions()" class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex items-center justify-between">
+                    <div (click)="openSessionDetail(s)" class="flex-1 cursor-pointer">
+                       <p class="text-xs text-blue-400 font-bold uppercase">{{ s.date | dateFr:'short' }}</p>
+                       <p class="text-white font-bold text-lg">{{ s.sessionName }}</p>
+                    </div>
+                    <button (click)="removeScheduledSession(s.id)" class="text-slate-600 hover:text-rose-500 p-2"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
                  </div>
               </div>
            </div>
@@ -217,7 +288,7 @@ export class DataService {
                  <div class="h-40 overflow-y-auto space-y-1 pr-1">
                     <div *ngFor="let ex of dataService.exercises()" (click)="addExToSession(ex)" class="bg-slate-950 border border-slate-800 p-2 rounded cursor-pointer hover:border-blue-500 transition flex justify-between">
                        <span class="text-sm text-slate-300">{{ ex.name }}</span>
-                       <span class="text-xs text-slate-500">+</span>
+                       <span class="text-xs text-slate-500 bg-slate-900 px-2 py-0.5 rounded border border-slate-700">+</span>
                     </div>
                  </div>
               </div>
@@ -227,9 +298,10 @@ export class DataService {
         <!-- --- NUTRITION TAB --- -->
         <div *ngIf="activeTab() === 'nutrition'" class="space-y-6 animate-fade">
            <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-              <button *ngFor="let v of ['schedule', 'ingredients', 'meals']" (click)="nutriView = v" [class]="nutriView === v ? 'bg-emerald-600 text-white' : 'bg-slate-900 text-slate-400'" class="px-4 py-2 rounded-full text-xs font-bold uppercase whitespace-nowrap transition border border-slate-800">{{ v === 'schedule' ? 'Menu' : v === 'ingredients' ? 'Aliments' : 'Recettes' }}</button>
+              <button *ngFor="let v of ['schedule', 'ingredients', 'meals']" (click)="nutriView = v" [class]="nutriView === v ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-900 text-slate-400 border-slate-800'" class="px-4 py-2 rounded-full text-xs font-bold uppercase whitespace-nowrap transition border shadow-sm">{{ v === 'schedule' ? 'Menu' : v === 'ingredients' ? 'Aliments' : 'Recettes' }}</button>
            </div>
 
+           <!-- (Contenu Nutrition restauré identique à la version fonctionnelle, pas de changement majeur nécessaire ici sauf le design) -->
            <div *ngIf="nutriView === 'schedule'">
               <div class="grid grid-cols-2 gap-3 mb-6">
                  <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl text-center"><p class="text-2xl font-bold text-emerald-400">{{ todaysCalories() | number:'1.0-0' }}</p><p class="text-[10px] text-slate-500 uppercase font-bold">Kcal Conso.</p></div>
@@ -237,11 +309,14 @@ export class DataService {
               </div>
               <h3 class="text-white font-bold mb-3">Aujourd'hui</h3>
               <div class="space-y-3">
-                 <div *ngFor="let m of todaysMealsUnconsumed()" class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex justify-between items-center">
-                    <div><p class="text-white font-bold">{{ m.mealName }}</p><p class="text-xs text-slate-500 uppercase">{{ m.type }} • {{ m.caloriesSnapshot | number:'1.0-0' }} kcal</p></div>
-                    <input type="checkbox" (change)="toggleMealConsumed(m.id)" class="w-6 h-6 rounded bg-slate-800 border-slate-600 text-emerald-600">
+                 <div *ngFor="let m of todaysMealsUnconsumed()" class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex justify-between items-center group">
+                    <div (click)="openMealDetail(m)" class="flex-1 cursor-pointer">
+                        <p class="text-white font-bold">{{ m.mealName }}</p>
+                        <p class="text-xs text-slate-500 uppercase">{{ m.type }} • {{ m.caloriesSnapshot | number:'1.0-0' }} kcal</p>
+                    </div>
+                    <input type="checkbox" (change)="toggleMealConsumed(m.id)" class="w-6 h-6 rounded bg-slate-800 border-slate-600 text-emerald-600 focus:ring-emerald-600">
                  </div>
-                 <p *ngIf="todaysMealsUnconsumed().length === 0" class="text-center text-slate-600 text-sm italic py-4">Tout est mangé (ou rien de prévu) !</p>
+                 <p *ngIf="todaysMealsUnconsumed().length === 0" class="text-center text-slate-600 text-sm italic py-4">Tout est consommé.</p>
               </div>
               
               <div class="mt-8 pt-6 border-t border-slate-800">
@@ -268,7 +343,7 @@ export class DataService {
                     <input type="number" [(ngModel)]="newIngredient.carbs" placeholder="Gluc" class="bg-slate-950 border border-slate-700 text-white p-2 rounded-lg text-center text-sm">
                     <input type="number" [(ngModel)]="newIngredient.fat" placeholder="Lip" class="bg-slate-950 border border-slate-700 text-white p-2 rounded-lg text-center text-sm">
                  </div>
-                 <button (click)="addIngredient()" class="w-full bg-emerald-600 text-white py-3 rounded-lg font-bold uppercase text-xs">Ajouter</button>
+                 <button (click)="addIngredient()" class="w-full bg-emerald-600 text-white py-3 rounded-lg font-bold uppercase text-xs hover:bg-emerald-500 transition">Ajouter</button>
               </div>
               <div class="overflow-x-auto rounded-xl border border-slate-800">
                  <table class="w-full text-left text-sm text-slate-400 bg-slate-900">
@@ -298,7 +373,7 @@ export class DataService {
                     <button (click)="confirmAddIngredient()" class="flex-1 bg-emerald-600 text-white rounded text-xs font-bold">OK</button>
                  </div>
                  <div class="h-40 overflow-y-auto space-y-1">
-                    <div *ngFor="let i of dataService.ingredients()" (click)="selectIngredient(i)" class="bg-slate-950 border border-slate-800 p-2 rounded cursor-pointer flex justify-between">
+                    <div *ngFor="let i of dataService.ingredients()" (click)="selectIngredient(i)" class="bg-slate-950 border border-slate-800 p-2 rounded cursor-pointer flex justify-between hover:bg-slate-900/50">
                        <span class="text-sm text-slate-300">{{ i.name }}</span><span class="text-xs text-slate-500">{{ i.calories }}kcal</span>
                     </div>
                  </div>
@@ -308,11 +383,24 @@ export class DataService {
 
         <!-- --- FINANCES TAB --- -->
         <div *ngIf="activeTab() === 'finance'" class="space-y-6 animate-fade">
-           <div class="flex justify-between items-center bg-slate-900 p-3 rounded-xl border border-slate-800">
-              <h2 class="text-white font-bold ml-2">Finances</h2>
-              <div class="flex gap-2">
-                 <select [ngModel]="selectedFinanceMonth" (ngModelChange)="selectedFinanceMonth.set($event)" class="bg-slate-950 border border-slate-700 text-white p-2 rounded-lg text-xs"><option *ngFor="let m of months; let i = index" [value]="i">{{ m }}</option></select>
-                 <select [ngModel]="selectedFinanceYear" (ngModelChange)="selectedFinanceYear.set($event)" class="bg-slate-950 border border-slate-700 text-white p-2 rounded-lg text-xs"><option *ngFor="let y of years" [value]="y">{{ y }}</option></select>
+           <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex flex-col gap-4">
+              <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                  <h2 class="text-white font-bold ml-1">Finances</h2>
+                  <!-- Budget Modification Input -->
+                  <div class="flex flex-col items-end">
+                      <label class="text-[10px] text-slate-500 uppercase font-bold">Budget Mensuel</label>
+                      <input type="number" [(ngModel)]="dataService.monthlyBudget" (ngModelChange)="dataService.save()" class="bg-transparent border-b border-slate-700 text-right w-24 text-white font-mono focus:border-blue-500 outline-none">
+                  </div>
+              </div>
+              <div class="flex gap-4">
+                 <div class="flex-1">
+                    <label class="text-[10px] text-slate-500 uppercase font-bold block mb-1">Mois</label>
+                    <select [ngModel]="selectedFinanceMonth" (ngModelChange)="selectedFinanceMonth.set($event)" class="w-full bg-slate-950 border border-slate-700 text-white p-2 rounded-lg text-sm"><option *ngFor="let m of months; let i = index" [value]="i">{{ m }}</option></select>
+                 </div>
+                 <div class="w-24">
+                    <label class="text-[10px] text-slate-500 uppercase font-bold block mb-1">Année</label>
+                    <select [ngModel]="selectedFinanceYear" (ngModelChange)="selectedFinanceYear.set($event)" class="w-full bg-slate-950 border border-slate-700 text-white p-2 rounded-lg text-sm"><option *ngFor="let y of years" [value]="y">{{ y }}</option></select>
+                 </div>
               </div>
            </div>
 
@@ -322,33 +410,37 @@ export class DataService {
               <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl text-center"><p class="text-white font-bold text-lg">{{ monthlyStats().balance | number:'1.0-0' }}</p><p class="text-[10px] text-slate-500 uppercase">Solde</p></div>
            </div>
 
-           <button (click)="showTransactionModal = true" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold uppercase text-sm shadow-lg shadow-blue-900/20">Ajouter une transaction</button>
+           <button (click)="showTransactionModal = true" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold uppercase text-sm shadow-lg shadow-blue-900/20 hover:bg-blue-500 transition">Ajouter une transaction</button>
 
            <div class="space-y-3 pb-20">
               <div *ngIf="filteredTransactions().length === 0" class="text-center text-slate-600 italic py-8">Aucune transaction ce mois-ci.</div>
               <div *ngFor="let t of filteredTransactions()" class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex justify-between items-center relative overflow-hidden group">
                  <div class="flex gap-3 items-center z-10">
-                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold" [ngClass]="t.type === 'revenu' ? 'bg-emerald-500/10 text-emerald-500' : (t.type === 'fixe' ? 'bg-purple-500/10 text-purple-500' : 'bg-rose-500/10 text-rose-500')">{{ t.type === 'revenu' ? '↓' : '↑' }}</div>
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold" [ngClass]="t.type === 'revenu' ? 'bg-emerald-500/10 text-emerald-500' : (t.type === 'fixe' ? 'bg-purple-500/10 text-purple-500' : 'bg-rose-500/10 text-rose-500')">
+                        <svg *ngIf="t.type==='revenu'" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+                        <svg *ngIf="t.type!=='revenu'" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                    </div>
                     <div><p class="text-white font-bold leading-tight">{{ t.category }}</p><p class="text-xs text-slate-500">{{ t.date | dateFr:'short' }} <span *ngIf="t.description">• {{ t.description }}</span></p></div>
                  </div>
                  <div class="text-right z-10"><p class="font-bold text-lg" [ngClass]="t.type === 'revenu' ? 'text-emerald-400' : 'text-slate-200'">{{ t.type === 'revenu' ? '+' : '-' }}{{ t.amount | number:'1.0-0' }}</p></div>
-                 <button (click)="deleteTransaction(t.id)" class="absolute inset-y-0 right-0 w-16 bg-rose-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20">✕</button>
+                 <button (click)="deleteTransaction(t.id)" class="absolute inset-y-0 right-0 w-16 bg-rose-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>
               </div>
            </div>
         </div>
 
-        <!-- --- DATA TAB --- -->
+        <!-- --- SETTINGS TAB (RESTAURÉ) --- -->
         <div *ngIf="activeTab() === 'data'" class="text-center py-20 space-y-6">
-           <h2 class="text-2xl font-bold text-white">Gestion Données</h2>
+           <h2 class="text-2xl font-bold text-white">Administration</h2>
+           <p class="text-slate-500 text-sm max-w-xs mx-auto">Gérez vos données locales. Pour la synchronisation, la configuration Firebase sera nécessaire ultérieurement.</p>
            <div class="flex flex-col gap-4 max-w-xs mx-auto">
-              <button (click)="dataService.injectData()" class="bg-blue-600 text-white py-3 rounded-lg font-bold">Injecter Démo</button>
-              <button (click)="dataService.reset()" class="border border-rose-900 text-rose-500 py-3 rounded-lg font-bold">Tout Effacer</button>
+              <button (click)="dataService.injectData()" class="bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-500 transition shadow-lg shadow-blue-900/20">Injecter Données de Démo</button>
+              <button (click)="dataService.reset()" class="border border-rose-900/50 text-rose-500 py-4 rounded-xl font-bold hover:bg-rose-900/20 transition">Tout Effacer (Reset)</button>
            </div>
         </div>
 
       </main>
 
-      <!-- MODALS (Full Screen / Bottom Sheet for Mobile) -->
+      <!-- MODALS (Transaction, Session, Meal) -->
       
       <!-- TRANSACTION MODAL -->
       <div *ngIf="showTransactionModal" class="fixed inset-0 z-[60] bg-slate-950/90 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-4 animate-fade">
@@ -356,43 +448,45 @@ export class DataService {
             <div class="p-4 border-b border-slate-800 flex justify-between items-center"><h3 class="text-lg font-bold text-white">Nouvelle Transaction</h3><button (click)="showTransactionModal = false" class="text-slate-400 p-2">Fermer</button></div>
             <div class="p-6 space-y-4 flex-1 overflow-y-auto">
                 <div class="grid grid-cols-3 gap-2"><button *ngFor="let t of ['variable', 'fixe', 'revenu']" (click)="newTransaction.type = t" [class]="newTransaction.type === t ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-800 text-slate-400 border-slate-700'" class="py-2 rounded-lg border text-xs font-bold uppercase transition capitalize">{{ t }}</button></div>
-                <div class="space-y-1"><label class="text-xs text-slate-500 uppercase font-bold">Montant</label><input type="number" [(ngModel)]="newTransaction.amount" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white text-lg font-bold" placeholder="0.00"></div>
-                <div class="space-y-1"><label class="text-xs text-slate-500 uppercase font-bold">Catégorie</label><select [(ngModel)]="newTransaction.category" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white"><option value="" disabled>Sélectionner...</option><option *ngFor="let c of getCategories(newTransaction.type)" [value]="c">{{ c }}</option></select></div>
-                <div class="space-y-1"><label class="text-xs text-slate-500 uppercase font-bold">Date</label><input type="date" [(ngModel)]="newTransaction.date" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white"></div>
-                <div class="space-y-1"><label class="text-xs text-slate-500 uppercase font-bold">Note</label><input type="text" [(ngModel)]="newTransaction.description" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white" placeholder="Facultatif"></div>
+                <div class="space-y-1"><label class="text-xs text-slate-500 uppercase font-bold">Montant</label><input type="number" [(ngModel)]="newTransaction.amount" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white text-lg font-bold focus:border-blue-500 outline-none" placeholder="0.00"></div>
+                <div class="space-y-1"><label class="text-xs text-slate-500 uppercase font-bold">Catégorie</label><select [(ngModel)]="newTransaction.category" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-blue-500 outline-none"><option value="" disabled>Sélectionner...</option><option *ngFor="let c of getCategories(newTransaction.type)" [value]="c">{{ c }}</option></select></div>
+                <div class="space-y-1"><label class="text-xs text-slate-500 uppercase font-bold">Date</label><input type="date" [(ngModel)]="newTransaction.date" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-blue-500 outline-none"></div>
+                <div class="space-y-1"><label class="text-xs text-slate-500 uppercase font-bold">Note</label><input type="text" [(ngModel)]="newTransaction.description" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-blue-500 outline-none" placeholder="Facultatif"></div>
             </div>
-            <div class="p-4 border-t border-slate-800 bg-slate-900 pb-safe"><button (click)="addTransaction()" [disabled]="!newTransaction.amount || !newTransaction.category" class="w-full bg-blue-600 disabled:opacity-50 text-white py-4 rounded-xl font-bold uppercase text-sm">Valider</button></div>
+            <div class="p-4 border-t border-slate-800 bg-slate-900 pb-safe"><button (click)="addTransaction()" [disabled]="!newTransaction.amount || !newTransaction.category" class="w-full bg-blue-600 disabled:opacity-50 text-white py-4 rounded-xl font-bold uppercase text-sm shadow-lg shadow-blue-900/20">Valider</button></div>
          </div>
       </div>
 
-      <!-- SESSION & MEAL PLANNING MODALS (Simplified logic for responsive demo, full logic exists in data service) -->
+      <!-- SESSION MODAL -->
       <div *ngIf="sessionModalData" class="fixed inset-0 z-[60] bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4 animate-fade">
          <div class="bg-slate-900 w-full max-w-lg rounded-2xl border border-slate-800 shadow-2xl max-h-[80vh] flex flex-col">
-            <div class="p-4 border-b border-slate-800 flex justify-between items-center"><h3 class="font-bold text-white">{{ sessionModalData.name }}</h3><button (click)="sessionModalData = null" class="text-slate-400">✕</button></div>
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center"><h3 class="font-bold text-white">{{ sessionModalData.name }}</h3><button (click)="sessionModalData = null" class="text-slate-400 hover:text-white"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
             <div class="p-4 overflow-y-auto flex-1 space-y-3">
                <div *ngFor="let ex of sessionModalData.exercises" class="bg-slate-950 p-3 rounded border border-slate-800">
                   <p class="text-white font-bold">{{ ex.name }}</p>
-                  <p class="text-xs text-slate-500">{{ ex.sets }} x {{ ex.reps }} &#64; {{ ex.weight }}kg</p>
+                  <p class="text-xs text-slate-500 uppercase">{{ ex.bodyPart }} - {{ ex.equipment }}</p>
+                  <p class="text-sm text-blue-400 mt-1 font-mono">{{ ex.sets }} x {{ ex.reps }} &#64; {{ ex.weight }}kg</p>
                </div>
             </div>
             <div *ngIf="planningMode" class="p-4 border-t border-slate-800 bg-slate-900 flex gap-2">
                <input type="date" [(ngModel)]="scheduleData.date" class="bg-slate-950 border border-slate-700 text-white p-2 rounded flex-1">
-               <button (click)="confirmScheduleSession()" class="bg-blue-600 text-white px-4 rounded font-bold">Valider</button>
+               <button (click)="confirmScheduleSession()" class="bg-blue-600 text-white px-4 rounded font-bold uppercase text-xs">Planifier</button>
             </div>
          </div>
       </div>
 
+      <!-- MEAL MODAL -->
       <div *ngIf="mealModalData" class="fixed inset-0 z-[60] bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4 animate-fade">
          <div class="bg-slate-900 w-full max-w-lg rounded-2xl border border-slate-800 shadow-2xl max-h-[80vh] flex flex-col">
-            <div class="p-4 border-b border-slate-800 flex justify-between items-center"><h3 class="font-bold text-white">{{ mealModalData.name }}</h3><button (click)="mealModalData = null" class="text-slate-400">✕</button></div>
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center"><h3 class="font-bold text-white">{{ mealModalData.name }}</h3><button (click)="mealModalData = null" class="text-slate-400 hover:text-white"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
             <div class="p-4 overflow-y-auto flex-1 space-y-2">
-               <div class="flex justify-between mb-4 bg-slate-950 p-3 rounded"><div class="text-center"><span class="block font-bold text-white">{{ mealModalData.totalCalories | number:'1.0-0' }}</span><span class="text-[10px] text-slate-500">Kcal</span></div><div class="text-center"><span class="block font-bold text-emerald-400">{{ mealModalData.totalProtein | number:'1.0-0' }}g</span><span class="text-[10px] text-slate-500">Prot</span></div><div class="text-center"><span class="block font-bold text-amber-400">{{ mealModalData.totalCarbs | number:'1.0-0' }}g</span><span class="text-[10px] text-slate-500">Gluc</span></div><div class="text-center"><span class="block font-bold text-rose-400">{{ mealModalData.totalFat | number:'1.0-0' }}g</span><span class="text-[10px] text-slate-500">Lip</span></div></div>
-               <h4 class="text-xs font-bold text-slate-500 uppercase">Ingrédients</h4>
-               <ul class="space-y-1"><li *ngFor="let item of (planningMode ? mealModalData.items : getMealItems(mealModalData.id))" class="text-sm text-slate-300 flex justify-between"><span>{{ item.ingredient.name }}</span><span>{{ item.quantity }}{{ item.ingredient.baseUnit === '100g' ? 'g' : '' }}</span></li></ul>
+               <div class="flex justify-between mb-4 bg-slate-950 p-3 rounded border border-slate-800"><div class="text-center"><span class="block font-bold text-white">{{ mealModalData.totalCalories | number:'1.0-0' }}</span><span class="text-[10px] text-slate-500 uppercase">Kcal</span></div><div class="text-center"><span class="block font-bold text-emerald-400">{{ mealModalData.totalProtein | number:'1.0-0' }}g</span><span class="text-[10px] text-slate-500 uppercase">Prot</span></div><div class="text-center"><span class="block font-bold text-amber-400">{{ mealModalData.totalCarbs | number:'1.0-0' }}g</span><span class="text-[10px] text-slate-500 uppercase">Gluc</span></div><div class="text-center"><span class="block font-bold text-rose-400">{{ mealModalData.totalFat | number:'1.0-0' }}g</span><span class="text-[10px] text-slate-500 uppercase">Lip</span></div></div>
+               <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Ingrédients</h4>
+               <ul class="space-y-2"><li *ngFor="let item of (planningMode ? mealModalData.items : getMealItems(mealModalData.id))" class="text-sm text-slate-300 flex justify-between border-b border-slate-800 pb-2 last:border-0"><span>{{ item.ingredient.name }}</span><span class="font-mono text-slate-500">{{ item.quantity }}{{ item.ingredient.baseUnit === '100g' ? 'g' : '' }}</span></li></ul>
             </div>
             <div *ngIf="planningMode" class="p-4 border-t border-slate-800 bg-slate-900 space-y-2">
                <div class="flex gap-2"><input type="date" [(ngModel)]="scheduleMealData.date" class="bg-slate-950 border border-slate-700 text-white p-2 rounded flex-1"><select [(ngModel)]="scheduleMealData.type" class="bg-slate-950 border border-slate-700 text-white p-2 rounded flex-1"><option value="Petit-déjeuner">Matin</option><option value="Déjeuner">Midi</option><option value="Dîner">Soir</option><option value="Collation">Snack</option></select></div>
-               <button (click)="confirmScheduleMeal()" class="w-full bg-emerald-600 text-white py-3 rounded font-bold">Ajouter au Menu</button>
+               <button (click)="confirmScheduleMeal()" class="w-full bg-emerald-600 text-white py-3 rounded font-bold uppercase text-xs">Ajouter au Menu</button>
             </div>
          </div>
       </div>
@@ -411,14 +505,15 @@ export class App {
   dataService = inject(DataService);
   activeTab = signal('home');
   tabs = [
-    { id: 'home', label: 'Accueil', icon: '🏠' },
-    { id: 'sport', label: 'Sport', icon: '💪' },
-    { id: 'nutrition', label: 'Nutrition', icon: '🥗' },
-    { id: 'finance', label: 'Finances', icon: '💰' }
+    { id: 'home', label: 'Accueil', svg: '<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/> <polyline points="9 22 9 12 15 12 15 22"/>' },
+    { id: 'sport', label: 'Sport', svg: '<path d="m6.5 6.5 11 11"/><path d="m21 21-1-1"/><path d="m3 3 1 1"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/>' },
+    { id: 'nutrition', label: 'Nutrition', svg: '<path d="M11 10.5a1.5 1.5 0 0 1 3 0v2.8a2 2 0 0 1-2 2H12a2 2 0 0 1-2-2v-2.8Z"/><path d="M7 10.5a1.5 1.5 0 0 1 3 0v2.8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-2.8Z"/><path d="M15 10.5a1.5 1.5 0 0 1 3 0v2.8a2 2 0 0 1-2 2H16a2 2 0 0 1-2-2v-2.8Z"/><rect width="18" height="14" x="3" y="6" rx="2"/><path d="M7 6V4a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v2"/>' },
+    { id: 'finance', label: 'Finances', svg: '<rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>' },
+    { id: 'data', label: 'Paramètres', svg: '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>' }
   ];
   today = new Date();
 
-  // Modals & Forms State
+  // Modals
   showTransactionModal = false;
   sessionModalData: any = null;
   mealModalData: any = null;
@@ -438,6 +533,8 @@ export class App {
 
   // Sport
   sportView = 'schedule';
+  filterBodyPart = signal(''); 
+  filterEquipment = signal('');
   exerciseForm: any = { equipment: 'Sans matériel' };
   editingExercise: any = null;
   newSessionName = ''; 
@@ -454,6 +551,9 @@ export class App {
   scheduleMealData: any = { date: new Date().toISOString().split('T')[0], type: 'Déjeuner', mealId: null };
 
   // --- COMPUTED ---
+  uniqueBodyParts = computed(() => [...new Set(this.dataService.exercises().map(e => e.bodyPart))].sort());
+  uniqueEquipment = computed(() => [...new Set(this.dataService.exercises().map(e => e.equipment))].sort());
+  
   totalBalance = computed(() => this.dataService.finances().reduce((acc, cur) => cur.type === 'revenu' ? acc + cur.amount : acc - cur.amount, 0));
   totalExpenses = computed(() => this.dataService.finances().filter(f => f.type !== 'revenu').reduce((acc, cur) => acc + cur.amount, 0));
   budgetPercent = computed(() => this.dataService.monthlyBudget() === 0 ? 0 : Math.min((this.totalExpenses() / this.dataService.monthlyBudget()) * 100, 100));
@@ -480,10 +580,16 @@ export class App {
      return upcoming.length > 0 ? upcoming[0] : null;
   });
   sortedScheduledSessions = computed(() => this.dataService.scheduledSessions().sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
-  filteredExercises = computed(() => this.dataService.exercises()); // Simplified filter
+  
+  filteredExercises = computed(() => {
+      return this.dataService.exercises().filter(e => 
+          (this.filterBodyPart() ? e.bodyPart === this.filterBodyPart() : true) && 
+          (this.filterEquipment() ? e.equipment === this.filterEquipment() : true)
+      );
+  });
 
   sortedScheduledMeals = computed(() => this.dataService.scheduledMeals().sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
-  todaysMealsUnconsumed = computed(() => { const d = new Date().toISOString().split('T')[0]; return this.dataService.scheduledMeals().filter(s => s.date === d && !s.consumed); });
+  todaysMealsUnconsumed = computed(() => { const d = new Date().toISOString().split('T')[0]; return this.dataService.scheduledMeals().filter(s => s.date === d); }); // removed !s.consumed to show checkable list
   todaysCalories = computed(() => { const d = new Date().toISOString().split('T')[0]; return this.dataService.scheduledMeals().filter(s => s.date === d).reduce((acc, c) => acc + c.caloriesSnapshot, 0); });
   todaysMacros = computed(() => { const d = new Date().toISOString().split('T')[0]; const meals = this.dataService.scheduledMeals().filter(s => s.date === d); return { prot: meals.reduce((acc, c) => acc + c.proteinSnapshot, 0) }; });
 
@@ -534,6 +640,13 @@ export class App {
     }
   }
   removeScheduledSession(id: string) { this.dataService.scheduledSessions.update(prev => prev.filter(x => x.id !== id)); this.dataService.save(); }
+  
+  // Navigation vers l'édition d'une séance (depuis l'accueil)
+  goToSportEdit(session: any) {
+      this.activeTab.set('sport');
+      this.sportView = 'sessions';
+      // Optionnel: Pré-remplir le formulaire si on voulait modifier la séance (complexe ici, on redirige juste)
+  }
 
   // Nutrition
   openMealDetail(m: any) { this.planningMode = false; this.mealModalData = { id: m.mealId, name: m.mealName, type: m.type, totalCalories: m.caloriesSnapshot, totalProtein: m.proteinSnapshot, totalCarbs: m.carbsSnapshot, totalFat: m.fatSnapshot }; }
