@@ -25,7 +25,6 @@ class DateFrPipe {
     }
   }
 }
-// Assignation manuelle du décorateur pour éviter l'erreur Rollup '@'
 DateFrPipe.decorators = [
   { type: Pipe, args: [{ name: 'dateFr', standalone: true }] }
 ];
@@ -275,7 +274,6 @@ export class App {
 
   // --- METHODS ---
 
-  // Modals
   openSessionDetail(s) { 
     this.planningMode = false;
     const def = this.dataService.sessions().find(x => x.id === s.sessionId);
@@ -311,7 +309,6 @@ export class App {
      return m ? m.items : [];
   }
 
-  // Finance Methods
   setTransType(t) { this.newTransaction.type = t; this.newTransaction.category = ''; }
   getCategories(type) { return this.categoryLists[type || 'variable']; }
   updateBudget(val) { this.dataService.monthlyBudget.set(val); this.dataService.save(); }
@@ -332,7 +329,6 @@ export class App {
   }
   deleteTransaction(id) { this.dataService.finances.update(prev => prev.filter(x => x.id !== id)); this.dataService.save(); }
 
-  // Sport Methods
   editExercise(ex) { this.editingExercise = ex; this.exerciseForm = { ...ex }; }
   cancelEditExercise() { this.editingExercise = null; this.exerciseForm = { equipment: 'Sans matériel' }; }
   saveExercise() {
@@ -379,7 +375,6 @@ export class App {
   }
   removeScheduledSession(id) { this.dataService.scheduledSessions.update(prev => prev.filter(x => x.id !== id)); this.dataService.save(); }
 
-  // Nutrition Methods
   addIngredient() {
     if (this.newIngredient.name) {
       const i = {
