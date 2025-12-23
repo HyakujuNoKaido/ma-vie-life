@@ -3,15 +3,13 @@ import { CommonModule, DecimalPipe, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 // --- CUSTOM PIPE: DATES FRANÇAISES ---
-// Note: Removed 'export' to ensure bootstrapping picks the App component.
-// Removed 'implements PipeTransform' to avoid esbuild/JSX parsing errors.
 @Pipe({ name: 'dateFr', standalone: true })
 class DateFrPipe {
-  transform(value: string | Date, format: 'full' | 'short' | 'month' = 'full'): string {
+  transform(value, format = 'full') {
     const date = new Date(value);
     if (isNaN(date.getTime())) return '';
 
-    let options: Intl.DateTimeFormatOptions;
+    let options;
     
     if (format === 'short') {
         options = { day: 'numeric', month: 'short' }; // 23 déc.
@@ -31,105 +29,25 @@ class DateFrPipe {
   }
 }
 
-// --- INTERFACES ---
-
-// SPORT
-interface Exercise {
-  id: string;
-  name: string;
-  bodyPart: string;
-  equipment: string;
-  sets: number;
-  reps: number;
-  weight: number;
-  imageUrl?: string;
-}
-
-interface WorkoutSession {
-  id: string;
-  name: string;
-  exercises: Exercise[];
-  totalDuration: number;
-}
-
-interface ScheduledSession {
-  id: string;
-  date: string;
-  sessionId: string;
-  sessionName: string;
-  completed: boolean;
-}
-
-// NUTRITION
-interface Ingredient {
-  id: string;
-  name: string;
-  baseUnit: '100g' | '1 unité'; 
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-}
-
-interface MealItem {
-  ingredient: Ingredient;
-  quantity: number;
-}
-
-interface Meal {
-  id: string;
-  name: string;
-  items: MealItem[];
-  totalCalories: number;
-  totalProtein: number;
-  totalCarbs: number;
-  totalFat: number;
-}
-
-interface ScheduledMeal {
-  id: string;
-  date: string;
-  mealId: string;
-  mealName: string;
-  type: 'Petit-déjeuner' | 'Déjeuner' | 'Dîner' | 'Collation';
-  // Snapshot
-  caloriesSnapshot: number;
-  proteinSnapshot: number;
-  carbsSnapshot: number;
-  fatSnapshot: number;
-  // Nouveau champ
-  consumed: boolean;
-}
-
-// FINANCE
-interface FinanceEntry {
-  id: string;
-  date: string;
-  description: string;
-  amount: number;
-  type: 'revenu' | 'fixe' | 'variable';
-  category: string;
-}
-
 // --- DATA SERVICE ---
 @Injectable({ providedIn: 'root' })
 class DataService {
-  exercises = signal<Exercise[]>([]);
-  sessions = signal<WorkoutSession[]>([]);
-  ingredients = signal<Ingredient[]>([]);
-  meals = signal<Meal[]>([]);
+  exercises = signal([]);
+  sessions = signal([]);
+  ingredients = signal([]);
+  meals = signal([]);
 
-  scheduledSessions = signal<ScheduledSession[]>([]);
-  scheduledMeals = signal<ScheduledMeal[]>([]);
-  finances = signal<FinanceEntry[]>([]);
+  scheduledSessions = signal([]);
+  scheduledMeals = signal([]);
+  finances = signal([]);
 
-  monthlyBudget = signal<number>(4000); 
+  monthlyBudget = signal(4000); 
 
   constructor() {
     this.loadFromStorage();
   }
 
-  private loadFromStorage() {
+  loadFromStorage() {
     try {
       const ex = localStorage.getItem('lt_exercises');
       const sess = localStorage.getItem('lt_sessions');
@@ -165,14 +83,14 @@ class DataService {
   }
 
   injectData() {
-    const exs: Exercise[] = [
+    const exs = [
       { id: 'ex1', name: 'Développé Couché', bodyPart: 'Pectoraux', equipment: 'Barre', sets: 4, reps: 10, weight: 80, imageUrl: "https://placehold.co/60x60/3b82f6/white?text=Bench" },
       { id: 'ex2', name: 'Squat', bodyPart: 'Jambes', equipment: 'Barre', sets: 4, reps: 8, weight: 100, imageUrl: "https://placehold.co/60x60/3b82f6/white?text=Squat" },
       { id: 'ex3', name: 'Tractions', bodyPart: 'Dos', equipment: 'Poids du corps', sets: 3, reps: 12, weight: 0, imageUrl: "https://placehold.co/60x60/3b82f6/white?text=PullUp" }
     ];
     this.exercises.set(exs);
 
-    const sess: WorkoutSession = {
+    const sess = {
       id: 'sess1',
       name: 'Full Body A',
       exercises: [exs[0], exs[1], exs[2]],
@@ -180,7 +98,7 @@ class DataService {
     };
     this.sessions.set([sess]);
 
-    const ings: Ingredient[] = [
+    const ings = [
       { id: 'ing1', name: 'Poulet (cru)', baseUnit: '100g', calories: 120, protein: 23, carbs: 0, fat: 2.5 },
       { id: 'ing2', name: 'Riz Basmati (cuit)', baseUnit: '100g', calories: 130, protein: 2.7, carbs: 28, fat: 0.3 },
       { id: 'ing3', name: 'Oeuf', baseUnit: '1 unité', calories: 70, protein: 6, carbs: 0.5, fat: 5 },
@@ -188,7 +106,7 @@ class DataService {
     ];
     this.ingredients.set(ings);
 
-    const meal: Meal = {
+    const meal = {
       id: 'meal1',
       name: 'Post-Workout',
       items: [
@@ -206,14 +124,13 @@ class DataService {
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
     
-    const f: FinanceEntry[] = [
+    const f = [
       { id: 'f1', date: todayStr, description: 'Salaire', amount: 5000, type: 'revenu', category: 'Salaire' },
       { id: 'f2', date: todayStr, description: 'Loyer', amount: 1500, type: 'fixe', category: 'Logement' }
     ];
     this.finances.set(f);
 
-    // Initial scheduled meal
-    const sm: ScheduledMeal = {
+    const sm = {
         id: 'sm1',
         date: todayStr,
         mealId: meal.id,
@@ -715,7 +632,7 @@ class DataService {
 })
 export class App {
   dataService = inject(DataService);
-  activeTab = signal<string>('home');
+  activeTab = signal('home');
   tabs = [
     { id: 'home', label: 'Accueil' },
     { id: 'sport', label: 'Sport' },
@@ -725,47 +642,47 @@ export class App {
   today = new Date();
 
   // --- MODALS STATE ---
-  sessionModalData: any | null = null;
-  mealModalData: any | null = null;
+  sessionModalData = null;
+  mealModalData = null;
   planningMode = false;
 
-  openSessionDetail(s: ScheduledSession) { 
+  openSessionDetail(s) { 
     this.planningMode = false;
     const def = this.dataService.sessions().find(x => x.id === s.sessionId);
     this.sessionModalData = { ...s, name: s.sessionName, exercises: def ? def.exercises : [] }; 
   }
-  selectSessionForPlanning(s: WorkoutSession) {
+  selectSessionForPlanning(s) {
     this.planningMode = true;
     this.sessionModalData = s;
     this.scheduleData.sessionId = s.id;
   }
   closeSessionModal() { this.sessionModalData = null; }
 
-  openMealDetail(m: ScheduledMeal) {
+  openMealDetail(m) {
     this.planningMode = false;
     this.mealModalData = { 
       id: m.mealId, name: m.mealName, type: m.type, 
       totalCalories: m.caloriesSnapshot, totalProtein: m.proteinSnapshot, totalCarbs: m.carbsSnapshot, totalFat: m.fatSnapshot 
     };
   }
-  selectMealForPlanning(m: Meal) {
+  selectMealForPlanning(m) {
     this.planningMode = true;
     this.mealModalData = m;
     this.scheduleMealData.mealId = m.id;
   }
   closeMealModal() { this.mealModalData = null; }
 
-  getSessionExercises(sessId: string): Exercise[] {
+  getSessionExercises(sessId) {
     const s = this.dataService.sessions().find(x => x.id === sessId);
     return s ? s.exercises : [];
   }
-  getMealItems(mealId: string): MealItem[] {
+  getMealItems(mealId) {
      const m = this.dataService.meals().find(x => x.id === mealId);
      return m ? m.items : [];
   }
 
   // --- FINANCE ---
-  newTransaction: Partial<FinanceEntry> = { type: 'fixe', date: new Date().toISOString().split('T')[0], category: '' };
+  newTransaction = { type: 'fixe', date: new Date().toISOString().split('T')[0], category: '' };
   
   months = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
   years = Array.from({length: 11}, (_, i) => new Date().getFullYear() - 5 + i); 
@@ -773,31 +690,31 @@ export class App {
   selectedFinanceMonth = signal(new Date().getMonth());
   selectedFinanceYear = signal(new Date().getFullYear());
 
-  categoryLists: any = {
+  categoryLists = {
     revenu: ['Salaire', 'Dividendes', 'Cadeau', 'Autre'],
     fixe: ['Loyer', 'Assurance', 'Internet/Mobile', 'Abonnement', 'Impôts'],
     variable: ['Alimentation', 'Shopping', 'Transport', 'Loisirs', 'Restaurant', 'Santé', 'Vacances']
   };
-  setTransType(t: any) { this.newTransaction.type = t; this.newTransaction.category = ''; }
-  getCategories(type: any) { return this.categoryLists[type || 'variable']; }
-  updateBudget(val: number) { this.dataService.monthlyBudget.set(val); this.dataService.save(); }
+  setTransType(t) { this.newTransaction.type = t; this.newTransaction.category = ''; }
+  getCategories(type) { return this.categoryLists[type || 'variable']; }
+  updateBudget(val) { this.dataService.monthlyBudget.set(val); this.dataService.save(); }
   
   addTransaction() {
     if (this.newTransaction.amount && this.newTransaction.category) {
-      const t: FinanceEntry = {
+      const t = {
         id: Date.now().toString(),
-        date: this.newTransaction.date!,
+        date: this.newTransaction.date,
         description: this.newTransaction.description || '',
-        amount: this.newTransaction.amount!,
-        type: this.newTransaction.type as any,
-        category: this.newTransaction.category!
+        amount: this.newTransaction.amount,
+        type: this.newTransaction.type,
+        category: this.newTransaction.category
       };
       this.dataService.finances.update(prev => [...prev, t]);
       this.dataService.save();
       this.newTransaction = { type: 'fixe', date: new Date().toISOString().split('T')[0], category: '' };
     }
   }
-  deleteTransaction(id: string) { this.dataService.finances.update(prev => prev.filter(x => x.id !== id)); this.dataService.save(); }
+  deleteTransaction(id) { this.dataService.finances.update(prev => prev.filter(x => x.id !== id)); this.dataService.save(); }
   sortedTransactions = computed(() => this.dataService.finances().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
   filteredTransactions = computed(() => {
      return this.sortedTransactions().filter(t => {
@@ -821,21 +738,21 @@ export class App {
   });
 
   // --- SPORT ---
-  sportView: any = 'schedule';
+  sportView = 'schedule';
   filterBodyPart = ''; filterEquipment = '';
-  exerciseForm: Partial<Exercise> = { equipment: 'Sans matériel' };
-  editingExercise: Exercise | null = null;
-  editExercise(ex: Exercise) { this.editingExercise = ex; this.exerciseForm = { ...ex }; }
+  exerciseForm = { equipment: 'Sans matériel' };
+  editingExercise = null;
+  editExercise(ex) { this.editingExercise = ex; this.exerciseForm = { ...ex }; }
   cancelEditExercise() { this.editingExercise = null; this.exerciseForm = { equipment: 'Sans matériel' }; }
   saveExercise() {
     if (this.exerciseForm.name) {
       if (this.editingExercise) {
-        const updated = { ...this.editingExercise, ...this.exerciseForm } as Exercise;
+        const updated = { ...this.editingExercise, ...this.exerciseForm };
         this.dataService.exercises.update(prev => prev.map(e => e.id === updated.id ? updated : e));
       } else {
-        const ex: Exercise = {
+        const ex = {
           id: Date.now().toString(),
-          name: this.exerciseForm.name!,
+          name: this.exerciseForm.name,
           bodyPart: this.exerciseForm.bodyPart || 'Divers',
           equipment: this.exerciseForm.equipment || 'Sans matériel',
           sets: this.exerciseForm.sets || 3,
@@ -853,18 +770,18 @@ export class App {
   uniqueEquipment = computed(() => [...new Set(this.dataService.exercises().map(e => e.equipment))].sort());
   filteredExercises = computed(() => this.dataService.exercises().filter(e => (this.filterBodyPart ? e.bodyPart === this.filterBodyPart : true) && (this.filterEquipment ? e.equipment === this.filterEquipment : true)));
 
-  newSessionName = ''; newSessionExercises: Exercise[] = [];
-  scheduleData = { date: new Date().toISOString().split('T')[0], sessionId: null as string | null };
+  newSessionName = ''; newSessionExercises = [];
+  scheduleData = { date: new Date().toISOString().split('T')[0], sessionId: null };
   nextSession = computed(() => {
      const now = new Date(); now.setHours(0,0,0,0);
      const upcoming = this.dataService.scheduledSessions().filter(s => new Date(s.date) >= now).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
      return upcoming.length > 0 ? upcoming[0] : null;
   });
-  addExToSession(ex: Exercise) { this.newSessionExercises.push(ex); }
-  removeExFromSession(ex: Exercise) { this.newSessionExercises = this.newSessionExercises.filter(e => e !== ex); }
+  addExToSession(ex) { this.newSessionExercises.push(ex); }
+  removeExFromSession(ex) { this.newSessionExercises = this.newSessionExercises.filter(e => e !== ex); }
   saveSession() {
     if (this.newSessionName && this.newSessionExercises.length > 0) {
-      const sess: WorkoutSession = { id: Date.now().toString(), name: this.newSessionName, exercises: [...this.newSessionExercises], totalDuration: 60 };
+      const sess = { id: Date.now().toString(), name: this.newSessionName, exercises: [...this.newSessionExercises], totalDuration: 60 };
       this.dataService.sessions.update(prev => [...prev, sess]);
       this.dataService.save();
       this.newSessionName = ''; this.newSessionExercises = [];
@@ -874,24 +791,24 @@ export class App {
     if (this.scheduleData.date && this.scheduleData.sessionId) {
       const sDef = this.dataService.sessions().find(s => s.id === this.scheduleData.sessionId);
       if (!sDef) return;
-      const ss: ScheduledSession = { id: Date.now().toString(), date: this.scheduleData.date, sessionId: sDef.id, sessionName: sDef.name, completed: false };
+      const ss = { id: Date.now().toString(), date: this.scheduleData.date, sessionId: sDef.id, sessionName: sDef.name, completed: false };
       this.dataService.scheduledSessions.update(prev => [...prev, ss]);
       this.dataService.save();
       this.closeSessionModal();
     }
   }
   sortedScheduledSessions = computed(() => this.dataService.scheduledSessions().sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
-  removeScheduledSession(id: string) { this.dataService.scheduledSessions.update(prev => prev.filter(x => x.id !== id)); this.dataService.save(); }
+  removeScheduledSession(id) { this.dataService.scheduledSessions.update(prev => prev.filter(x => x.id !== id)); this.dataService.save(); }
 
   // --- NUTRITION ---
-  nutriView: any = 'schedule';
-  newIngredient: Partial<Ingredient> = { baseUnit: '100g' };
+  nutriView = 'schedule';
+  newIngredient = { baseUnit: '100g' };
   addIngredient() {
     if (this.newIngredient.name) {
-      const i: Ingredient = {
+      const i = {
         id: Date.now().toString(),
-        name: this.newIngredient.name!,
-        baseUnit: this.newIngredient.baseUnit as any || '100g',
+        name: this.newIngredient.name,
+        baseUnit: this.newIngredient.baseUnit || '100g',
         calories: this.newIngredient.calories || 0,
         protein: this.newIngredient.protein || 0,
         carbs: this.newIngredient.carbs || 0,
@@ -902,18 +819,18 @@ export class App {
       this.newIngredient = { baseUnit: '100g' };
     }
   }
-  newMealName = ''; newMealItems: MealItem[] = [];
-  selectedIngredientForAdd: Ingredient | null = null;
-  quantityToAdd: number | null = null;
-  selectIngredient(i: Ingredient) { this.selectedIngredientForAdd = i; this.quantityToAdd = null; }
+  newMealName = ''; newMealItems = [];
+  selectedIngredientForAdd = null;
+  quantityToAdd = null;
+  selectIngredient(i) { this.selectedIngredientForAdd = i; this.quantityToAdd = null; }
   confirmAddIngredient() {
     if (this.selectedIngredientForAdd && this.quantityToAdd) {
       this.newMealItems.push({ ingredient: this.selectedIngredientForAdd, quantity: this.quantityToAdd });
       this.selectedIngredientForAdd = null; this.quantityToAdd = null;
     }
   }
-  removeIngFromMeal(item: MealItem) { this.newMealItems = this.newMealItems.filter(x => x !== item); }
-  calculateItemCalories(item: MealItem): number { return item.ingredient.baseUnit === '100g' ? (item.quantity / 100) * item.ingredient.calories : item.quantity * item.ingredient.calories; }
+  removeIngFromMeal(item) { this.newMealItems = this.newMealItems.filter(x => x !== item); }
+  calculateItemCalories(item) { return item.ingredient.baseUnit === '100g' ? (item.quantity / 100) * item.ingredient.calories : item.quantity * item.ingredient.calories; }
   getNewMealTotals() {
     let cal = 0, p = 0, c = 0, f = 0;
     this.newMealItems.forEach(item => {
@@ -928,18 +845,18 @@ export class App {
   saveMeal() {
     if (this.newMealName && this.newMealItems.length > 0) {
       const t = this.getNewMealTotals();
-      const m: Meal = { id: Date.now().toString(), name: this.newMealName, items: [...this.newMealItems], totalCalories: t.cal, totalProtein: t.p, totalCarbs: t.c, totalFat: t.f };
+      const m = { id: Date.now().toString(), name: this.newMealName, items: [...this.newMealItems], totalCalories: t.cal, totalProtein: t.p, totalCarbs: t.c, totalFat: t.f };
       this.dataService.meals.update(prev => [...prev, m]);
       this.dataService.save();
       this.newMealName = ''; this.newMealItems = [];
     }
   }
-  scheduleMealData = { date: new Date().toISOString().split('T')[0], type: 'Déjeuner' as any, mealId: null as string | null };
+  scheduleMealData = { date: new Date().toISOString().split('T')[0], type: 'Déjeuner', mealId: null };
   confirmScheduleMeal() {
     if (this.scheduleMealData.date && this.scheduleMealData.mealId) {
       const mDef = this.dataService.meals().find(m => m.id === this.scheduleMealData.mealId);
       if (!mDef) return;
-      const sm: ScheduledMeal = {
+      const sm = {
         id: Date.now().toString(),
         date: this.scheduleMealData.date,
         mealId: mDef.id,
@@ -957,8 +874,8 @@ export class App {
     }
   }
   sortedScheduledMeals = computed(() => this.dataService.scheduledMeals().sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
-  removeScheduledMeal(id: string) { this.dataService.scheduledMeals.update(prev => prev.filter(x => x.id !== id)); this.dataService.save(); }
-  toggleMealConsumed(id: string) {
+  removeScheduledMeal(id) { this.dataService.scheduledMeals.update(prev => prev.filter(x => x.id !== id)); this.dataService.save(); }
+  toggleMealConsumed(id) {
     this.dataService.scheduledMeals.update(prev => prev.map(m => m.id === id ? { ...m, consumed: !m.consumed } : m));
     this.dataService.save();
   }
