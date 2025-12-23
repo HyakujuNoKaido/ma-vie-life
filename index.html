@@ -4,28 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LIFE Dashboard</title>
-    <!-- Chargement de Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-      body { background-color: #f8fafc; margin: 0; }
-      #root { min-height: 100vh; }
-    </style>
   </head>
   <body>
     <div id="root">
-      <!-- Ce message ne s'affiche que si le JavaScript plante ou ne charge pas -->
-      <div style="display: flex; height: 100vh; align-items: center; justify-content: center; font-family: sans-serif; color: #64748b;">
-        <div style="text-align: center;">
-          <div style="width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #4f46e5; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
-          <p style="font-weight: 800; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;">Chargement du Dashboard...</p>
-        </div>
+      <!-- Ce message disparaîtra dès que le JS chargera -->
+      <div style="display: flex; height: 100vh; align-items: center; justify-content: center; font-family: sans-serif;">
+        <p style="color: #6366f1; font-weight: 900; letter-spacing: 0.2em;">CONNEXION...</p>
       </div>
     </div>
-
-    <script type="module" src="/src/App.jsx"></script>
-
-    <style>
-      @keyframes spin { to { transform: rotate(360deg); } }
-    </style>
+    <!-- On pointe vers main.jsx désormais -->
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
