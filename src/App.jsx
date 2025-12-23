@@ -3,8 +3,7 @@ import { CommonModule, DecimalPipe, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 // --- 1. CUSTOM PIPE ---
-// Note: No 'export' keyword here to prevent bootstrapping issues.
-// The App component can still use it because it's in the same file.
+// Defined first for availability, but NOT exported yet to avoid bootstrapping precedence issues.
 @Pipe({
   name: 'dateFr',
   standalone: true
@@ -33,7 +32,7 @@ class DateFrPipe implements PipeTransform {
 }
 
 // --- 2. DATA SERVICE ---
-// Note: No 'export' keyword here.
+// Defined before App so 'inject(DataService)' works. Not exported in-place.
 @Injectable({
   providedIn: 'root'
 })
@@ -173,6 +172,7 @@ class DataService {
 }
 
 // --- 3. MAIN COMPONENT ---
+// Exported as a named export FIRST (or as the primary visible export) to guide the bootstrapper.
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -299,7 +299,7 @@ class DataService {
     </div>
   `
 })
-export default class App {
+export class App {
   dataService = inject(DataService);
   activeTab = signal('home');
   tabs = [
@@ -584,3 +584,6 @@ export default class App {
     this.dataService.save();
   }
 }
+
+// Ensure these are available for build tools expecting exported symbols
+export { DateFrPipe, DataService };
