@@ -3,7 +3,8 @@ import { CommonModule, DecimalPipe, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 // --- 1. CUSTOM PIPE ---
-// Removed 'export' so the bootstrapper doesn't try to load this as the root component
+// Note: No 'export' keyword here to prevent bootstrapping issues.
+// The App component can still use it because it's in the same file.
 @Pipe({
   name: 'dateFr',
   standalone: true
@@ -32,7 +33,7 @@ class DateFrPipe implements PipeTransform {
 }
 
 // --- 2. DATA SERVICE ---
-// Removed 'export' so the bootstrapper doesn't try to load this as the root component
+// Note: No 'export' keyword here.
 @Injectable({
   providedIn: 'root'
 })
@@ -50,9 +51,14 @@ class DataService {
     this.loadFromStorage();
   }
 
+  // Safe helper to check for browser environment
+  private isBrowser(): boolean {
+    return typeof window !== 'undefined' && typeof localStorage !== 'undefined';
+  }
+
   loadFromStorage() {
     try {
-      if (typeof localStorage === 'undefined') return;
+      if (!this.isBrowser()) return;
       
       const ex = localStorage.getItem('lt_exercises');
       const sess = localStorage.getItem('lt_sessions');
@@ -77,7 +83,7 @@ class DataService {
   }
 
   save() {
-    if (typeof localStorage === 'undefined') return;
+    if (!this.isBrowser()) return;
     
     localStorage.setItem('lt_exercises', JSON.stringify(this.exercises()));
     localStorage.setItem('lt_sessions', JSON.stringify(this.sessions()));
@@ -162,7 +168,7 @@ class DataService {
     this.scheduledSessions.set([]);
     this.scheduledMeals.set([]);
     this.finances.set([]);
-    if (typeof localStorage !== 'undefined') localStorage.clear();
+    if (this.isBrowser()) localStorage.clear();
   }
 }
 
@@ -293,7 +299,7 @@ class DataService {
     </div>
   `
 })
-export class App {
+export default class App {
   dataService = inject(DataService);
   activeTab = signal('home');
   tabs = [
