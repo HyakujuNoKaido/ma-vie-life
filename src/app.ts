@@ -3,7 +3,6 @@ import { CommonModule, DecimalPipe, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 // --- 1. CUSTOM PIPE ---
-// L'export est obligatoire pour que la compilation AOT (Vercel) fonctionne
 @Pipe({
   name: 'dateFr',
   standalone: true
@@ -581,4 +580,5 @@ export class App {
     this.dataService.save();
   }
 }
+
 
