@@ -3,17 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LIFE Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>LifeTrack</title>
   </head>
   <body>
-    <div id="root">
-      <!-- Ce message disparaîtra dès que le JS chargera -->
-      <div style="display: flex; height: 100vh; align-items: center; justify-content: center; font-family: sans-serif;">
-        <p style="color: #6366f1; font-weight: 900; letter-spacing: 0.2em;">CONNEXION...</p>
-      </div>
-    </div>
-    <!-- On pointe vers main.jsx désormais -->
-    <script type="module" src="/src/main.jsx"></script>
+    <app-root></app-root> <!-- C'est ici que l'app s'insère -->
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
