@@ -1,51 +1,59 @@
-import { Component, computed, signal, effect, Injectable, inject, Pipe } from '@angular/core';
+import { Component, computed, signal, effect, Injectable, inject, Pipe, PipeTransform } from '@angular/core';
 import { CommonModule, DecimalPipe, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 // --- 1. CUSTOM PIPE ---
-class DateFrPipe {
-  transform(value, format = 'full') {
+// Removed 'export' so the bootstrapper doesn't try to load this as the root component
+@Pipe({
+  name: 'dateFr',
+  standalone: true
+})
+class DateFrPipe implements PipeTransform {
+  transform(value: string | Date, format: string = 'full'): string {
     const date = new Date(value);
     if (isNaN(date.getTime())) return '';
 
-    let options;
+    let options: Intl.DateTimeFormatOptions;
     if (format === 'short') {
-        options = { day: 'numeric', month: 'short' };
+      options = { day: 'numeric', month: 'short' };
     } else if (format === 'month') {
-        options = { month: 'long', year: 'numeric' };
+      options = { month: 'long', year: 'numeric' };
     } else {
-        options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+      options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
     }
 
     try {
-        const str = date.toLocaleDateString('fr-FR', options);
-        return str.charAt(0).toUpperCase() + str.slice(1);
+      const str = date.toLocaleDateString('fr-FR', options);
+      return str.charAt(0).toUpperCase() + str.slice(1);
     } catch (e) {
-        return date.toDateString();
+      return date.toDateString();
     }
   }
 }
-DateFrPipe.decorators = [
-  { type: Pipe, args: [{ name: 'dateFr', standalone: true }] }
-];
 
 // --- 2. DATA SERVICE ---
+// Removed 'export' so the bootstrapper doesn't try to load this as the root component
+@Injectable({
+  providedIn: 'root'
+})
 class DataService {
-  constructor() {
-    this.exercises = signal([]);
-    this.sessions = signal([]);
-    this.ingredients = signal([]);
-    this.meals = signal([]);
-    this.scheduledSessions = signal([]);
-    this.scheduledMeals = signal([]);
-    this.finances = signal([]);
-    this.monthlyBudget = signal(4000);
+  exercises = signal<any[]>([]);
+  sessions = signal<any[]>([]);
+  ingredients = signal<any[]>([]);
+  meals = signal<any[]>([]);
+  scheduledSessions = signal<any[]>([]);
+  scheduledMeals = signal<any[]>([]);
+  finances = signal<any[]>([]);
+  monthlyBudget = signal<number>(4000);
 
+  constructor() {
     this.loadFromStorage();
   }
 
   loadFromStorage() {
     try {
+      if (typeof localStorage === 'undefined') return;
+      
       const ex = localStorage.getItem('lt_exercises');
       const sess = localStorage.getItem('lt_sessions');
       const ing = localStorage.getItem('lt_ingredients');
@@ -69,6 +77,8 @@ class DataService {
   }
 
   save() {
+    if (typeof localStorage === 'undefined') return;
+    
     localStorage.setItem('lt_exercises', JSON.stringify(this.exercises()));
     localStorage.setItem('lt_sessions', JSON.stringify(this.sessions()));
     localStorage.setItem('lt_ingredients', JSON.stringify(this.ingredients()));
@@ -120,7 +130,7 @@ class DataService {
 
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
-    
+     
     const f = [
       { id: 'f1', date: todayStr, description: 'Salaire', amount: 5000, type: 'revenu', category: 'Salaire' },
       { id: 'f2', date: todayStr, description: 'Loyer', amount: 1500, type: 'fixe', category: 'Logement' }
@@ -152,309 +162,16 @@ class DataService {
     this.scheduledSessions.set([]);
     this.scheduledMeals.set([]);
     this.finances.set([]);
-    localStorage.clear();
+    if (typeof localStorage !== 'undefined') localStorage.clear();
   }
 }
-DataService.decorators = [
-  { type: Injectable, args: [{ providedIn: 'root' }] }
-];
 
 // --- 3. MAIN COMPONENT ---
-export class App {
-  constructor() {
-    this.dataService = inject(DataService);
-    this.activeTab = signal('home');
-    this.tabs = [
-      { id: 'home', label: 'Accueil' },
-      { id: 'sport', label: 'Sport' },
-      { id: 'nutrition', label: 'Nutrition' },
-      { id: 'finance', label: 'Finances' }
-    ];
-    this.today = new Date();
-
-    // Modals
-    this.sessionModalData = null;
-    this.mealModalData = null;
-    this.planningMode = false;
-
-    // Finance State
-    this.newTransaction = { type: 'fixe', date: new Date().toISOString().split('T')[0], category: '' };
-    this.months = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
-    this.years = Array.from({length: 11}, (_, i) => new Date().getFullYear() - 5 + i); 
-    this.selectedFinanceMonth = signal(new Date().getMonth());
-    this.selectedFinanceYear = signal(new Date().getFullYear());
-    this.categoryLists = {
-      revenu: ['Salaire', 'Dividendes', 'Cadeau', 'Autre'],
-      fixe: ['Loyer', 'Assurance', 'Internet/Mobile', 'Abonnement', 'Impôts'],
-      variable: ['Alimentation', 'Shopping', 'Transport', 'Loisirs', 'Restaurant', 'Santé', 'Vacances']
-    };
-
-    // Sport State
-    this.sportView = 'schedule';
-    this.filterBodyPart = ''; 
-    this.filterEquipment = '';
-    this.exerciseForm = { equipment: 'Sans matériel' };
-    this.editingExercise = null;
-    this.newSessionName = ''; 
-    this.newSessionExercises = [];
-    this.scheduleData = { date: new Date().toISOString().split('T')[0], sessionId: null };
-
-    // Nutrition State
-    this.nutriView = 'schedule';
-    this.newIngredient = { baseUnit: '100g' };
-    this.newMealName = ''; 
-    this.newMealItems = [];
-    this.selectedIngredientForAdd = null;
-    this.quantityToAdd = null;
-    this.scheduleMealData = { date: new Date().toISOString().split('T')[0], type: 'Déjeuner', mealId: null };
-
-    // --- COMPUTED SIGNALS ---
-    
-    // Finance Computed
-    this.sortedTransactions = computed(() => this.dataService.finances().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-    
-    this.filteredTransactions = computed(() => {
-       return this.sortedTransactions().filter(t => {
-          const d = new Date(t.date);
-          return d.getMonth() == this.selectedFinanceMonth() && d.getFullYear() == this.selectedFinanceYear();
-       });
-    });
-
-    this.monthlyStats = computed(() => {
-       const txs = this.filteredTransactions();
-       const income = txs.filter(t => t.type === 'revenu').reduce((acc, t) => acc + t.amount, 0);
-       const expenses = txs.filter(t => t.type !== 'revenu').reduce((acc, t) => acc + t.amount, 0);
-       return { income, expenses, balance: income - expenses };
-    });
-
-    this.totalBalance = computed(() => this.dataService.finances().reduce((acc, cur) => cur.type === 'revenu' ? acc + cur.amount : acc - cur.amount, 0));
-    this.totalExpenses = computed(() => this.dataService.finances().filter(f => f.type !== 'revenu').reduce((acc, cur) => acc + cur.amount, 0));
-    this.remainingBudget = computed(() => this.dataService.monthlyBudget() - this.totalExpenses());
-    this.budgetPercent = computed(() => this.dataService.monthlyBudget() === 0 ? 0 : Math.min((this.totalExpenses() / this.dataService.monthlyBudget()) * 100, 100));
-    
-    this.upcomingPayments = computed(() => {
-      const now = new Date(); now.setHours(0,0,0,0);
-      return this.dataService.finances().filter(f => f.type !== 'revenu' && new Date(f.date) >= now).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    });
-
-    // Sport Computed
-    this.uniqueBodyParts = computed(() => [...new Set(this.dataService.exercises().map(e => e.bodyPart))].sort());
-    this.uniqueEquipment = computed(() => [...new Set(this.dataService.exercises().map(e => e.equipment))].sort());
-    this.filteredExercises = computed(() => this.dataService.exercises().filter(e => (this.filterBodyPart ? e.bodyPart === this.filterBodyPart : true) && (this.filterEquipment ? e.equipment === this.filterEquipment : true)));
-    
-    this.nextSession = computed(() => {
-       const now = new Date(); now.setHours(0,0,0,0);
-       const upcoming = this.dataService.scheduledSessions().filter(s => new Date(s.date) >= now).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-       return upcoming.length > 0 ? upcoming[0] : null;
-    });
-    this.sortedScheduledSessions = computed(() => this.dataService.scheduledSessions().sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
-
-    // Nutrition Computed
-    this.sortedScheduledMeals = computed(() => this.dataService.scheduledMeals().sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
-    this.todaysMealsUnconsumed = computed(() => { 
-        const d = this.today.toISOString().split('T')[0]; 
-        return this.dataService.scheduledMeals().filter(s => s.date === d && !s.consumed); 
-    });
-    this.todaysCalories = computed(() => {
-       const d = this.today.toISOString().split('T')[0];
-       const meals = this.dataService.scheduledMeals().filter(s => s.date === d);
-       return meals.reduce((acc, c) => acc + c.caloriesSnapshot, 0);
-    });
-    this.todaysMacros = computed(() => {
-       const d = this.today.toISOString().split('T')[0];
-       const meals = this.dataService.scheduledMeals().filter(s => s.date === d);
-       return {
-          cal: meals.reduce((acc, c) => acc + c.caloriesSnapshot, 0),
-          prot: meals.reduce((acc, c) => acc + c.proteinSnapshot, 0),
-          carb: meals.reduce((acc, c) => acc + c.carbsSnapshot, 0),
-          fat: meals.reduce((acc, c) => acc + c.fatSnapshot, 0)
-       };
-    });
-  }
-
-  // --- METHODS ---
-
-  openSessionDetail(s) { 
-    this.planningMode = false;
-    const def = this.dataService.sessions().find(x => x.id === s.sessionId);
-    this.sessionModalData = { ...s, name: s.sessionName, exercises: def ? def.exercises : [] }; 
-  }
-  selectSessionForPlanning(s) {
-    this.planningMode = true;
-    this.sessionModalData = s;
-    this.scheduleData.sessionId = s.id;
-  }
-  closeSessionModal() { this.sessionModalData = null; }
-
-  openMealDetail(m) {
-    this.planningMode = false;
-    this.mealModalData = { 
-      id: m.mealId, name: m.mealName, type: m.type, 
-      totalCalories: m.caloriesSnapshot, totalProtein: m.proteinSnapshot, totalCarbs: m.carbsSnapshot, totalFat: m.fatSnapshot 
-    };
-  }
-  selectMealForPlanning(m) {
-    this.planningMode = true;
-    this.mealModalData = m;
-    this.scheduleMealData.mealId = m.id;
-  }
-  closeMealModal() { this.mealModalData = null; }
-
-  getSessionExercises(sessId) {
-    const s = this.dataService.sessions().find(x => x.id === sessId);
-    return s ? s.exercises : [];
-  }
-  getMealItems(mealId) {
-     const m = this.dataService.meals().find(x => x.id === mealId);
-     return m ? m.items : [];
-  }
-
-  setTransType(t) { this.newTransaction.type = t; this.newTransaction.category = ''; }
-  getCategories(type) { return this.categoryLists[type || 'variable']; }
-  updateBudget(val) { this.dataService.monthlyBudget.set(val); this.dataService.save(); }
-  addTransaction() {
-    if (this.newTransaction.amount && this.newTransaction.category) {
-      const t = {
-        id: Date.now().toString(),
-        date: this.newTransaction.date,
-        description: this.newTransaction.description || '',
-        amount: this.newTransaction.amount,
-        type: this.newTransaction.type,
-        category: this.newTransaction.category
-      };
-      this.dataService.finances.update(prev => [...prev, t]);
-      this.dataService.save();
-      this.newTransaction = { type: 'fixe', date: new Date().toISOString().split('T')[0], category: '' };
-    }
-  }
-  deleteTransaction(id) { this.dataService.finances.update(prev => prev.filter(x => x.id !== id)); this.dataService.save(); }
-
-  editExercise(ex) { this.editingExercise = ex; this.exerciseForm = { ...ex }; }
-  cancelEditExercise() { this.editingExercise = null; this.exerciseForm = { equipment: 'Sans matériel' }; }
-  saveExercise() {
-    if (this.exerciseForm.name) {
-      if (this.editingExercise) {
-        const updated = { ...this.editingExercise, ...this.exerciseForm };
-        this.dataService.exercises.update(prev => prev.map(e => e.id === updated.id ? updated : e));
-      } else {
-        const ex = {
-          id: Date.now().toString(),
-          name: this.exerciseForm.name,
-          bodyPart: this.exerciseForm.bodyPart || 'Divers',
-          equipment: this.exerciseForm.equipment || 'Sans matériel',
-          sets: this.exerciseForm.sets || 3,
-          reps: this.exerciseForm.reps || 10,
-          weight: this.exerciseForm.weight || 0,
-          imageUrl: this.exerciseForm.imageUrl || ''
-        };
-        this.dataService.exercises.update(prev => [...prev, ex]);
-      }
-      this.dataService.save();
-      this.cancelEditExercise();
-    }
-  }
-  addExToSession(ex) { this.newSessionExercises.push(ex); }
-  removeExFromSession(ex) { this.newSessionExercises = this.newSessionExercises.filter(e => e !== ex); }
-  saveSession() {
-    if (this.newSessionName && this.newSessionExercises.length > 0) {
-      const sess = { id: Date.now().toString(), name: this.newSessionName, exercises: [...this.newSessionExercises], totalDuration: 60 };
-      this.dataService.sessions.update(prev => [...prev, sess]);
-      this.dataService.save();
-      this.newSessionName = ''; this.newSessionExercises = [];
-    }
-  }
-  confirmScheduleSession() {
-    if (this.scheduleData.date && this.scheduleData.sessionId) {
-      const sDef = this.dataService.sessions().find(s => s.id === this.scheduleData.sessionId);
-      if (!sDef) return;
-      const ss = { id: Date.now().toString(), date: this.scheduleData.date, sessionId: sDef.id, sessionName: sDef.name, completed: false };
-      this.dataService.scheduledSessions.update(prev => [...prev, ss]);
-      this.dataService.save();
-      this.closeSessionModal();
-    }
-  }
-  removeScheduledSession(id) { this.dataService.scheduledSessions.update(prev => prev.filter(x => x.id !== id)); this.dataService.save(); }
-
-  addIngredient() {
-    if (this.newIngredient.name) {
-      const i = {
-        id: Date.now().toString(),
-        name: this.newIngredient.name,
-        baseUnit: this.newIngredient.baseUnit || '100g',
-        calories: this.newIngredient.calories || 0,
-        protein: this.newIngredient.protein || 0,
-        carbs: this.newIngredient.carbs || 0,
-        fat: this.newIngredient.fat || 0
-      };
-      this.dataService.ingredients.update(prev => [...prev, i]);
-      this.dataService.save();
-      this.newIngredient = { baseUnit: '100g' };
-    }
-  }
-  selectIngredient(i) { this.selectedIngredientForAdd = i; this.quantityToAdd = null; }
-  confirmAddIngredient() {
-    if (this.selectedIngredientForAdd && this.quantityToAdd) {
-      this.newMealItems.push({ ingredient: this.selectedIngredientForAdd, quantity: this.quantityToAdd });
-      this.selectedIngredientForAdd = null; this.quantityToAdd = null;
-    }
-  }
-  removeIngFromMeal(item) { this.newMealItems = this.newMealItems.filter(x => x !== item); }
-  calculateItemCalories(item) { return item.ingredient.baseUnit === '100g' ? (item.quantity / 100) * item.ingredient.calories : item.quantity * item.ingredient.calories; }
-  getNewMealTotals() {
-    let cal = 0, p = 0, c = 0, f = 0;
-    this.newMealItems.forEach(item => {
-       const ratio = item.ingredient.baseUnit === '100g' ? item.quantity / 100 : item.quantity;
-       cal += ratio * item.ingredient.calories;
-       p += ratio * item.ingredient.protein;
-       c += ratio * item.ingredient.carbs;
-       f += ratio * item.ingredient.fat;
-    });
-    return { cal, p, c, f };
-  }
-  saveMeal() {
-    if (this.newMealName && this.newMealItems.length > 0) {
-      const t = this.getNewMealTotals();
-      const m = { id: Date.now().toString(), name: this.newMealName, items: [...this.newMealItems], totalCalories: t.cal, totalProtein: t.p, totalCarbs: t.c, totalFat: t.f };
-      this.dataService.meals.update(prev => [...prev, m]);
-      this.dataService.save();
-      this.newMealName = ''; this.newMealItems = [];
-    }
-  }
-  confirmScheduleMeal() {
-    if (this.scheduleMealData.date && this.scheduleMealData.mealId) {
-      const mDef = this.dataService.meals().find(m => m.id === this.scheduleMealData.mealId);
-      if (!mDef) return;
-      const sm = {
-        id: Date.now().toString(),
-        date: this.scheduleMealData.date,
-        mealId: mDef.id,
-        mealName: mDef.name,
-        type: this.scheduleMealData.type,
-        caloriesSnapshot: mDef.totalCalories,
-        proteinSnapshot: mDef.totalProtein,
-        carbsSnapshot: mDef.totalCarbs,
-        fatSnapshot: mDef.totalFat,
-        consumed: false
-      };
-      this.dataService.scheduledMeals.update(prev => [...prev, sm]);
-      this.dataService.save();
-      this.closeMealModal();
-    }
-  }
-  removeScheduledMeal(id) { this.dataService.scheduledMeals.update(prev => prev.filter(x => x.id !== id)); this.dataService.save(); }
-  toggleMealConsumed(id) {
-    this.dataService.scheduledMeals.update(prev => prev.map(m => m.id === id ? { ...m, consumed: !m.consumed } : m));
-    this.dataService.save();
-  }
-}
-App.decorators = [
-  {
-    type: Component,
-    args: [{
-      selector: 'app-root',
-      standalone: true,
-      imports: [CommonModule, FormsModule, DateFrPipe, DecimalPipe, CurrencyPipe],
-      template: `
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  imports: [CommonModule, FormsModule, DateFrPipe, DecimalPipe, CurrencyPipe],
+  template: `
     <div class="flex h-screen bg-slate-950 text-slate-200 font-sans overflow-hidden selection:bg-blue-600 selection:text-white">
       <!-- SIDEBAR -->
       <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col z-20 shadow-2xl">
@@ -575,6 +292,289 @@ App.decorators = [
       <div *ngIf="mealModalData" class="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade"><div class="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]"><div class="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-950"><div><h3 class="text-2xl font-bold text-white">{{ mealModalData.name }}</h3><p class="text-emerald-400 uppercase font-bold text-sm" *ngIf="planningMode">Planification</p></div><button (click)="closeMealModal()" class="w-8 h-8 rounded-full bg-slate-800 text-white hover:bg-rose-600 transition">✕</button></div><div class="p-6 overflow-y-auto flex-1"><div class="flex justify-between mb-6 bg-slate-800/50 p-4 rounded border border-slate-800"><div class="text-center"><span class="block text-2xl font-bold text-white">{{ mealModalData.totalCalories | number:'1.0-0' }}</span><span class="text-xs uppercase text-slate-500">Kcal</span></div><div class="text-center"><span class="block text-xl font-bold text-emerald-400">{{ mealModalData.totalProtein | number:'1.0-0' }}g</span><span class="text-xs uppercase text-slate-500">Prot</span></div><div class="text-center"><span class="block text-xl font-bold text-amber-400">{{ mealModalData.totalCarbs | number:'1.0-0' }}g</span><span class="text-xs uppercase text-slate-500">Gluc</span></div><div class="text-center"><span class="block text-xl font-bold text-rose-400">{{ mealModalData.totalFat | number:'1.0-0' }}g</span><span class="text-xs uppercase text-slate-500">Lip</span></div></div><h4 class="text-slate-500 uppercase tracking-widest text-xs font-bold mb-4">Ingrédients</h4><ul class="space-y-2"><li *ngFor="let item of (planningMode ? mealModalData.items : getMealItems(mealModalData.id))" class="flex justify-between items-center border-b border-slate-800 pb-2"><div><span class="text-slate-200 block">{{ item.ingredient.name }}</span><span class="text-slate-500 text-xs">{{ item.quantity }}{{ item.ingredient.baseUnit === '100g' ? 'g' : ' ut' }}</span></div><span class="text-slate-400 font-mono text-sm" *ngIf="planningMode">{{ calculateItemCalories(item) | number:'1.0-0' }} kcal</span></li></ul></div><div *ngIf="planningMode" class="p-6 border-t border-slate-800 bg-slate-950 space-y-4"><div class="flex gap-4"><input type="date" [(ngModel)]="scheduleMealData.date" class="bg-slate-800 border border-slate-700 text-white p-2 rounded flex-1"><select [(ngModel)]="scheduleMealData.type" class="bg-slate-800 border border-slate-700 text-white p-2 rounded flex-1"><option value="Petit-déjeuner">Petit-déjeuner</option><option value="Déjeuner">Déjeuner</option><option value="Dîner">Dîner</option><option value="Collation">Collation</option></select></div><button (click)="confirmScheduleMeal()" class="w-full bg-emerald-600 text-white py-3 rounded font-bold uppercase">Ajouter au Menu</button></div><div *ngIf="!planningMode" class="p-6 border-t border-slate-800 bg-slate-950"><button (click)="closeMealModal(); activeTab.set('nutrition'); nutriView='schedule'" class="w-full border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 py-3 rounded font-bold uppercase transition">Voir Planning Complet</button></div></div></div>
     </div>
   `
-    }]
+})
+export class App {
+  dataService = inject(DataService);
+  activeTab = signal('home');
+  tabs = [
+    { id: 'home', label: 'Accueil' },
+    { id: 'sport', label: 'Sport' },
+    { id: 'nutrition', label: 'Nutrition' },
+    { id: 'finance', label: 'Finances' }
+  ];
+  today = new Date();
+
+  // Modals
+  sessionModalData: any = null;
+  mealModalData: any = null;
+  planningMode = false;
+
+  // Finance State
+  newTransaction = { type: 'fixe', date: new Date().toISOString().split('T')[0], category: '', amount: 0, description: '' };
+  months = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+  years = Array.from({length: 11}, (_, i) => new Date().getFullYear() - 5 + i); 
+  selectedFinanceMonth = signal(new Date().getMonth());
+  selectedFinanceYear = signal(new Date().getFullYear());
+  categoryLists: any = {
+    revenu: ['Salaire', 'Dividendes', 'Cadeau', 'Autre'],
+    fixe: ['Loyer', 'Assurance', 'Internet/Mobile', 'Abonnement', 'Impôts'],
+    variable: ['Alimentation', 'Shopping', 'Transport', 'Loisirs', 'Restaurant', 'Santé', 'Vacances']
+  };
+
+  // Sport State
+  sportView = 'schedule';
+  filterBodyPart = ''; 
+  filterEquipment = '';
+  exerciseForm: any = { equipment: 'Sans matériel' };
+  editingExercise: any = null;
+  newSessionName = ''; 
+  newSessionExercises: any[] = [];
+  scheduleData: any = { date: new Date().toISOString().split('T')[0], sessionId: null };
+
+  // Nutrition State
+  nutriView = 'schedule';
+  newIngredient: any = { baseUnit: '100g' };
+  newMealName = ''; 
+  newMealItems: any[] = [];
+  selectedIngredientForAdd: any = null;
+  quantityToAdd: number | null = null;
+  scheduleMealData: any = { date: new Date().toISOString().split('T')[0], type: 'Déjeuner', mealId: null };
+
+  // --- COMPUTED SIGNALS ---
+   
+  // Finance Computed
+  sortedTransactions = computed(() => this.dataService.finances().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+   
+  filteredTransactions = computed(() => {
+     return this.sortedTransactions().filter(t => {
+        const d = new Date(t.date);
+        return d.getMonth() == this.selectedFinanceMonth() && d.getFullYear() == this.selectedFinanceYear();
+     });
+  });
+
+  monthlyStats = computed(() => {
+     const txs = this.filteredTransactions();
+     const income = txs.filter(t => t.type === 'revenu').reduce((acc, t) => acc + t.amount, 0);
+     const expenses = txs.filter(t => t.type !== 'revenu').reduce((acc, t) => acc + t.amount, 0);
+     return { income, expenses, balance: income - expenses };
+  });
+
+  totalBalance = computed(() => this.dataService.finances().reduce((acc, cur) => cur.type === 'revenu' ? acc + cur.amount : acc - cur.amount, 0));
+  totalExpenses = computed(() => this.dataService.finances().filter(f => f.type !== 'revenu').reduce((acc, cur) => acc + cur.amount, 0));
+  remainingBudget = computed(() => this.dataService.monthlyBudget() - this.totalExpenses());
+  budgetPercent = computed(() => this.dataService.monthlyBudget() === 0 ? 0 : Math.min((this.totalExpenses() / this.dataService.monthlyBudget()) * 100, 100));
+   
+  upcomingPayments = computed(() => {
+    const now = new Date(); now.setHours(0,0,0,0);
+    return this.dataService.finances().filter(f => f.type !== 'revenu' && new Date(f.date) >= now).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  });
+
+  // Sport Computed
+  uniqueBodyParts = computed(() => [...new Set(this.dataService.exercises().map(e => e.bodyPart))].sort());
+  uniqueEquipment = computed(() => [...new Set(this.dataService.exercises().map(e => e.equipment))].sort());
+  filteredExercises = computed(() => this.dataService.exercises().filter(e => (this.filterBodyPart ? e.bodyPart === this.filterBodyPart : true) && (this.filterEquipment ? e.equipment === this.filterEquipment : true)));
+   
+  nextSession = computed(() => {
+     const now = new Date(); now.setHours(0,0,0,0);
+     const upcoming = this.dataService.scheduledSessions().filter(s => new Date(s.date) >= now).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+     return upcoming.length > 0 ? upcoming[0] : null;
+  });
+  sortedScheduledSessions = computed(() => this.dataService.scheduledSessions().sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+
+  // Nutrition Computed
+  sortedScheduledMeals = computed(() => this.dataService.scheduledMeals().sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+  todaysMealsUnconsumed = computed(() => { 
+     const d = this.today.toISOString().split('T')[0]; 
+     return this.dataService.scheduledMeals().filter(s => s.date === d && !s.consumed); 
+  });
+  todaysCalories = computed(() => {
+     const d = this.today.toISOString().split('T')[0];
+     const meals = this.dataService.scheduledMeals().filter(s => s.date === d);
+     return meals.reduce((acc, c) => acc + c.caloriesSnapshot, 0);
+  });
+  todaysMacros = computed(() => {
+     const d = this.today.toISOString().split('T')[0];
+     const meals = this.dataService.scheduledMeals().filter(s => s.date === d);
+     return {
+        cal: meals.reduce((acc, c) => acc + c.caloriesSnapshot, 0),
+        prot: meals.reduce((acc, c) => acc + c.proteinSnapshot, 0),
+        carb: meals.reduce((acc, c) => acc + c.carbsSnapshot, 0),
+        fat: meals.reduce((acc, c) => acc + c.fatSnapshot, 0)
+     };
+  });
+
+  // --- METHODS ---
+
+  openSessionDetail(s: any) { 
+    this.planningMode = false;
+    const def = this.dataService.sessions().find(x => x.id === s.sessionId);
+    this.sessionModalData = { ...s, name: s.sessionName, exercises: def ? def.exercises : [] }; 
   }
-];
+  selectSessionForPlanning(s: any) {
+    this.planningMode = true;
+    this.sessionModalData = s;
+    this.scheduleData.sessionId = s.id;
+  }
+  closeSessionModal() { this.sessionModalData = null; }
+
+  openMealDetail(m: any) {
+    this.planningMode = false;
+    this.mealModalData = { 
+      id: m.mealId, name: m.mealName, type: m.type, 
+      totalCalories: m.caloriesSnapshot, totalProtein: m.proteinSnapshot, totalCarbs: m.carbsSnapshot, totalFat: m.fatSnapshot 
+    };
+  }
+  selectMealForPlanning(m: any) {
+    this.planningMode = true;
+    this.mealModalData = m;
+    this.scheduleMealData.mealId = m.id;
+  }
+  closeMealModal() { this.mealModalData = null; }
+
+  getSessionExercises(sessId: string) {
+    const s = this.dataService.sessions().find(x => x.id === sessId);
+    return s ? s.exercises : [];
+  }
+  getMealItems(mealId: string) {
+     const m = this.dataService.meals().find(x => x.id === mealId);
+     return m ? m.items : [];
+  }
+
+  setTransType(t: string) { this.newTransaction.type = t; this.newTransaction.category = ''; }
+  getCategories(type: string) { return this.categoryLists[type || 'variable']; }
+  updateBudget(val: number) { this.dataService.monthlyBudget.set(val); this.dataService.save(); }
+  addTransaction() {
+    if (this.newTransaction.amount && this.newTransaction.category) {
+      const t = {
+        id: Date.now().toString(),
+        date: this.newTransaction.date,
+        description: this.newTransaction.description || '',
+        amount: this.newTransaction.amount,
+        type: this.newTransaction.type,
+        category: this.newTransaction.category
+      };
+      this.dataService.finances.update(prev => [...prev, t]);
+      this.dataService.save();
+      this.newTransaction = { type: 'fixe', date: new Date().toISOString().split('T')[0], category: '', amount: 0, description: '' };
+    }
+  }
+  deleteTransaction(id: string) { this.dataService.finances.update(prev => prev.filter(x => x.id !== id)); this.dataService.save(); }
+
+  editExercise(ex: any) { this.editingExercise = ex; this.exerciseForm = { ...ex }; }
+  cancelEditExercise() { this.editingExercise = null; this.exerciseForm = { equipment: 'Sans matériel' }; }
+  saveExercise() {
+    if (this.exerciseForm.name) {
+      if (this.editingExercise) {
+        const updated = { ...this.editingExercise, ...this.exerciseForm };
+        this.dataService.exercises.update(prev => prev.map(e => e.id === updated.id ? updated : e));
+      } else {
+        const ex = {
+          id: Date.now().toString(),
+          name: this.exerciseForm.name,
+          bodyPart: this.exerciseForm.bodyPart || 'Divers',
+          equipment: this.exerciseForm.equipment || 'Sans matériel',
+          sets: this.exerciseForm.sets || 3,
+          reps: this.exerciseForm.reps || 10,
+          weight: this.exerciseForm.weight || 0,
+          imageUrl: this.exerciseForm.imageUrl || ''
+        };
+        this.dataService.exercises.update(prev => [...prev, ex]);
+      }
+      this.dataService.save();
+      this.cancelEditExercise();
+    }
+  }
+  addExToSession(ex: any) { this.newSessionExercises.push(ex); }
+  removeExFromSession(ex: any) { this.newSessionExercises = this.newSessionExercises.filter(e => e !== ex); }
+  saveSession() {
+    if (this.newSessionName && this.newSessionExercises.length > 0) {
+      const sess = { id: Date.now().toString(), name: this.newSessionName, exercises: [...this.newSessionExercises], totalDuration: 60 };
+      this.dataService.sessions.update(prev => [...prev, sess]);
+      this.dataService.save();
+      this.newSessionName = ''; this.newSessionExercises = [];
+    }
+  }
+  confirmScheduleSession() {
+    if (this.scheduleData.date && this.scheduleData.sessionId) {
+      const sDef = this.dataService.sessions().find(s => s.id === this.scheduleData.sessionId);
+      if (!sDef) return;
+      const ss = { id: Date.now().toString(), date: this.scheduleData.date, sessionId: sDef.id, sessionName: sDef.name, completed: false };
+      this.dataService.scheduledSessions.update(prev => [...prev, ss]);
+      this.dataService.save();
+      this.closeSessionModal();
+    }
+  }
+  removeScheduledSession(id: string) { this.dataService.scheduledSessions.update(prev => prev.filter(x => x.id !== id)); this.dataService.save(); }
+
+  addIngredient() {
+    if (this.newIngredient.name) {
+      const i = {
+        id: Date.now().toString(),
+        name: this.newIngredient.name,
+        baseUnit: this.newIngredient.baseUnit || '100g',
+        calories: this.newIngredient.calories || 0,
+        protein: this.newIngredient.protein || 0,
+        carbs: this.newIngredient.carbs || 0,
+        fat: this.newIngredient.fat || 0
+      };
+      this.dataService.ingredients.update(prev => [...prev, i]);
+      this.dataService.save();
+      this.newIngredient = { baseUnit: '100g' };
+    }
+  }
+  selectIngredient(i: any) { this.selectedIngredientForAdd = i; this.quantityToAdd = null; }
+  confirmAddIngredient() {
+    if (this.selectedIngredientForAdd && this.quantityToAdd) {
+      this.newMealItems.push({ ingredient: this.selectedIngredientForAdd, quantity: this.quantityToAdd });
+      this.selectedIngredientForAdd = null; this.quantityToAdd = null;
+    }
+  }
+  removeIngFromMeal(item: any) { this.newMealItems = this.newMealItems.filter(x => x !== item); }
+  calculateItemCalories(item: any) { return item.ingredient.baseUnit === '100g' ? (item.quantity / 100) * item.ingredient.calories : item.quantity * item.ingredient.calories; }
+  getNewMealTotals() {
+    let cal = 0, p = 0, c = 0, f = 0;
+    this.newMealItems.forEach(item => {
+       const ratio = item.ingredient.baseUnit === '100g' ? item.quantity / 100 : item.quantity;
+       cal += ratio * item.ingredient.calories;
+       p += ratio * item.ingredient.protein;
+       c += ratio * item.ingredient.carbs;
+       f += ratio * item.ingredient.fat;
+    });
+    return { cal, p, c, f };
+  }
+  saveMeal() {
+    if (this.newMealName && this.newMealItems.length > 0) {
+      const t = this.getNewMealTotals();
+      const m = { id: Date.now().toString(), name: this.newMealName, items: [...this.newMealItems], totalCalories: t.cal, totalProtein: t.p, totalCarbs: t.c, totalFat: t.f };
+      this.dataService.meals.update(prev => [...prev, m]);
+      this.dataService.save();
+      this.newMealName = ''; this.newMealItems = [];
+    }
+  }
+  confirmScheduleMeal() {
+    if (this.scheduleMealData.date && this.scheduleMealData.mealId) {
+      const mDef = this.dataService.meals().find(m => m.id === this.scheduleMealData.mealId);
+      if (!mDef) return;
+      const sm = {
+        id: Date.now().toString(),
+        date: this.scheduleMealData.date,
+        mealId: mDef.id,
+        mealName: mDef.name,
+        type: this.scheduleMealData.type,
+        caloriesSnapshot: mDef.totalCalories,
+        proteinSnapshot: mDef.totalProtein,
+        carbsSnapshot: mDef.totalCarbs,
+        fatSnapshot: mDef.totalFat,
+        consumed: false
+      };
+      this.dataService.scheduledMeals.update(prev => [...prev, sm]);
+      this.dataService.save();
+      this.closeMealModal();
+    }
+  }
+  removeScheduledMeal(id: string) { this.dataService.scheduledMeals.update(prev => prev.filter(x => x.id !== id)); this.dataService.save(); }
+  toggleMealConsumed(id: string) {
+    this.dataService.scheduledMeals.update(prev => prev.map(m => m.id === id ? { ...m, consumed: !m.consumed } : m));
+    this.dataService.save();
+  }
+}
