@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 // --- CUSTOM PIPE: DATES FRANÇAISES ---
 @Pipe({ name: 'dateFr', standalone: true })
 class DateFrPipe {
+  // Removed ': string' return type and 'implements' to satisfy build parser
   transform(value, format = 'full') {
     const date = new Date(value);
     if (isNaN(date.getTime())) return '';
