@@ -2,18 +2,16 @@ import { Component, computed, signal, Injectable, inject, Pipe, PipeTransform } 
 import { CommonModule, DecimalPipe, CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-// --- 1. PIPE (Formatage Date) ---
+// --- 1. PIPE ---
 @Pipe({ name: 'dateFr', standalone: true })
 export class DateFrPipe implements PipeTransform {
   transform(value: string | Date, format: string = 'full'): string {
     const date = new Date(value);
     if (isNaN(date.getTime())) return '';
     let options: Intl.DateTimeFormatOptions;
-    // Format optimisé pour mobile
     if (format === 'short') options = { day: 'numeric', month: 'short' };
     else if (format === 'month') options = { month: 'long', year: 'numeric' };
-    else options = { weekday: 'short', day: 'numeric', month: 'long' }; // Plus court pour mobile
-
+    else options = { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' };
     try {
       const str = date.toLocaleDateString('fr-FR', options);
       return str.charAt(0).toUpperCase() + str.slice(1);
@@ -21,10 +19,9 @@ export class DateFrPipe implements PipeTransform {
   }
 }
 
-// --- 2. SERVICE (Données & Sauvegarde) ---
+// --- 2. SERVICE ---
 @Injectable({ providedIn: 'root' })
 export class DataService {
-  // Signaux (Données réactives)
   exercises = signal<any[]>([]);
   sessions = signal<any[]>([]);
   ingredients = signal<any[]>([]);
@@ -35,10 +32,8 @@ export class DataService {
   monthlyBudget = signal<number>(4000);
 
   constructor() { this.loadFromStorage(); }
-  
   private isBrowser() { return typeof window !== 'undefined' && typeof localStorage !== 'undefined'; }
-  
-  // Sauvegarde automatique locale (Persistance quand on quitte l'app)
+
   loadFromStorage() {
     if (!this.isBrowser()) return;
     try {
@@ -61,28 +56,30 @@ export class DataService {
   }
 
   injectData() {
-    // Données de test pour voir le design tout de suite
-    const todayStr = new Date().toISOString().split('T')[0];
-    if (this.exercises().length === 0) {
-        this.exercises.set([{ id: 'ex1', name: 'Développé Couché', bodyPart: 'Pectoraux', equipment: 'Barre', sets: 4, reps: 10, weight: 80, imageUrl: "" }]);
-        this.sessions.set([{ id: 'sess1', name: 'Pecs & Bras', exercises: [this.exercises()[0]], totalDuration: 60 }]);
-        this.ingredients.set([{ id: 'ing1', name: 'Poulet', baseUnit: '100g', calories: 120, protein: 23, carbs: 0, fat: 1 }]);
-        this.meals.set([{ id: 'm1', name: 'Post-Workout', items: [{ingredient: this.ingredients()[0], quantity: 200}], totalCalories: 240, totalProtein: 46, totalCarbs: 0, totalFat: 2 }]);
-        this.finances.set([
-            { id: 'f1', date: todayStr, description: 'Salaire', amount: 4500, type: 'revenu', category: 'Salaire' },
-            { id: 'f2', date: todayStr, description: 'Loyer', amount: 1200, type: 'fixe', category: 'Logement' }
-        ]);
-        this.save();
-    }
+    const exs = [
+      { id: 'ex1', name: 'Développé Couché', bodyPart: 'Pectoraux', equipment: 'Barre', sets: 4, reps: 10, weight: 80, imageUrl: "https://placehold.co/60x60/3b82f6/white?text=Bench" },
+      { id: 'ex2', name: 'Squat', bodyPart: 'Jambes', equipment: 'Barre', sets: 4, reps: 8, weight: 100, imageUrl: "https://placehold.co/60x60/3b82f6/white?text=Squat" }
+    ];
+    this.exercises.set(exs);
+    const sess = { id: 'sess1', name: 'Full Body A', exercises: [exs[0], exs[1]], totalDuration: 60 };
+    this.sessions.set([sess]);
+    const ings = [
+      { id: 'ing1', name: 'Poulet (cru)', baseUnit: '100g', calories: 120, protein: 23, carbs: 0, fat: 2.5 },
+      { id: 'ing2', name: 'Riz Basmati (cuit)', baseUnit: '100g', calories: 130, protein: 2.7, carbs: 28, fat: 0.3 }
+    ];
+    this.ingredients.set(ings);
+    const meal = { id: 'meal1', name: 'Post-Workout', items: [{ ingredient: ings[0], quantity: 150 }, { ingredient: ings[1], quantity: 200 }], totalCalories: 440, totalProtein: 40, totalCarbs: 56, totalFat: 4 };
+    this.meals.set([meal]);
+    const today = new Date().toISOString().split('T')[0];
+    this.finances.set([{ id: 'f1', date: today, description: 'Salaire', amount: 5000, type: 'revenu', category: 'Salaire' }]);
+    this.scheduledMeals.set([{ id: 'sm1', date: today, mealId: meal.id, mealName: meal.name, type: 'Déjeuner', caloriesSnapshot: meal.totalCalories, proteinSnapshot: meal.totalProtein, carbsSnapshot: meal.totalCarbs, fatSnapshot: meal.totalFat, consumed: false }]);
+    this.save();
   }
-  
-  reset() { 
-    if(this.isBrowser()) localStorage.clear(); 
-    location.reload(); 
-  }
+
+  reset() { if (this.isBrowser()) localStorage.clear(); location.reload(); }
 }
 
-// --- 3. COMPONENT (Interface Graphique) ---
+// --- 3. COMPONENT ---
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -90,208 +87,312 @@ export class DataService {
   template: `
     <div class="flex flex-col md:flex-row h-screen bg-slate-950 text-slate-200 font-sans overflow-hidden selection:bg-blue-600 selection:text-white">
       
-      <!-- NAV MOBILE (En bas) -->
+      <!-- NAV MOBILE (Bottom) -->
       <nav class="md:hidden fixed bottom-0 w-full bg-slate-900/95 backdrop-blur border-t border-slate-800 flex justify-around items-center z-50 h-16 pb-safe">
-        <button *ngFor="let t of tabs" (click)="activeTab.set(t.id)" 
-          class="flex flex-col items-center justify-center w-full h-full space-y-1"
-          [class.text-blue-500]="activeTab() === t.id" 
-          [class.text-slate-500]="activeTab() !== t.id">
-           <span class="text-xl">{{t.icon}}</span>
-           <span class="text-[10px] font-bold uppercase">{{t.label}}</span>
+        <button *ngFor="let t of tabs" (click)="activeTab.set(t.id)" class="flex flex-col items-center justify-center w-full h-full space-y-1" [class.text-blue-500]="activeTab() === t.id" [class.text-slate-500]="activeTab() !== t.id">
+           <span class="text-xl">{{t.icon}}</span><span class="text-[10px] font-bold uppercase">{{t.label}}</span>
         </button>
       </nav>
 
-      <!-- SIDEBAR DESKTOP (À gauche) -->
+      <!-- SIDEBAR DESKTOP -->
       <aside class="hidden md:flex w-64 bg-slate-900 border-r border-slate-800 flex-col z-20 shadow-2xl">
-        <div class="p-6 border-b border-slate-800">
-          <h1 class="text-2xl font-bold text-white uppercase tracking-tighter">Life<span class="text-blue-500">Track</span></h1>
-        </div>
+        <div class="p-6 border-b border-slate-800"><h1 class="text-2xl font-bold text-white uppercase tracking-tighter">Life<span class="text-blue-500">Track</span></h1></div>
         <nav class="flex-1 py-6 space-y-2">
-          <button *ngFor="let t of tabs" (click)="activeTab.set(t.id)" 
-            [class]="activeTab() === t.id ? 'bg-blue-600/10 text-blue-400 border-r-4 border-blue-600' : 'text-slate-400 hover:bg-slate-800 border-r-4 border-transparent'" 
-            class="w-full flex items-center space-x-4 px-6 py-3 transition-all hover:pl-7">
-             <span class="text-xl">{{t.icon}}</span>
-             <span class="text-sm font-bold uppercase tracking-wider">{{t.label}}</span>
+          <button *ngFor="let t of tabs" (click)="activeTab.set(t.id)" [class]="activeTab() === t.id ? 'bg-blue-600/10 text-blue-400 border-r-4 border-blue-600' : 'text-slate-400 hover:bg-slate-800 border-r-4 border-transparent'" class="w-full flex items-center space-x-4 px-6 py-3 transition-all hover:pl-7">
+             <span class="text-xl">{{t.icon}}</span><span class="text-sm font-bold uppercase tracking-wider">{{t.label}}</span>
           </button>
         </nav>
-        <div class="p-4 border-t border-slate-800">
-           <button (click)="activeTab.set('data')" class="text-xs text-slate-500 hover:text-white transition w-full flex items-center gap-2 px-4 py-2 rounded hover:bg-slate-800">
-             <span>⚙️</span><span>Système & Données</span>
-           </button>
-        </div>
+        <div class="p-4 border-t border-slate-800"><button (click)="activeTab.set('data')" class="text-xs text-slate-500 hover:text-white transition w-full flex items-center gap-2 px-4 py-2 rounded hover:bg-slate-800"><span>⚙️</span><span>Système</span></button></div>
       </aside>
 
-      <!-- ZONE PRINCIPALE -->
+      <!-- MAIN CONTENT -->
       <main class="flex-1 overflow-y-auto bg-slate-950 p-4 pb-24 md:p-10 relative scroll-smooth">
         
         <!-- HEADER MOBILE -->
         <header class="md:hidden flex justify-between items-center mb-6 pt-2">
-            <div>
-                <h1 class="text-xl font-bold text-white">Life<span class="text-blue-500">Track</span></h1>
-                <p class="text-xs text-slate-400">{{ today | dateFr:'full' }}</p>
-            </div>
+            <div><h1 class="text-xl font-bold text-white">Life<span class="text-blue-500">Track</span></h1><p class="text-xs text-slate-400 capitalize">{{ today | dateFr:'full' }}</p></div>
             <div class="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-blue-400">LT</div>
         </header>
 
-        <!-- DASHBOARD (Accueil) -->
+        <!-- --- HOME TAB --- -->
         <div *ngIf="activeTab() === 'home'" class="animate-fade space-y-6">
-          <header class="hidden md:block border-b border-slate-800 pb-6">
-            <h2 class="text-3xl font-bold text-white mb-1">Tableau de bord</h2>
-            <p class="text-slate-400 capitalize">{{ today | dateFr:'full' }}</p>
-          </header>
+          <header class="hidden md:block border-b border-slate-800 pb-6"><h2 class="text-3xl font-bold text-white mb-1">Tableau de bord</h2><p class="text-slate-400 capitalize">{{ today | dateFr:'full' }}</p></header>
           
-          <!-- Solde Principal -->
           <div class="bg-gradient-to-br from-slate-900 to-slate-800 p-6 rounded-2xl border border-slate-800 shadow-xl relative overflow-hidden">
-             <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
              <p class="text-slate-400 uppercase text-xs font-bold tracking-widest mb-1">Solde Disponible</p>
-             <p [class]="totalBalance() >= 0 ? 'text-white' : 'text-rose-400'" class="text-4xl md:text-5xl font-black tracking-tight">
-               CHF {{ totalBalance() | number:'1.2-2' }}
-             </p>
-             <div class="mt-4 flex gap-3 text-xs font-bold">
-                <span class="bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded">Entrées: +{{ monthlyStats().income | number:'1.0-0' }}</span>
-                <span class="bg-rose-500/10 text-rose-400 px-2 py-1 rounded">Sorties: -{{ monthlyStats().expenses | number:'1.0-0' }}</span>
+             <p [class]="totalBalance() >= 0 ? 'text-white' : 'text-rose-400'" class="text-4xl md:text-5xl font-black tracking-tight">CHF {{ totalBalance() | number:'1.2-2' }}</p>
+             <div class="h-4 bg-slate-700/50 rounded-full mt-4 overflow-hidden"><div class="h-full bg-blue-500 transition-all" [style.width.%]="budgetPercent()"></div></div>
+             <p class="text-xs text-right mt-1 text-slate-400">Budget utilisé: {{ budgetPercent() | number:'1.0-0' }}%</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
+                <h3 class="text-white font-bold mb-4 flex items-center gap-2"><span class="text-orange-400">⚡️</span> Prochaine Séance</h3>
+                <div *ngIf="nextSession(); else noSession" (click)="openSessionDetail(nextSession())" class="cursor-pointer bg-slate-800/50 p-4 rounded-lg hover:bg-slate-800 transition">
+                   <p class="text-xl font-bold text-white">{{ nextSession().sessionName }}</p>
+                   <p class="text-xs text-blue-400 uppercase font-bold mt-1">{{ nextSession().date | dateFr:'short' }}</p>
+                </div>
+                <ng-template #noSession><p class="text-slate-500 text-sm italic">Rien de prévu.</p></ng-template>
              </div>
-          </div>
-
-          <!-- Raccourcis Rapides -->
-          <div class="grid grid-cols-2 gap-4">
-             <button (click)="activeTab.set('finance'); showTransactionModal=true" class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-blue-500 transition active:scale-95">
-                <div class="w-10 h-10 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center text-xl">＋</div>
-                <span class="text-xs font-bold uppercase text-slate-300">Dépense</span>
-             </button>
-             <button (click)="activeTab.set('sport')" class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-blue-500 transition active:scale-95">
-                <div class="w-10 h-10 rounded-full bg-orange-600/20 text-orange-400 flex items-center justify-center text-xl">💪</div>
-                <span class="text-xs font-bold uppercase text-slate-300">Séance</span>
-             </button>
-          </div>
-
-          <div *ngIf="dataService.finances().length === 0" class="text-center py-10">
-             <p class="text-slate-500 text-sm mb-4">L'application est vide.</p>
-             <button (click)="dataService.injectData()" class="text-blue-400 underline text-sm">Injecter des données de démonstration</button>
+             <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
+                <h3 class="text-white font-bold mb-4 flex items-center gap-2"><span class="text-emerald-400">🥗</span> Calories du Jour</h3>
+                <div class="flex justify-between items-end">
+                   <div><span class="text-3xl font-bold text-white">{{ todaysCalories() | number:'1.0-0' }}</span> <span class="text-xs text-slate-500">kcal</span></div>
+                   <div class="text-right text-xs"><div class="text-blue-400 font-bold">{{ todaysMacros().prot | number:'1.0-0' }}g Prot</div></div>
+                </div>
+             </div>
           </div>
         </div>
 
-        <!-- FINANCES -->
-        <div *ngIf="activeTab() === 'finance'" class="space-y-6 animate-fade">
-           <div class="flex justify-between items-center">
-              <h2 class="text-xl font-bold text-white">Finances</h2>
-              <button (click)="showTransactionModal = true" class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg shadow-lg shadow-blue-900/50">＋</button>
+        <!-- --- SPORT TAB --- -->
+        <div *ngIf="activeTab() === 'sport'" class="space-y-6 animate-fade">
+           <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+              <button *ngFor="let v of ['schedule', 'library', 'sessions']" (click)="sportView = v" [class]="sportView === v ? 'bg-blue-600 text-white' : 'bg-slate-900 text-slate-400'" class="px-4 py-2 rounded-full text-xs font-bold uppercase whitespace-nowrap transition border border-slate-800">{{ v === 'schedule' ? 'Planning' : v === 'library' ? 'Exercices' : 'Séances' }}</button>
            </div>
 
-           <!-- Liste Transactions (Style Carte Mobile) -->
-           <div class="space-y-3">
+           <div *ngIf="sportView === 'schedule'">
+              <h3 class="text-white font-bold mb-4">Planning</h3>
+              <div class="grid gap-3">
+                 <div *ngFor="let s of sortedScheduledSessions()" class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex items-center justify-between">
+                    <div (click)="openSessionDetail(s)" class="flex-1 cursor-pointer">
+                       <p class="text-xs text-blue-400 font-bold uppercase">{{ s.date | dateFr:'short' }}</p>
+                       <p class="text-white font-bold text-lg">{{ s.sessionName }}</p>
+                    </div>
+                    <button (click)="removeScheduledSession(s.id)" class="text-slate-600 hover:text-rose-500 p-2">✕</button>
+                 </div>
+              </div>
+              <div class="mt-8 pt-6 border-t border-slate-800">
+                 <h3 class="text-slate-400 text-xs font-bold uppercase mb-4">Planifier une séance</h3>
+                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div *ngFor="let s of dataService.sessions()" (click)="selectSessionForPlanning(s)" class="bg-slate-900 border border-slate-800 p-4 rounded-xl hover:border-blue-500 cursor-pointer transition">
+                       <p class="text-white font-bold">{{ s.name }}</p>
+                       <p class="text-xs text-slate-500">{{ s.totalDuration }} min • {{ s.exercises.length }} exos</p>
+                    </div>
+                 </div>
+              </div>
+           </div>
+
+           <div *ngIf="sportView === 'library'">
+              <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 mb-6">
+                 <h3 class="text-white font-bold mb-4 text-sm uppercase">Ajouter / Modifier</h3>
+                 <input [(ngModel)]="exerciseForm.name" placeholder="Nom de l'exercice" class="w-full bg-slate-950 border border-slate-700 text-white p-3 rounded-lg mb-2 text-sm">
+                 <div class="grid grid-cols-2 gap-2 mb-2">
+                    <input [(ngModel)]="exerciseForm.bodyPart" placeholder="Muscle" class="bg-slate-950 border border-slate-700 text-white p-3 rounded-lg text-sm">
+                    <input [(ngModel)]="exerciseForm.equipment" placeholder="Matériel" class="bg-slate-950 border border-slate-700 text-white p-3 rounded-lg text-sm">
+                 </div>
+                 <div class="grid grid-cols-3 gap-2 mb-4">
+                    <input type="number" [(ngModel)]="exerciseForm.sets" placeholder="Séries" class="bg-slate-950 border border-slate-700 text-white p-2 rounded-lg text-center text-sm">
+                    <input type="number" [(ngModel)]="exerciseForm.reps" placeholder="Reps" class="bg-slate-950 border border-slate-700 text-white p-2 rounded-lg text-center text-sm">
+                    <input type="number" [(ngModel)]="exerciseForm.weight" placeholder="Kg" class="bg-slate-950 border border-slate-700 text-white p-2 rounded-lg text-center text-sm">
+                 </div>
+                 <button (click)="saveExercise()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold uppercase text-xs">{{ editingExercise ? 'Mettre à jour' : 'Ajouter' }}</button>
+              </div>
+              <div class="grid gap-3">
+                 <div *ngFor="let ex of filteredExercises()" class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex justify-between items-center group">
+                    <div>
+                       <p class="text-white font-bold">{{ ex.name }}</p>
+                       <p class="text-xs text-slate-500 uppercase">{{ ex.bodyPart }} • {{ ex.equipment }}</p>
+                       <p class="text-xs text-blue-400 mt-1">{{ ex.sets }} x {{ ex.reps }} @ {{ ex.weight }}kg</p>
+                    </div>
+                    <button (click)="editExercise(ex)" class="text-slate-600 hover:text-white px-3 py-1 border border-slate-700 rounded text-xs">Edit</button>
+                 </div>
+              </div>
+           </div>
+
+           <div *ngIf="sportView === 'sessions'">
+              <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                 <h3 class="text-white font-bold mb-4">Créer une Séance</h3>
+                 <input [(ngModel)]="newSessionName" placeholder="Nom (ex: Jambes Lourd)" class="w-full bg-slate-950 border border-slate-700 text-white p-3 rounded-lg mb-4">
+                 <div class="mb-4">
+                    <p class="text-xs text-slate-500 uppercase font-bold mb-2">Exercices Inclus</p>
+                    <div *ngFor="let ex of newSessionExercises" class="flex justify-between items-center bg-slate-800 p-2 rounded mb-1">
+                       <span class="text-sm text-white">{{ ex.name }}</span>
+                       <button (click)="removeExFromSession(ex)" class="text-rose-400 font-bold px-2">×</button>
+                    </div>
+                    <p *ngIf="newSessionExercises.length === 0" class="text-xs text-slate-600 italic">Aucun exercice ajouté.</p>
+                 </div>
+                 <button (click)="saveSession()" [disabled]="!newSessionName || newSessionExercises.length === 0" class="w-full bg-blue-600 disabled:opacity-50 text-white py-3 rounded-lg font-bold uppercase text-xs mb-6">Sauvegarder la Séance</button>
+                 
+                 <p class="text-xs text-slate-500 uppercase font-bold mb-2">Ajouter des exercices</p>
+                 <div class="h-40 overflow-y-auto space-y-1 pr-1">
+                    <div *ngFor="let ex of dataService.exercises()" (click)="addExToSession(ex)" class="bg-slate-950 border border-slate-800 p-2 rounded cursor-pointer hover:border-blue-500 transition flex justify-between">
+                       <span class="text-sm text-slate-300">{{ ex.name }}</span>
+                       <span class="text-xs text-slate-500">+</span>
+                    </div>
+                 </div>
+              </div>
+           </div>
+        </div>
+
+        <!-- --- NUTRITION TAB --- -->
+        <div *ngIf="activeTab() === 'nutrition'" class="space-y-6 animate-fade">
+           <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+              <button *ngFor="let v of ['schedule', 'ingredients', 'meals']" (click)="nutriView = v" [class]="nutriView === v ? 'bg-emerald-600 text-white' : 'bg-slate-900 text-slate-400'" class="px-4 py-2 rounded-full text-xs font-bold uppercase whitespace-nowrap transition border border-slate-800">{{ v === 'schedule' ? 'Menu' : v === 'ingredients' ? 'Aliments' : 'Recettes' }}</button>
+           </div>
+
+           <div *ngIf="nutriView === 'schedule'">
+              <div class="grid grid-cols-2 gap-3 mb-6">
+                 <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl text-center"><p class="text-2xl font-bold text-emerald-400">{{ todaysCalories() | number:'1.0-0' }}</p><p class="text-[10px] text-slate-500 uppercase font-bold">Kcal Conso.</p></div>
+                 <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl text-center"><p class="text-2xl font-bold text-blue-400">{{ todaysMacros().prot | number:'1.0-0' }}g</p><p class="text-[10px] text-slate-500 uppercase font-bold">Protéines</p></div>
+              </div>
+              <h3 class="text-white font-bold mb-3">Aujourd'hui</h3>
+              <div class="space-y-3">
+                 <div *ngFor="let m of todaysMealsUnconsumed()" class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex justify-between items-center">
+                    <div><p class="text-white font-bold">{{ m.mealName }}</p><p class="text-xs text-slate-500 uppercase">{{ m.type }} • {{ m.caloriesSnapshot | number:'1.0-0' }} kcal</p></div>
+                    <input type="checkbox" (change)="toggleMealConsumed(m.id)" class="w-6 h-6 rounded bg-slate-800 border-slate-600 text-emerald-600">
+                 </div>
+                 <p *ngIf="todaysMealsUnconsumed().length === 0" class="text-center text-slate-600 text-sm italic py-4">Tout est mangé (ou rien de prévu) !</p>
+              </div>
+              
+              <div class="mt-8 pt-6 border-t border-slate-800">
+                 <h3 class="text-slate-400 text-xs font-bold uppercase mb-4">Ajouter un repas au menu</h3>
+                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div *ngFor="let m of dataService.meals()" (click)="selectMealForPlanning(m)" class="bg-slate-900 border border-slate-800 p-4 rounded-xl hover:border-emerald-500 cursor-pointer transition">
+                       <p class="text-white font-bold">{{ m.name }}</p>
+                       <p class="text-xs text-emerald-400 font-mono">{{ m.totalCalories | number:'1.0-0' }} kcal</p>
+                    </div>
+                 </div>
+              </div>
+           </div>
+
+           <div *ngIf="nutriView === 'ingredients'">
+              <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 mb-6">
+                 <h3 class="text-white font-bold mb-4 text-sm uppercase">Nouvel Aliment</h3>
+                 <div class="grid grid-cols-3 gap-2 mb-2">
+                    <div class="col-span-2"><input [(ngModel)]="newIngredient.name" placeholder="Nom (ex: Oeuf)" class="w-full bg-slate-950 border border-slate-700 text-white p-3 rounded-lg text-sm"></div>
+                    <select [(ngModel)]="newIngredient.baseUnit" class="bg-slate-950 border border-slate-700 text-white p-3 rounded-lg text-sm"><option value="100g">100g</option><option value="1 unité">Unité</option></select>
+                 </div>
+                 <div class="grid grid-cols-4 gap-2 mb-4">
+                    <input type="number" [(ngModel)]="newIngredient.calories" placeholder="Kcal" class="bg-slate-950 border border-slate-700 text-white p-2 rounded-lg text-center text-sm">
+                    <input type="number" [(ngModel)]="newIngredient.protein" placeholder="Prot" class="bg-slate-950 border border-slate-700 text-white p-2 rounded-lg text-center text-sm">
+                    <input type="number" [(ngModel)]="newIngredient.carbs" placeholder="Gluc" class="bg-slate-950 border border-slate-700 text-white p-2 rounded-lg text-center text-sm">
+                    <input type="number" [(ngModel)]="newIngredient.fat" placeholder="Lip" class="bg-slate-950 border border-slate-700 text-white p-2 rounded-lg text-center text-sm">
+                 </div>
+                 <button (click)="addIngredient()" class="w-full bg-emerald-600 text-white py-3 rounded-lg font-bold uppercase text-xs">Ajouter</button>
+              </div>
+              <div class="overflow-x-auto rounded-xl border border-slate-800">
+                 <table class="w-full text-left text-sm text-slate-400 bg-slate-900">
+                    <thead class="bg-slate-950 text-slate-200 uppercase text-xs"><tr><th class="p-3">Nom</th><th class="p-3">Kcal</th><th class="p-3">P/G/L</th></tr></thead>
+                    <tbody><tr *ngFor="let i of dataService.ingredients()" class="border-t border-slate-800"><td class="p-3 text-white">{{ i.name }}</td><td class="p-3 font-mono">{{ i.calories }}</td><td class="p-3 text-xs">{{ i.protein }}/{{ i.carbs }}/{{ i.fat }}</td></tr></tbody>
+                 </table>
+              </div>
+           </div>
+
+           <div *ngIf="nutriView === 'meals'">
+              <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                 <h3 class="text-white font-bold mb-4">Créer une Recette</h3>
+                 <input [(ngModel)]="newMealName" placeholder="Nom Recette" class="w-full bg-slate-950 border border-slate-700 text-white p-3 rounded-lg mb-4">
+                 <div class="bg-slate-950 p-3 rounded-lg mb-4 min-h-[100px]">
+                    <div *ngFor="let item of newMealItems" class="flex justify-between items-center border-b border-slate-800 pb-2 mb-2 last:border-0">
+                       <span class="text-sm text-white">{{ item.ingredient.name }} <span class="text-slate-500">({{ item.quantity }}{{ item.ingredient.baseUnit === '100g' ? 'g' : '' }})</span></span>
+                       <button (click)="removeIngFromMeal(item)" class="text-rose-500 px-2">×</button>
+                    </div>
+                    <p *ngIf="newMealItems.length === 0" class="text-center text-xs text-slate-600 py-4">Ajoutez des aliments ci-dessous</p>
+                 </div>
+                 <div class="flex justify-between items-end mb-4"><span class="text-xs uppercase text-slate-500 font-bold">Total</span><span class="text-2xl font-bold text-emerald-400">{{ getNewMealTotals().cal | number:'1.0-0' }} kcal</span></div>
+                 <button (click)="saveMeal()" [disabled]="!newMealName || newMealItems.length === 0" class="w-full bg-emerald-600 disabled:opacity-50 text-white py-3 rounded-lg font-bold uppercase text-xs mb-6">Sauvegarder Recette</button>
+                 
+                 <p class="text-xs text-slate-500 uppercase font-bold mb-2">Ajouter un ingrédient</p>
+                 <div *ngIf="selectedIngredientForAdd" class="bg-slate-800 p-3 rounded mb-2 flex gap-2">
+                    <input type="number" [(ngModel)]="quantityToAdd" class="w-20 bg-slate-950 text-white p-2 rounded" placeholder="Qté">
+                    <button (click)="confirmAddIngredient()" class="flex-1 bg-emerald-600 text-white rounded text-xs font-bold">OK</button>
+                 </div>
+                 <div class="h-40 overflow-y-auto space-y-1">
+                    <div *ngFor="let i of dataService.ingredients()" (click)="selectIngredient(i)" class="bg-slate-950 border border-slate-800 p-2 rounded cursor-pointer flex justify-between">
+                       <span class="text-sm text-slate-300">{{ i.name }}</span><span class="text-xs text-slate-500">{{ i.calories }}kcal</span>
+                    </div>
+                 </div>
+              </div>
+           </div>
+        </div>
+
+        <!-- --- FINANCES TAB --- -->
+        <div *ngIf="activeTab() === 'finance'" class="space-y-6 animate-fade">
+           <div class="flex justify-between items-center bg-slate-900 p-3 rounded-xl border border-slate-800">
+              <h2 class="text-white font-bold ml-2">Finances</h2>
+              <div class="flex gap-2">
+                 <select [ngModel]="selectedFinanceMonth" (ngModelChange)="selectedFinanceMonth.set($event)" class="bg-slate-950 border border-slate-700 text-white p-2 rounded-lg text-xs"><option *ngFor="let m of months; let i = index" [value]="i">{{ m }}</option></select>
+                 <select [ngModel]="selectedFinanceYear" (ngModelChange)="selectedFinanceYear.set($event)" class="bg-slate-950 border border-slate-700 text-white p-2 rounded-lg text-xs"><option *ngFor="let y of years" [value]="y">{{ y }}</option></select>
+              </div>
+           </div>
+
+           <div class="grid grid-cols-3 gap-3">
+              <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl text-center"><p class="text-emerald-400 font-bold text-lg">+{{ monthlyStats().income | number:'1.0-0' }}</p><p class="text-[10px] text-slate-500 uppercase">Entrées</p></div>
+              <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl text-center"><p class="text-rose-400 font-bold text-lg">-{{ monthlyStats().expenses | number:'1.0-0' }}</p><p class="text-[10px] text-slate-500 uppercase">Sorties</p></div>
+              <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl text-center"><p class="text-white font-bold text-lg">{{ monthlyStats().balance | number:'1.0-0' }}</p><p class="text-[10px] text-slate-500 uppercase">Solde</p></div>
+           </div>
+
+           <button (click)="showTransactionModal = true" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold uppercase text-sm shadow-lg shadow-blue-900/20">Ajouter une transaction</button>
+
+           <div class="space-y-3 pb-20">
+              <div *ngIf="filteredTransactions().length === 0" class="text-center text-slate-600 italic py-8">Aucune transaction ce mois-ci.</div>
               <div *ngFor="let t of filteredTransactions()" class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex justify-between items-center relative overflow-hidden group">
                  <div class="flex gap-3 items-center z-10">
-                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold" 
-                         [ngClass]="t.type === 'revenu' ? 'bg-emerald-500/10 text-emerald-500' : (t.type === 'fixe' ? 'bg-purple-500/10 text-purple-500' : 'bg-rose-500/10 text-rose-500')">
-                       {{ t.type === 'revenu' ? '↓' : '↑' }}
-                    </div>
-                    <div>
-                       <p class="text-white font-bold leading-tight">{{ t.category }}</p>
-                       <p class="text-xs text-slate-500">{{ t.date | dateFr:'short' }} <span *ngIf="t.description">• {{ t.description }}</span></p>
-                    </div>
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold" [ngClass]="t.type === 'revenu' ? 'bg-emerald-500/10 text-emerald-500' : (t.type === 'fixe' ? 'bg-purple-500/10 text-purple-500' : 'bg-rose-500/10 text-rose-500')">{{ t.type === 'revenu' ? '↓' : '↑' }}</div>
+                    <div><p class="text-white font-bold leading-tight">{{ t.category }}</p><p class="text-xs text-slate-500">{{ t.date | dateFr:'short' }} <span *ngIf="t.description">• {{ t.description }}</span></p></div>
                  </div>
-                 <div class="text-right z-10">
-                    <p class="font-bold text-lg" [ngClass]="t.type === 'revenu' ? 'text-emerald-400' : 'text-slate-200'">
-                       {{ t.type === 'revenu' ? '+' : '-' }}{{ t.amount | number:'1.0-0' }}
-                    </p>
-                 </div>
+                 <div class="text-right z-10"><p class="font-bold text-lg" [ngClass]="t.type === 'revenu' ? 'text-emerald-400' : 'text-slate-200'">{{ t.type === 'revenu' ? '+' : '-' }}{{ t.amount | number:'1.0-0' }}</p></div>
                  <button (click)="deleteTransaction(t.id)" class="absolute inset-y-0 right-0 w-16 bg-rose-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20">✕</button>
               </div>
            </div>
         </div>
 
-        <!-- SPORT -->
-        <div *ngIf="activeTab() === 'sport'" class="space-y-6 animate-fade">
-            <h2 class="text-xl font-bold text-white">Sport & Séances</h2>
-            <div class="grid grid-cols-1 gap-4">
-                <div *ngFor="let s of dataService.sessions()" class="bg-slate-900 border border-slate-800 p-5 rounded-2xl relative overflow-hidden">
-                    <div class="absolute top-0 right-0 bg-slate-800 px-3 py-1 rounded-bl-xl text-xs font-bold text-slate-400">{{ s.totalDuration }} min</div>
-                    <h3 class="text-lg font-bold text-white mb-2">{{ s.name }}</h3>
-                    <div class="flex flex-wrap gap-2">
-                        <span *ngFor="let ex of s.exercises" class="text-xs bg-slate-950 border border-slate-800 px-2 py-1 rounded text-slate-400">{{ ex.name }}</span>
-                    </div>
-                    <button class="mt-4 w-full bg-slate-800 hover:bg-slate-700 text-blue-400 py-2 rounded-lg text-sm font-bold uppercase transition">Lancer la séance</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- NUTRITION -->
-        <div *ngIf="activeTab() === 'nutrition'" class="space-y-6 animate-fade">
-            <h2 class="text-xl font-bold text-white">Nutrition</h2>
-            <div class="grid grid-cols-2 gap-4">
-                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl text-center">
-                    <p class="text-2xl font-bold text-emerald-400">{{ todaysCalories() | number:'1.0-0' }}</p>
-                    <p class="text-xs text-slate-500 uppercase font-bold">Kcal Conso.</p>
-                </div>
-                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl text-center">
-                    <p class="text-2xl font-bold text-blue-400">{{ todaysMacros().prot | number:'1.0-0' }}g</p>
-                    <p class="text-xs text-slate-500 uppercase font-bold">Protéines</p>
-                </div>
-            </div>
-            <h3 class="text-sm font-bold text-slate-400 uppercase mt-6 mb-2">Repas Prévus</h3>
-            <div *ngIf="todaysMealsUnconsumed().length === 0" class="text-slate-600 text-sm italic">Aucun repas planifié pour aujourd'hui.</div>
-            <div *ngFor="let m of todaysMealsUnconsumed()" class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex justify-between items-center">
-                <div>
-                    <p class="text-white font-bold">{{ m.mealName }}</p>
-                    <p class="text-xs text-slate-500">{{ m.type }} • {{ m.caloriesSnapshot }} kcal</p>
-                </div>
-                <input type="checkbox" (change)="toggleMealConsumed(m.id)" class="w-6 h-6 rounded border-slate-600 bg-slate-800 text-emerald-500 focus:ring-emerald-500">
-            </div>
-        </div>
-
-        <!-- SYSTEM -->
-        <div *ngIf="activeTab() === 'data'" class="flex flex-col items-center justify-center h-full space-y-6">
-            <div class="text-center">
-                <h2 class="text-2xl font-bold text-white mb-2">Données</h2>
-                <p class="text-slate-500 text-sm max-w-xs mx-auto">Vos données sont actuellement stockées sur cet appareil uniquement.</p>
-            </div>
-            <button (click)="dataService.reset()" class="bg-rose-900/20 border border-rose-900 text-rose-500 px-6 py-3 rounded-lg font-bold w-full max-w-xs hover:bg-rose-900/40 transition">
-                Réinitialiser l'App
-            </button>
-            <div class="p-4 bg-blue-900/10 border border-blue-900/30 rounded-lg max-w-xs text-center">
-                <p class="text-blue-400 text-xs font-bold mb-1">SYNCHRONISATION</p>
-                <p class="text-slate-400 text-xs">Pour activer la synchro PC/Mobile, une configuration Firebase est requise.</p>
-            </div>
+        <!-- --- DATA TAB --- -->
+        <div *ngIf="activeTab() === 'data'" class="text-center py-20 space-y-6">
+           <h2 class="text-2xl font-bold text-white">Gestion Données</h2>
+           <div class="flex flex-col gap-4 max-w-xs mx-auto">
+              <button (click)="dataService.injectData()" class="bg-blue-600 text-white py-3 rounded-lg font-bold">Injecter Démo</button>
+              <button (click)="dataService.reset()" class="border border-rose-900 text-rose-500 py-3 rounded-lg font-bold">Tout Effacer</button>
+           </div>
         </div>
 
       </main>
 
-      <!-- MODAL TRANSACTION (Mobile Friendly) -->
-      <div *ngIf="showTransactionModal" class="fixed inset-0 z-[60] bg-slate-950/80 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-4 animate-fade">
-         <div class="bg-slate-900 w-full md:max-w-md md:rounded-2xl rounded-t-2xl border-t md:border border-slate-800 h-[80vh] md:h-auto flex flex-col shadow-2xl">
-            <div class="p-4 border-b border-slate-800 flex justify-between items-center">
-                <h3 class="text-lg font-bold text-white">Nouvelle Transaction</h3>
-                <button (click)="showTransactionModal = false" class="text-slate-400 hover:text-white p-2">Fermer</button>
-            </div>
+      <!-- MODALS (Full Screen / Bottom Sheet for Mobile) -->
+      
+      <!-- TRANSACTION MODAL -->
+      <div *ngIf="showTransactionModal" class="fixed inset-0 z-[60] bg-slate-950/90 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-4 animate-fade">
+         <div class="bg-slate-900 w-full md:max-w-md rounded-t-2xl md:rounded-2xl border-t md:border border-slate-800 h-[85vh] md:h-auto flex flex-col shadow-2xl">
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center"><h3 class="text-lg font-bold text-white">Nouvelle Transaction</h3><button (click)="showTransactionModal = false" class="text-slate-400 p-2">Fermer</button></div>
             <div class="p-6 space-y-4 flex-1 overflow-y-auto">
-                <div class="grid grid-cols-3 gap-2">
-                    <button *ngFor="let t of ['variable', 'fixe', 'revenu']" (click)="newTransaction.type = t" 
-                        [class]="newTransaction.type === t ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-800 text-slate-400 border-slate-700'"
-                        class="py-2 rounded-lg border text-xs font-bold uppercase transition capitalize">
-                        {{ t }}
-                    </button>
-                </div>
-                <div class="space-y-1">
-                    <label class="text-xs text-slate-500 uppercase font-bold">Montant</label>
-                    <input type="number" [(ngModel)]="newTransaction.amount" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white text-lg font-bold focus:border-blue-500 outline-none" placeholder="0.00">
-                </div>
-                <div class="space-y-1">
-                    <label class="text-xs text-slate-500 uppercase font-bold">Catégorie</label>
-                    <select [(ngModel)]="newTransaction.category" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-blue-500 outline-none appearance-none">
-                        <option value="" disabled>Sélectionner...</option>
-                        <option *ngFor="let c of getCategories(newTransaction.type)" [value]="c">{{ c }}</option>
-                    </select>
-                </div>
-                <div class="space-y-1">
-                    <label class="text-xs text-slate-500 uppercase font-bold">Date</label>
-                    <input type="date" [(ngModel)]="newTransaction.date" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-blue-500 outline-none">
-                </div>
+                <div class="grid grid-cols-3 gap-2"><button *ngFor="let t of ['variable', 'fixe', 'revenu']" (click)="newTransaction.type = t" [class]="newTransaction.type === t ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-800 text-slate-400 border-slate-700'" class="py-2 rounded-lg border text-xs font-bold uppercase transition capitalize">{{ t }}</button></div>
+                <div class="space-y-1"><label class="text-xs text-slate-500 uppercase font-bold">Montant</label><input type="number" [(ngModel)]="newTransaction.amount" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white text-lg font-bold" placeholder="0.00"></div>
+                <div class="space-y-1"><label class="text-xs text-slate-500 uppercase font-bold">Catégorie</label><select [(ngModel)]="newTransaction.category" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white"><option value="" disabled>Sélectionner...</option><option *ngFor="let c of getCategories(newTransaction.type)" [value]="c">{{ c }}</option></select></div>
+                <div class="space-y-1"><label class="text-xs text-slate-500 uppercase font-bold">Date</label><input type="date" [(ngModel)]="newTransaction.date" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white"></div>
+                <div class="space-y-1"><label class="text-xs text-slate-500 uppercase font-bold">Note</label><input type="text" [(ngModel)]="newTransaction.description" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white" placeholder="Facultatif"></div>
             </div>
-            <div class="p-4 border-t border-slate-800 bg-slate-900 pb-safe">
-                <button (click)="addTransaction()" [disabled]="!newTransaction.amount || !newTransaction.category" class="w-full bg-blue-600 disabled:opacity-50 text-white py-4 rounded-xl font-bold uppercase text-sm shadow-lg shadow-blue-900/20">
-                    Valider
-                </button>
+            <div class="p-4 border-t border-slate-800 bg-slate-900 pb-safe"><button (click)="addTransaction()" [disabled]="!newTransaction.amount || !newTransaction.category" class="w-full bg-blue-600 disabled:opacity-50 text-white py-4 rounded-xl font-bold uppercase text-sm">Valider</button></div>
+         </div>
+      </div>
+
+      <!-- SESSION & MEAL PLANNING MODALS (Simplified logic for responsive demo, full logic exists in data service) -->
+      <div *ngIf="sessionModalData" class="fixed inset-0 z-[60] bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4 animate-fade">
+         <div class="bg-slate-900 w-full max-w-lg rounded-2xl border border-slate-800 shadow-2xl max-h-[80vh] flex flex-col">
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center"><h3 class="font-bold text-white">{{ sessionModalData.name }}</h3><button (click)="sessionModalData = null" class="text-slate-400">✕</button></div>
+            <div class="p-4 overflow-y-auto flex-1 space-y-3">
+               <div *ngFor="let ex of sessionModalData.exercises" class="bg-slate-950 p-3 rounded border border-slate-800">
+                  <p class="text-white font-bold">{{ ex.name }}</p>
+                  <p class="text-xs text-slate-500">{{ ex.sets }} x {{ ex.reps }} @ {{ ex.weight }}kg</p>
+               </div>
+            </div>
+            <div *ngIf="planningMode" class="p-4 border-t border-slate-800 bg-slate-900 flex gap-2">
+               <input type="date" [(ngModel)]="scheduleData.date" class="bg-slate-950 border border-slate-700 text-white p-2 rounded flex-1">
+               <button (click)="confirmScheduleSession()" class="bg-blue-600 text-white px-4 rounded font-bold">Valider</button>
+            </div>
+         </div>
+      </div>
+
+      <div *ngIf="mealModalData" class="fixed inset-0 z-[60] bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4 animate-fade">
+         <div class="bg-slate-900 w-full max-w-lg rounded-2xl border border-slate-800 shadow-2xl max-h-[80vh] flex flex-col">
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center"><h3 class="font-bold text-white">{{ mealModalData.name }}</h3><button (click)="mealModalData = null" class="text-slate-400">✕</button></div>
+            <div class="p-4 overflow-y-auto flex-1 space-y-2">
+               <div class="flex justify-between mb-4 bg-slate-950 p-3 rounded"><div class="text-center"><span class="block font-bold text-white">{{ mealModalData.totalCalories | number:'1.0-0' }}</span><span class="text-[10px] text-slate-500">Kcal</span></div><div class="text-center"><span class="block font-bold text-emerald-400">{{ mealModalData.totalProtein | number:'1.0-0' }}g</span><span class="text-[10px] text-slate-500">Prot</span></div><div class="text-center"><span class="block font-bold text-amber-400">{{ mealModalData.totalCarbs | number:'1.0-0' }}g</span><span class="text-[10px] text-slate-500">Gluc</span></div><div class="text-center"><span class="block font-bold text-rose-400">{{ mealModalData.totalFat | number:'1.0-0' }}g</span><span class="text-[10px] text-slate-500">Lip</span></div></div>
+               <h4 class="text-xs font-bold text-slate-500 uppercase">Ingrédients</h4>
+               <ul class="space-y-1"><li *ngFor="let item of (planningMode ? mealModalData.items : getMealItems(mealModalData.id))" class="text-sm text-slate-300 flex justify-between"><span>{{ item.ingredient.name }}</span><span>{{ item.quantity }}{{ item.ingredient.baseUnit === '100g' ? 'g' : '' }}</span></li></ul>
+            </div>
+            <div *ngIf="planningMode" class="p-4 border-t border-slate-800 bg-slate-900 space-y-2">
+               <div class="flex gap-2"><input type="date" [(ngModel)]="scheduleMealData.date" class="bg-slate-950 border border-slate-700 text-white p-2 rounded flex-1"><select [(ngModel)]="scheduleMealData.type" class="bg-slate-950 border border-slate-700 text-white p-2 rounded flex-1"><option value="Petit-déjeuner">Matin</option><option value="Déjeuner">Midi</option><option value="Dîner">Soir</option><option value="Collation">Snack</option></select></div>
+               <button (click)="confirmScheduleMeal()" class="w-full bg-emerald-600 text-white py-3 rounded font-bold">Ajouter au Menu</button>
             </div>
          </div>
       </div>
@@ -300,7 +401,8 @@ export class DataService {
   `,
   styles: [`
     .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
-    /* Animation simple */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     .animate-fade { animation: fadeIn 0.3s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
   `]
@@ -308,8 +410,6 @@ export class DataService {
 export class App {
   dataService = inject(DataService);
   activeTab = signal('home');
-  showTransactionModal = false; // Gestion simple de la modal
-  
   tabs = [
     { id: 'home', label: 'Accueil', icon: '🏠' },
     { id: 'sport', label: 'Sport', icon: '💪' },
@@ -318,79 +418,159 @@ export class App {
   ];
   today = new Date();
 
-  // Finance Logic
+  // Modals & Forms State
+  showTransactionModal = false;
+  sessionModalData: any = null;
+  mealModalData: any = null;
+  planningMode = false;
+  
+  // Finance
   newTransaction = { type: 'variable', date: new Date().toISOString().split('T')[0], category: '', amount: null as number | null, description: '' };
+  months = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+  years = Array.from({length: 11}, (_, i) => new Date().getFullYear() - 5 + i); 
+  selectedFinanceMonth = signal(new Date().getMonth());
+  selectedFinanceYear = signal(new Date().getFullYear());
   categoryLists: any = {
     revenu: ['Salaire', 'Dividendes', 'Cadeau', 'Autre'],
     fixe: ['Loyer', 'Assurance', 'Internet', 'Impôts'],
-    variable: ['Alimentation', 'Shopping', 'Transport', 'Loisirs', 'Restaurant', 'Santé']
+    variable: ['Alimentation', 'Shopping', 'Transport', 'Loisirs', 'Restaurant', 'Santé', 'Vacances']
   };
 
-  // Computed
+  // Sport
+  sportView = 'schedule';
+  exerciseForm: any = { equipment: 'Sans matériel' };
+  editingExercise: any = null;
+  newSessionName = ''; 
+  newSessionExercises: any[] = [];
+  scheduleData: any = { date: new Date().toISOString().split('T')[0], sessionId: null };
+
+  // Nutrition
+  nutriView = 'schedule';
+  newIngredient: any = { baseUnit: '100g' };
+  newMealName = ''; 
+  newMealItems: any[] = [];
+  selectedIngredientForAdd: any = null;
+  quantityToAdd: number | null = null;
+  scheduleMealData: any = { date: new Date().toISOString().split('T')[0], type: 'Déjeuner', mealId: null };
+
+  // --- COMPUTED ---
   totalBalance = computed(() => this.dataService.finances().reduce((acc, cur) => cur.type === 'revenu' ? acc + cur.amount : acc - cur.amount, 0));
-  
-  monthlyStats = computed(() => {
-     const now = new Date();
-     const txs = this.dataService.finances().filter(t => {
+  totalExpenses = computed(() => this.dataService.finances().filter(f => f.type !== 'revenu').reduce((acc, cur) => acc + cur.amount, 0));
+  budgetPercent = computed(() => this.dataService.monthlyBudget() === 0 ? 0 : Math.min((this.totalExpenses() / this.dataService.monthlyBudget()) * 100, 100));
+
+  sortedTransactions = computed(() => this.dataService.finances().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+  filteredTransactions = computed(() => {
+     return this.sortedTransactions().filter(t => {
         const d = new Date(t.date);
-        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        return d.getMonth() == this.selectedFinanceMonth() && d.getFullYear() == this.selectedFinanceYear();
      });
+  });
+  monthlyStats = computed(() => {
+     const txs = this.filteredTransactions();
      return {
         income: txs.filter(t => t.type === 'revenu').reduce((acc, t) => acc + t.amount, 0),
-        expenses: txs.filter(t => t.type !== 'revenu').reduce((acc, t) => acc + t.amount, 0)
+        expenses: txs.filter(t => t.type !== 'revenu').reduce((acc, t) => acc + t.amount, 0),
+        balance: txs.reduce((acc, t) => t.type === 'revenu' ? acc + t.amount : acc - t.amount, 0)
      };
   });
 
-  filteredTransactions = computed(() => {
-      // Tri par date décroissante
-      return this.dataService.finances().sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 50);
+  nextSession = computed(() => {
+     const now = new Date(); now.setHours(0,0,0,0);
+     const upcoming = this.dataService.scheduledSessions().filter(s => new Date(s.date) >= now).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+     return upcoming.length > 0 ? upcoming[0] : null;
   });
+  sortedScheduledSessions = computed(() => this.dataService.scheduledSessions().sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+  filteredExercises = computed(() => this.dataService.exercises()); // Simplified filter
 
-  // Nutrition Computed (Simplifiés)
-  todaysMealsUnconsumed = computed(() => { 
-     const d = new Date().toISOString().split('T')[0]; 
-     return this.dataService.scheduledMeals().filter(s => s.date === d && !s.consumed); 
-  });
-  todaysCalories = computed(() => {
-     const d = new Date().toISOString().split('T')[0]; 
-     return this.dataService.scheduledMeals().filter(s => s.date === d).reduce((acc, c) => acc + c.caloriesSnapshot, 0);
-  });
-  todaysMacros = computed(() => {
-     const d = new Date().toISOString().split('T')[0];
-     const meals = this.dataService.scheduledMeals().filter(s => s.date === d);
-     return {
-        prot: meals.reduce((acc, c) => acc + c.proteinSnapshot, 0)
-     };
-  });
+  sortedScheduledMeals = computed(() => this.dataService.scheduledMeals().sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+  todaysMealsUnconsumed = computed(() => { const d = new Date().toISOString().split('T')[0]; return this.dataService.scheduledMeals().filter(s => s.date === d && !s.consumed); });
+  todaysCalories = computed(() => { const d = new Date().toISOString().split('T')[0]; return this.dataService.scheduledMeals().filter(s => s.date === d).reduce((acc, c) => acc + c.caloriesSnapshot, 0); });
+  todaysMacros = computed(() => { const d = new Date().toISOString().split('T')[0]; const meals = this.dataService.scheduledMeals().filter(s => s.date === d); return { prot: meals.reduce((acc, c) => acc + c.proteinSnapshot, 0) }; });
 
-  // Methods
+  // --- METHODS ---
   getCategories(type: string) { return this.categoryLists[type] || []; }
   
+  // Finance
   addTransaction() {
     if (this.newTransaction.amount && this.newTransaction.category) {
-      const t = {
-        id: Date.now().toString(),
-        ...this.newTransaction,
-        amount: Number(this.newTransaction.amount) // Sécurité typage
-      };
+      const t = { id: Date.now().toString(), ...this.newTransaction, amount: Number(this.newTransaction.amount) };
       this.dataService.finances.update(prev => [t, ...prev]);
       this.dataService.save();
       this.showTransactionModal = false;
       this.newTransaction = { type: 'variable', date: new Date().toISOString().split('T')[0], category: '', amount: null, description: '' };
     }
   }
+  deleteTransaction(id: string) { if(confirm('Supprimer ?')) { this.dataService.finances.update(prev => prev.filter(t => t.id !== id)); this.dataService.save(); } }
 
-  deleteTransaction(id: string) {
-      if(confirm('Supprimer cette transaction ?')) {
-          this.dataService.finances.update(prev => prev.filter(t => t.id !== id));
-          this.dataService.save();
-      }
+  // Sport
+  openSessionDetail(s: any) { 
+    this.planningMode = false;
+    const def = this.dataService.sessions().find(x => x.id === s.sessionId);
+    this.sessionModalData = { ...s, name: s.sessionName, exercises: def ? def.exercises : [] }; 
   }
+  selectSessionForPlanning(s: any) { this.planningMode = true; this.sessionModalData = { ...s, exercises: s.exercises }; this.scheduleData.sessionId = s.id; }
+  closeSessionModal() { this.sessionModalData = null; }
+  
+  editExercise(ex: any) { this.editingExercise = ex; this.exerciseForm = { ...ex }; }
+  saveExercise() {
+    if (this.exerciseForm.name) {
+      if (this.editingExercise) this.dataService.exercises.update(prev => prev.map(e => e.id === this.editingExercise.id ? { ...this.editingExercise, ...this.exerciseForm } : e));
+      else this.dataService.exercises.update(prev => [...prev, { id: Date.now().toString(), ...this.exerciseForm }]);
+      this.dataService.save(); this.editingExercise = null; this.exerciseForm = { equipment: 'Sans matériel' };
+    }
+  }
+  addExToSession(ex: any) { this.newSessionExercises.push(ex); }
+  removeExFromSession(ex: any) { this.newSessionExercises = this.newSessionExercises.filter(e => e !== ex); }
+  saveSession() {
+    if (this.newSessionName && this.newSessionExercises.length > 0) {
+      this.dataService.sessions.update(prev => [...prev, { id: Date.now().toString(), name: this.newSessionName, exercises: [...this.newSessionExercises], totalDuration: 60 }]);
+      this.dataService.save(); this.newSessionName = ''; this.newSessionExercises = [];
+    }
+  }
+  confirmScheduleSession() {
+    if (this.scheduleData.date && this.scheduleData.sessionId) {
+      const sDef = this.dataService.sessions().find(s => s.id === this.scheduleData.sessionId);
+      if (sDef) { this.dataService.scheduledSessions.update(prev => [...prev, { id: Date.now().toString(), date: this.scheduleData.date, sessionId: sDef.id, sessionName: sDef.name, completed: false }]); this.dataService.save(); this.closeSessionModal(); }
+    }
+  }
+  removeScheduledSession(id: string) { this.dataService.scheduledSessions.update(prev => prev.filter(x => x.id !== id)); this.dataService.save(); }
 
-  toggleMealConsumed(id: string) {
-    this.dataService.scheduledMeals.update(prev => prev.map(m => m.id === id ? { ...m, consumed: !m.consumed } : m));
-    this.dataService.save();
+  // Nutrition
+  openMealDetail(m: any) { this.planningMode = false; this.mealModalData = { id: m.mealId, name: m.mealName, type: m.type, totalCalories: m.caloriesSnapshot, totalProtein: m.proteinSnapshot, totalCarbs: m.carbsSnapshot, totalFat: m.fatSnapshot }; }
+  selectMealForPlanning(m: any) { this.planningMode = true; this.mealModalData = m; this.scheduleMealData.mealId = m.id; }
+  closeMealModal() { this.mealModalData = null; }
+  getMealItems(mealId: string) { const m = this.dataService.meals().find(x => x.id === mealId); return m ? m.items : []; }
+  
+  addIngredient() {
+    if (this.newIngredient.name) {
+      this.dataService.ingredients.update(prev => [...prev, { id: Date.now().toString(), ...this.newIngredient }]);
+      this.dataService.save(); this.newIngredient = { baseUnit: '100g' };
+    }
   }
+  selectIngredient(i: any) { this.selectedIngredientForAdd = i; this.quantityToAdd = null; }
+  confirmAddIngredient() { if (this.selectedIngredientForAdd && this.quantityToAdd) { this.newMealItems.push({ ingredient: this.selectedIngredientForAdd, quantity: this.quantityToAdd }); this.selectedIngredientForAdd = null; } }
+  removeIngFromMeal(item: any) { this.newMealItems = this.newMealItems.filter(x => x !== item); }
+  calculateItemCalories(item: any) { return item.ingredient.baseUnit === '100g' ? (item.quantity / 100) * item.ingredient.calories : item.quantity * item.ingredient.calories; }
+  getNewMealTotals() {
+    let cal = 0, p = 0, c = 0, f = 0;
+    this.newMealItems.forEach(item => { const ratio = item.ingredient.baseUnit === '100g' ? item.quantity / 100 : item.quantity; cal += ratio * item.ingredient.calories; p += ratio * item.ingredient.protein; c += ratio * item.ingredient.carbs; f += ratio * item.ingredient.fat; });
+    return { cal, p, c, f };
+  }
+  saveMeal() {
+    if (this.newMealName && this.newMealItems.length > 0) {
+      const t = this.getNewMealTotals();
+      this.dataService.meals.update(prev => [...prev, { id: Date.now().toString(), name: this.newMealName, items: [...this.newMealItems], totalCalories: t.cal, totalProtein: t.p, totalCarbs: t.c, totalFat: t.f }]);
+      this.dataService.save(); this.newMealName = ''; this.newMealItems = [];
+    }
+  }
+  confirmScheduleMeal() {
+    if (this.scheduleMealData.date && this.scheduleMealData.mealId) {
+      const mDef = this.dataService.meals().find(m => m.id === this.scheduleMealData.mealId);
+      if (mDef) { this.dataService.scheduledMeals.update(prev => [...prev, { id: Date.now().toString(), date: this.scheduleMealData.date, mealId: mDef.id, mealName: mDef.name, type: this.scheduleMealData.type, caloriesSnapshot: mDef.totalCalories, proteinSnapshot: mDef.totalProtein, carbsSnapshot: mDef.totalCarbs, fatSnapshot: mDef.totalFat, consumed: false }]); this.dataService.save(); this.closeMealModal(); }
+    }
+  }
+  removeScheduledMeal(id: string) { this.dataService.scheduledMeals.update(prev => prev.filter(x => x.id !== id)); this.dataService.save(); }
+  toggleMealConsumed(id: string) { this.dataService.scheduledMeals.update(prev => prev.map(m => m.id === id ? { ...m, consumed: !m.consumed } : m)); this.dataService.save(); }
 }
 
 
