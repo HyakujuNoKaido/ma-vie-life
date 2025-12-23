@@ -118,10 +118,13 @@ export default function App() {
     const syncCollection = (name, setter) => {
       const q = query(collection(db, 'artifacts', appId, 'public', 'data', name));
       return onSnapshot(q, 
-        (snap) => setter(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+        (snap) => {
+          setter(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+          setSyncError(null); // Clear error on success
+        },
         (err) => {
           if (err.code === 'permission-denied') {
-            setSyncError("⚠️ Base de données verrouillée. Activez les droits d'écriture sur Firebase.");
+            setSyncError("⚠️ Permissions insuffisantes.");
           }
         }
       );
@@ -140,7 +143,7 @@ export default function App() {
     const unsubGoal = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'budget'), (d) => {
       if(d.exists()) setBudgetGoal(d.data().monthlyGoal || 0);
     }, (err) => {
-      if (err.code === 'permission-denied') setSyncError("⚠️ Base de données verrouillée.");
+      if (err.code === 'permission-denied') setSyncError("⚠️ Permissions insuffisantes.");
     });
 
     return () => { unsubs.forEach(u => u()); unsubGoal(); };
@@ -200,10 +203,9 @@ export default function App() {
       </header>
       {syncError && (
         <div className="bg-red-50 border border-red-200 text-red-600 p-6 rounded-2xl text-sm font-medium">
-          <p className="font-black flex items-center gap-2 mb-2"><AlertCircle size={16}/> ACTION REQUISE SUR FIREBASE</p>
-          1. Allez sur <a href="https://console.firebase.google.com" target="_blank" className="underline">Firebase Console</a> {'>'} Firestore Database {'>'} Règles.<br/>
-          2. Remplacez le code par :<br/>
-          <code className="bg-red-100 p-1 rounded block mt-2 font-mono text-xs">allow read, write: if true;</code>
+          <p className="font-black flex items-center gap-2 mb-2"><AlertCircle size={16}/> SÉCURITÉ RENFORCÉE</p>
+          Votre base est sécurisée. Assurez-vous que les Règles Firestore sont :<br/>
+          <code className="bg-red-100 p-1 rounded block mt-2 font-mono text-xs">allow read, write: if request.auth != null;</code>
         </div>
       )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
