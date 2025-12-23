@@ -120,11 +120,12 @@ export default function App() {
       return onSnapshot(q, 
         (snap) => {
           setter(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-          setSyncError(null); // Clear error on success
+          // Si une lecture réussit, on efface l'erreur globale si elle venait de là
+          if (syncError && syncError.includes("verrouillée")) setSyncError(null);
         },
         (err) => {
           if (err.code === 'permission-denied') {
-            setSyncError("⚠️ Permissions insuffisantes.");
+            setSyncError("⚠️ ACCÈS REFUSÉ : Votre base de données est verrouillée sur Firebase.");
           }
         }
       );
@@ -143,7 +144,7 @@ export default function App() {
     const unsubGoal = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'budget'), (d) => {
       if(d.exists()) setBudgetGoal(d.data().monthlyGoal || 0);
     }, (err) => {
-      if (err.code === 'permission-denied') setSyncError("⚠️ Permissions insuffisantes.");
+      if (err.code === 'permission-denied') setSyncError("⚠️ ACCÈS REFUSÉ : Base de données verrouillée.");
     });
 
     return () => { unsubs.forEach(u => u()); unsubGoal(); };
@@ -202,10 +203,18 @@ export default function App() {
         </div>
       </header>
       {syncError && (
-        <div className="bg-red-50 border border-red-200 text-red-600 p-6 rounded-2xl text-sm font-medium">
-          <p className="font-black flex items-center gap-2 mb-2"><AlertCircle size={16}/> SÉCURITÉ RENFORCÉE</p>
-          Votre base est sécurisée. Assurez-vous que les Règles Firestore sont :<br/>
-          <code className="bg-red-100 p-1 rounded block mt-2 font-mono text-xs">allow read, write: if request.auth != null;</code>
+        <div className="bg-red-50 border border-red-200 text-red-700 p-6 rounded-3xl shadow-lg animate-pulse">
+          <p className="font-black flex items-center gap-2 mb-3 text-lg"><AlertCircle size={24}/> BASE DE DONNÉES BLOQUÉE</p>
+          <p className="text-sm mb-3">Pour que l'application fonctionne, vous devez autoriser l'accès dans Firebase :</p>
+          <ol className="list-decimal list-inside text-sm space-y-1 mb-4 pl-2">
+            <li>Allez sur <a href="https://console.firebase.google.com" target="_blank" rel="noreferrer" className="underline font-bold">Firebase Console</a></li>
+            <li>Ouvrez votre projet &gt; <strong>Firestore Database</strong></li>
+            <li>Cliquez sur l'onglet <strong>Règles (Rules)</strong></li>
+            <li>Remplacez tout le code par celui ci-dessous et cliquez sur <strong>Publier</strong></li>
+          </ol>
+          <div className="bg-white p-3 rounded-xl border border-red-100 font-mono text-xs select-all text-slate-600">
+            allow read, write: if true;
+          </div>
         </div>
       )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -484,7 +493,7 @@ export default function App() {
                </div>
                <div className="space-y-1">
                  {newMeal.ingredients.map((ing, i) => (
-                   <div key={i} className="flex justify-between text-xs bg-white p-2 rounded-lg text-slate-600">
+                   <div key={i} className="flex justify-between text-xs bg-white p-2 rounded-lg text-slate-600 shadow-sm">
                      <span>{ing.name}</span><span className="font-bold">{ing.qty}</span>
                    </div>
                  ))}
