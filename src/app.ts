@@ -107,12 +107,12 @@ export class DataService {
 
         <button (click)="activeTab.set('nutrition')" class="flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors" [class.text-blue-500]="activeTab() === 'nutrition'" [class.text-slate-500]="activeTab() !== 'nutrition'">
            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 10.5a1.5 1.5 0 0 1 3 0v2.8a2 2 0 0 1-2 2H12a2 2 0 0 1-2-2v-2.8Z"/><path d="M7 10.5a1.5 1.5 0 0 1 3 0v2.8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-2.8Z"/><path d="M15 10.5a1.5 1.5 0 0 1 3 0v2.8a2 2 0 0 1-2 2H16a2 2 0 0 1-2-2v-2.8Z"/><rect width="18" height="14" x="3" y="6" rx="2"/><path d="M7 6V4a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v2"/></svg>
-           <span class="text-[10px] font-bold uppercase">Nutri</span>
+           <span class="text-[10px] font-bold uppercase">Nutrition</span>
         </button>
 
         <button (click)="activeTab.set('finance')" class="flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors" [class.text-blue-500]="activeTab() === 'finance'" [class.text-slate-500]="activeTab() !== 'finance'">
            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
-           <span class="text-[10px] font-bold uppercase">Money</span>
+           <span class="text-[10px] font-bold uppercase">Finances</span>
         </button>
 
       </nav>
