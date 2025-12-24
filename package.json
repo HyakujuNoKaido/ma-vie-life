@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "node set-env.js && ng build", 
+    "build": "ng build", 
     "watch": "ng build --watch --configuration development"
   },
   "private": true,
@@ -33,3 +33,5 @@
     "typescript": "~5.2.0"
   }
 }
+
+
