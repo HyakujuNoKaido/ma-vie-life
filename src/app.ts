@@ -2,6 +2,20 @@ import { Component, computed, signal, Injectable, inject, Pipe, PipeTransform } 
 import { CommonModule, DecimalPipe, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
+// --- FIREBASE IMPORTS ---
+import { initializeApp } from 'firebase/app';
+import { getFirestore, doc, onSnapshot, setDoc } from 'firebase/firestore';
+
+// --- VOTRE CONFIGURATION FIREBASE ---
+const firebaseConfig = {
+  apiKey: "AIzaSyDQlNuPgVI13Jyx1h9ykM7B_6krxltlN6w",
+  authDomain: "mondashboardlife.firebaseapp.com",
+  projectId: "mondashboardlife",
+  storageBucket: "mondashboardlife.firebasestorage.app",
+  messagingSenderId: "361243061610",
+  appId: "1:361243061610:web:ec830caf5da084effec913"
+};
+
 // --- 1. PIPE (Date Français) ---
 @Pipe({ name: 'dateFr', standalone: true })
 export class DateFrPipe implements PipeTransform {
@@ -19,9 +33,10 @@ export class DateFrPipe implements PipeTransform {
   }
 }
 
-// --- 2. SERVICE (Données) ---
+// --- 2. SERVICE (Données & Synchro) ---
 @Injectable({ providedIn: 'root' })
 export class DataService {
+  // Données Réactives
   exercises = signal<any[]>([]);
   sessions = signal<any[]>([]);
   ingredients = signal<any[]>([]);
@@ -31,31 +46,124 @@ export class DataService {
   finances = signal<any[]>([]);
   monthlyBudget = signal<number>(4000);
 
-  constructor() { this.loadFromStorage(); }
-  private isBrowser() { return typeof window !== 'undefined' && typeof localStorage !== 'undefined'; }
+  // État de la connexion
+  isSyncing = signal(false);
+  lastSyncTime = signal<Date | null>(null);
+  
+  private db: any;
+  private docRef: any;
+  private useCloud = false;
 
-  loadFromStorage() {
-    if (!this.isBrowser()) return;
-    try {
-      const keys = ['lt_exercises', 'lt_sessions', 'lt_ingredients', 'lt_meals', 'lt_finances', 'lt_sched_sessions', 'lt_sched_meals', 'lt_budget'];
-      const targets = [this.exercises, this.sessions, this.ingredients, this.meals, this.finances, this.scheduledSessions, this.scheduledMeals, this.monthlyBudget];
-      keys.forEach((k, i) => { const v = localStorage.getItem(k); if (v) targets[i].set(JSON.parse(v)); });
-    } catch (e) { console.error(e); }
+  constructor() {
+    this.initSystem();
   }
 
-  save() {
+  private initSystem() {
+    // Initialisation de Firebase
+    if (firebaseConfig.apiKey) {
+      try {
+        const app = initializeApp(firebaseConfig);
+        this.db = getFirestore(app);
+        // "my_data" est le nom du document unique partagé entre vos appareils
+        this.docRef = doc(this.db, 'lifetrack_sync', 'my_data'); 
+        this.useCloud = true;
+        this.startCloudSync();
+      } catch (e) {
+        console.error("Erreur init Firebase:", e);
+        this.loadLocal(); // Si échec, on utilise le local
+      }
+    } else {
+      this.loadLocal();
+    }
+  }
+
+  // --- MODE CLOUD (Firebase) ---
+  private startCloudSync() {
+    this.isSyncing.set(true);
+    // Écoute en temps réel des changements (venant du PC ou du mobile)
+    onSnapshot(this.docRef, (docSnap: any) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        this.applyData(data);
+        this.lastSyncTime.set(new Date());
+        this.isSyncing.set(false);
+      } else {
+        // Premier lancement Cloud : on envoie les données locales si elles existent
+        console.log("Premier lancement Cloud : Création du document.");
+        this.save(); 
+      }
+    }, (error: any) => {
+      console.error("Erreur synchro:", error);
+      this.isSyncing.set(false);
+      this.loadLocal(); // Fallback si coupure internet
+    });
+  }
+
+  // --- MODE LOCAL (LocalStorage) ---
+  private isBrowser() { return typeof window !== 'undefined' && typeof localStorage !== 'undefined'; }
+
+  private loadLocal() {
     if (!this.isBrowser()) return;
-    localStorage.setItem('lt_exercises', JSON.stringify(this.exercises()));
-    localStorage.setItem('lt_sessions', JSON.stringify(this.sessions()));
-    localStorage.setItem('lt_ingredients', JSON.stringify(this.ingredients()));
-    localStorage.setItem('lt_meals', JSON.stringify(this.meals()));
-    localStorage.setItem('lt_finances', JSON.stringify(this.finances()));
-    localStorage.setItem('lt_sched_sessions', JSON.stringify(this.scheduledSessions()));
-    localStorage.setItem('lt_sched_meals', JSON.stringify(this.scheduledMeals()));
-    localStorage.setItem('lt_budget', JSON.stringify(this.monthlyBudget()));
+    const localData = localStorage.getItem('lt_full_backup');
+    if (localData) {
+      this.applyData(JSON.parse(localData));
+    }
+  }
+
+  // --- UTILITAIRES ---
+  private applyData(data: any) {
+    if (!data) return;
+    if (data.exercises) this.exercises.set(data.exercises);
+    if (data.sessions) this.sessions.set(data.sessions);
+    if (data.ingredients) this.ingredients.set(data.ingredients);
+    if (data.meals) this.meals.set(data.meals);
+    if (data.scheduledSessions) this.scheduledSessions.set(data.scheduledSessions);
+    if (data.scheduledMeals) this.scheduledMeals.set(data.scheduledMeals);
+    if (data.finances) this.finances.set(data.finances);
+    if (data.monthlyBudget) this.monthlyBudget.set(data.monthlyBudget);
+  }
+
+  private getAllData() {
+    return {
+      exercises: this.exercises(),
+      sessions: this.sessions(),
+      ingredients: this.ingredients(),
+      meals: this.meals(),
+      scheduledSessions: this.scheduledSessions(),
+      scheduledMeals: this.scheduledMeals(),
+      finances: this.finances(),
+      monthlyBudget: this.monthlyBudget(),
+      lastUpdated: new Date().toISOString()
+    };
+  }
+
+  // --- SAUVEGARDE UNIFIÉE ---
+  save() {
+    const data = this.getAllData();
+    
+    // 1. Toujours sauvegarder en local (backup rapide & hors ligne)
+    if (this.isBrowser()) {
+      localStorage.setItem('lt_full_backup', JSON.stringify(data));
+    }
+
+    // 2. Si connecté, envoyer au Cloud
+    if (this.useCloud && this.docRef) {
+      this.isSyncing.set(true);
+      // 'merge: true' permet de ne mettre à jour que ce qui change si besoin, ici on écrase pour une synchro totale
+      setDoc(this.docRef, data) 
+        .then(() => {
+            this.isSyncing.set(false);
+            this.lastSyncTime.set(new Date());
+        })
+        .catch(e => {
+            console.error("Erreur sauvegarde cloud:", e);
+            this.isSyncing.set(false);
+        });
+    }
   }
 
   injectData() {
+    // Données de démo
     const exs = [
       { id: 'ex1', name: 'Développé Couché', bodyPart: 'Pectoraux', equipment: 'Barre', sets: 4, reps: 10, weight: 80 },
       { id: 'ex2', name: 'Squat', bodyPart: 'Jambes', equipment: 'Barre', sets: 4, reps: 8, weight: 100 },
@@ -81,7 +189,14 @@ export class DataService {
     this.save();
   }
 
-  reset() { if (this.isBrowser()) localStorage.clear(); location.reload(); }
+  reset() { 
+      if (confirm("Attention: Cela effacera toutes les données sur TOUS les appareils synchronisés via le Cloud. Continuer ?")) {
+        this.exercises.set([]); this.sessions.set([]); this.ingredients.set([]); this.meals.set([]); 
+        this.scheduledSessions.set([]); this.scheduledMeals.set([]); this.finances.set([]);
+        this.save(); // Propager le vide au cloud
+        location.reload();
+      }
+  }
 }
 
 // --- 3. COMPONENT ---
@@ -107,12 +222,12 @@ export class DataService {
 
         <button (click)="activeTab.set('nutrition')" class="flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors" [class.text-blue-500]="activeTab() === 'nutrition'" [class.text-slate-500]="activeTab() !== 'nutrition'">
            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 10.5a1.5 1.5 0 0 1 3 0v2.8a2 2 0 0 1-2 2H12a2 2 0 0 1-2-2v-2.8Z"/><path d="M7 10.5a1.5 1.5 0 0 1 3 0v2.8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-2.8Z"/><path d="M15 10.5a1.5 1.5 0 0 1 3 0v2.8a2 2 0 0 1-2 2H16a2 2 0 0 1-2-2v-2.8Z"/><rect width="18" height="14" x="3" y="6" rx="2"/><path d="M7 6V4a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v2"/></svg>
-           <span class="text-[10px] font-bold uppercase">Nutrition</span>
+           <span class="text-[10px] font-bold uppercase">Nutri</span>
         </button>
 
         <button (click)="activeTab.set('finance')" class="flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors" [class.text-blue-500]="activeTab() === 'finance'" [class.text-slate-500]="activeTab() !== 'finance'">
            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
-           <span class="text-[10px] font-bold uppercase">Finances</span>
+           <span class="text-[10px] font-bold uppercase">Money</span>
         </button>
 
       </nav>
@@ -149,15 +264,25 @@ export class DataService {
       <!-- MAIN CONTENT -->
       <main class="flex-1 overflow-y-auto bg-slate-950 p-4 pb-[100px] md:p-10 relative scroll-smooth">
         
-        <!-- HEADER MOBILE -->
+        <!-- HEADER MOBILE (Avec indicateur de Synchro) -->
         <header class="md:hidden flex justify-between items-center mb-6 pt-2">
             <div><h1 class="text-xl font-bold text-white">Life<span class="text-blue-500">Track</span></h1><p class="text-xs text-slate-400 capitalize">{{ today | dateFr:'full' }}</p></div>
-            <div class="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-blue-400">LT</div>
+            <div class="flex items-center gap-2">
+                <!-- Indicateur Sync -->
+                <div class="w-2 h-2 rounded-full" [class.bg-emerald-500]="!dataService.isSyncing()" [class.bg-amber-500]="dataService.isSyncing()" [class.animate-pulse]="dataService.isSyncing()"></div>
+                <div class="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-blue-400">LT</div>
+            </div>
         </header>
 
         <!-- --- HOME TAB --- -->
         <div *ngIf="activeTab() === 'home'" class="animate-fade space-y-6">
-          <header class="hidden md:block border-b border-slate-800 pb-6"><h2 class="text-3xl font-bold text-white mb-1">Tableau de bord</h2><p class="text-slate-400 capitalize">{{ today | dateFr:'full' }}</p></header>
+          <header class="hidden md:flex justify-between items-end border-b border-slate-800 pb-6">
+              <div><h2 class="text-3xl font-bold text-white mb-1">Tableau de bord</h2><p class="text-slate-400 capitalize">{{ today | dateFr:'full' }}</p></div>
+              <div class="text-xs text-slate-500 flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full" [class.bg-emerald-500]="!dataService.isSyncing()" [class.bg-amber-500]="dataService.isSyncing()"></span>
+                  {{ dataService.isSyncing() ? 'Synchronisation...' : 'Synchronisé' }}
+              </div>
+          </header>
           
           <!-- Solde Card -->
           <div class="bg-gradient-to-br from-slate-900 to-slate-800 p-6 rounded-2xl border border-slate-800 shadow-xl relative overflow-hidden">
@@ -281,7 +406,7 @@ export class DataService {
               </div>
            </div>
 
-           <!-- Schedule & Sessions views remain similar but polished -->
+           <!-- Schedule & Sessions views -->
            <div *ngIf="sportView === 'schedule'">
               <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl mb-6">
                  <h3 class="text-slate-400 text-xs font-bold uppercase mb-4">Planifier une séance</h3>
@@ -335,7 +460,7 @@ export class DataService {
               <button *ngFor="let v of ['schedule', 'ingredients', 'meals']" (click)="nutriView = v" [class]="nutriView === v ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-900 text-slate-400 border-slate-800'" class="px-4 py-2 rounded-full text-xs font-bold uppercase whitespace-nowrap transition border shadow-sm">{{ v === 'schedule' ? 'Menu' : v === 'ingredients' ? 'Aliments' : 'Recettes' }}</button>
            </div>
 
-           <!-- (Contenu Nutrition restauré identique à la version fonctionnelle, pas de changement majeur nécessaire ici sauf le design) -->
+           <!-- (Contenu Nutrition) -->
            <div *ngIf="nutriView === 'schedule'">
               <div class="grid grid-cols-2 gap-3 mb-6">
                  <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl text-center"><p class="text-2xl font-bold text-emerald-400">{{ todaysCalories() | number:'1.0-0' }}</p><p class="text-[10px] text-slate-500 uppercase font-bold">Kcal Conso.</p></div>
@@ -420,7 +545,6 @@ export class DataService {
            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex flex-col gap-4">
               <div class="flex justify-between items-center border-b border-slate-800 pb-4">
                   <h2 class="text-white font-bold ml-1">Finances</h2>
-                  <!-- Budget Modification Input -->
                   <div class="flex flex-col items-end">
                       <label class="text-[10px] text-slate-500 uppercase font-bold">Budget Mensuel</label>
                       <input type="number" [(ngModel)]="dataService.monthlyBudget" (ngModelChange)="dataService.save()" class="bg-transparent border-b border-slate-700 text-right w-24 text-white font-mono focus:border-blue-500 outline-none">
@@ -546,7 +670,7 @@ export class App {
   ];
   today = new Date();
 
-  // Modals
+  // Modals & Forms State
   showTransactionModal = false;
   sessionModalData: any = null;
   mealModalData: any = null;
@@ -718,5 +842,3 @@ export class App {
   removeScheduledMeal(id: string) { this.dataService.scheduledMeals.update(prev => prev.filter(x => x.id !== id)); this.dataService.save(); }
   toggleMealConsumed(id: string) { this.dataService.scheduledMeals.update(prev => prev.map(m => m.id === id ? { ...m, consumed: !m.consumed } : m)); this.dataService.save(); }
 }
-
-
