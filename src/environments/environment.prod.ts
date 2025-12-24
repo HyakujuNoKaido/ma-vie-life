@@ -1,16 +1,13 @@
-// Fichier : src/environments/environment.prod.ts
-// Ce fichier est un PLACEHOLDER pour la production.
-// Ne mettez PAS vos vraies clés ici si vous utilisez GitHub.
-// Le script set-env.js remplira ces valeurs automatiquement sur Cloudflare.
-
 export const environment = {
   production: true,
   firebase: {
-    apiKey: "", 
-    authDomain: "",
-    projectId: "",
-    storageBucket: "",
-    messagingSenderId: "",
-    appId: ""
+    apiKey: "AIzaSyDQlNuPgVI13Jyx1h9ykM7B_6krxltlN6w",
+    authDomain: "mondashboardlife.firebaseapp.com",
+    projectId: "mondashboardlife",
+    storageBucket: "mondashboardlife.firebasestorage.app",
+    messagingSenderId: "361243061610",
+    appId: "1:361243061610:web:ec830caf5da084effec913"
   }
 };
+
+
