@@ -7,6 +7,8 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore, doc, onSnapshot, setDoc } from 'firebase/firestore';
 
 // --- VOTRE CONFIGURATION FIREBASE ---
+// Note: Pour la production, il est recommandé d'utiliser environment.ts, 
+// mais pour ce déploiement rapide, nous laissons tel quel.
 const firebaseConfig = {
   apiKey: "AIzaSyDQlNuPgVI13Jyx1h9ykM7B_6krxltlN6w",
   authDomain: "mondashboardlife.firebaseapp.com",
@@ -605,7 +607,7 @@ export class DataService {
          <div class="bg-slate-900 w-full md:max-w-md rounded-t-2xl md:rounded-2xl border-t md:border border-slate-800 h-[85vh] md:h-auto flex flex-col shadow-2xl">
             <div class="p-4 border-b border-slate-800 flex justify-between items-center"><h3 class="text-lg font-bold text-white">Nouvelle Transaction</h3><button (click)="showTransactionModal = false" class="text-slate-400 p-2">Fermer</button></div>
             <div class="p-6 space-y-4 flex-1 overflow-y-auto">
-                <div class="grid grid-cols-3 gap-2"><button *ngFor="let t of ['variable', 'fixe', 'revenu']" (click)="newTransaction.type = t" [class]="newTransaction.type === t ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-800 text-slate-400 border-slate-700'" class="py-2 rounded-lg border text-xs font-bold uppercase transition capitalize">{{ t }}</button></div>
+                <div class="grid grid-cols-3 gap-2"><button *ngFor="let t of ['variable', 'fixe', 'revenu']" (click)="newTransaction.type = t" [class.bg-blue-600]="newTransaction.type === t" [class.text-white]="newTransaction.type === t" [class.border-blue-600]="newTransaction.type === t" [class.bg-slate-800]="newTransaction.type !== t" [class.text-slate-400]="newTransaction.type !== t" [class.border-slate-700]="newTransaction.type !== t" class="py-2 rounded-lg border text-xs font-bold uppercase transition capitalize">{{ t }}</button></div>
                 <div class="space-y-1"><label class="text-xs text-slate-500 uppercase font-bold">Montant</label><input type="number" [(ngModel)]="newTransaction.amount" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white text-lg font-bold focus:border-blue-500 outline-none" placeholder="0.00"></div>
                 <div class="space-y-1"><label class="text-xs text-slate-500 uppercase font-bold">Catégorie</label><select [(ngModel)]="newTransaction.category" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-blue-500 outline-none"><option value="" disabled>Sélectionner...</option><option *ngFor="let c of getCategories(newTransaction.type)" [value]="c">{{ c }}</option></select></div>
                 <div class="space-y-1"><label class="text-xs text-slate-500 uppercase font-bold">Date</label><input type="date" [(ngModel)]="newTransaction.date" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-blue-500 outline-none"></div>
