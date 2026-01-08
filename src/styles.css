@@ -4,6 +4,14 @@
 
 /* Styles globaux si nécessaire */
 body {
-    margin: 0;
-    font-family: system-ui, -apple-system, sans-serif;
+  /* Ces deux lignes poussent ton contenu pour qu'il ne soit pas caché par l'encoche */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  
+  /* IMPORTANT : Mets ici la couleur de fond de ton app (noir ou blanc) */
+  /* Sinon, la zone derrière l'heure risque d'être transparente ou blanche par défaut */
+  background-color: #ffffff; 
+  
+  /* Assure que l'app prend tout l'écran */
+  min-height: 100vh;
 }
