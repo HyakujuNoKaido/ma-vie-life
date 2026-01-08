@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 1. Préparation de Node.js
+      # 1. Préparation
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -21,31 +21,33 @@ jobs:
       - name: Installation et Build Web
         run: |
           npm install
-          # Si ton script de build s'appelle autrement, change la ligne ci-dessous
           npm run build 
 
-      # 3. Transformation en App iPhone (AVEC LE CORRECTIF DE VERSION)
+      # 3. Moteur Mobile (AVEC L'ASTUCE ANTI-PLANTAGE)
       - name: Ajout du moteur Mobile et Correctif iOS
         run: |
           npm install @capacitor/core @capacitor/cli @capacitor/ios
-          # On initialise le projet
           npx cap init "Ma Vie Life" "com.mavielife.app" --web-dir dist
-          npx cap add ios
           
-          # --- LE FIX EST ICI ---
-          # On force le fichier de configuration (Podfile) à accepter iOS 15.0
-          # Cela corrige l'erreur "higher minimum deployment target"
-          sed -i '' "s/platform :ios, .*/platform :ios, '15.0'/" ios/App/Podfile
-          # ----------------------
-
+          # --- L'ASTUCE EST ICI ---
+          # On lance la création du projet iOS.
+          # Si ça plante à cause de la version (exit code 1), "|| true" dit à GitHub : "C'est pas grave, continue !"
+          npx cap add ios || true
+          
+          # Maintenant que le dossier est créé, on applique le correctif
+          # On force la version à iOS 16.0 (qui est compatible avec tout aujourd'hui)
+          sed -i '' "s/platform :ios, .*/platform :ios, '16.0'/" ios/App/Podfile
+          
+          # On relance l'installation des dépendances (cette fois ça va marcher car on a corrigé le fichier)
+          npx cap update ios
           npx cap sync
 
       # 4. Compilation de l'App (IPA)
       - name: Construction de l'IPA
         run: |
           cd ios/App
-          # On force aussi Xcode à utiliser iOS 15 comme cible
-          xcodebuild -workspace App.xcworkspace -scheme App -configuration Release -archivePath App.xcarchive archive CODE_SIGNING_ALLOWED=NO IPHONEOS_DEPLOYMENT_TARGET=15.0
+          # On compile en forçant la compatibilité iOS 16.0
+          xcodebuild -workspace App.xcworkspace -scheme App -configuration Release -archivePath App.xcarchive archive CODE_SIGNING_ALLOWED=NO IPHONEOS_DEPLOYMENT_TARGET=16.0
           
           cd App.xcarchive/Products/Applications
           mkdir Payload
