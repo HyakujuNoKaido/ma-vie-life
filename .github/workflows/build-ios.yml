@@ -23,22 +23,27 @@ jobs:
           npm install
           npm run build 
 
-      # 3. Moteur Mobile (AVEC L'ASTUCE ANTI-PLANTAGE)
-      - name: Ajout du moteur Mobile et Correctif iOS
+      # 3. Moteur Mobile & Génération d'Icônes
+      - name: Ajout Mobile, Fix iOS et Icônes
         run: |
-          npm install @capacitor/core @capacitor/cli @capacitor/ios
+          # Installation des outils, y compris le générateur d'assets
+          npm install @capacitor/core @capacitor/cli @capacitor/ios @capacitor/assets
+
+          # Initialisation
           npx cap init "Ma Vie Life" "com.mavielife.app" --web-dir dist
           
-          # --- L'ASTUCE EST ICI ---
-          # On lance la création du projet iOS.
-          # Si ça plante à cause de la version (exit code 1), "|| true" dit à GitHub : "C'est pas grave, continue !"
+          # Création du projet iOS (avec l'astuce anti-plantage)
           npx cap add ios || true
           
-          # Maintenant que le dossier est créé, on applique le correctif
-          # On force la version à iOS 16.0 (qui est compatible avec tout aujourd'hui)
+          # --- GÉNÉRATION DES ICÔNES ---
+          # Si le dossier 'resources' et 'icon.png' existent, ça va créer les icônes iOS
+          npx capacitor-assets generate --ios
+          # -----------------------------
+
+          # Correctif version iOS (sed)
           sed -i '' "s/platform :ios, .*/platform :ios, '16.0'/" ios/App/Podfile
           
-          # On relance l'installation des dépendances (cette fois ça va marcher car on a corrigé le fichier)
+          # Synchro finale
           npx cap update ios
           npx cap sync
 
@@ -46,7 +51,7 @@ jobs:
       - name: Construction de l'IPA
         run: |
           cd ios/App
-          # On compile en forçant la compatibilité iOS 16.0
+          # Compilation forcée iOS 16.0
           xcodebuild -workspace App.xcworkspace -scheme App -configuration Release -archivePath App.xcarchive archive CODE_SIGNING_ALLOWED=NO IPHONEOS_DEPLOYMENT_TARGET=16.0
           
           cd App.xcarchive/Products/Applications
@@ -54,7 +59,7 @@ jobs:
           mv App.app Payload/
           zip -r MaVieLife.ipa Payload/
 
-      # 5. Mise à disposition du fichier
+      # 5. Mise à disposition
       - name: Mettre l'IPA à disposition
         uses: actions/upload-artifact@v4
         with:
