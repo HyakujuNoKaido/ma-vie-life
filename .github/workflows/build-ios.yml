@@ -1,0 +1,50 @@
+name: Créer mon App iPhone (IPA)
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 1. Préparation de l'environnement (Node.js)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # 2. Installation des dépendances et Build du site web
+      - name: Installation et Build Web
+        run: |
+          npm install
+          npm run build # Assure-toi que cette commande crée un dossier 'dist' ou 'build'
+
+      # 3. Transformation en App iPhone (Capacitor)
+      # Si tu n'as pas encore ajouté Capacitor à ton projet, ce script l'ajoute à la volée
+      - name: Ajout du moteur Mobile (Capacitor)
+        run: |
+          npm install @capacitor/core @capacitor/cli @capacitor/ios
+          npx cap init "Ma Vie Life" "com.mavielife.app" --web-dir dist # Remplace 'dist' par ton dossier de sortie si différent
+          npx cap add ios
+          npx cap sync
+
+      # 4. Compilation de l'App (Sans signature pour SideStore)
+      - name: Construction de l'IPA (xcodebuild)
+        run: |
+          cd ios/App
+          xcodebuild -workspace App.xcworkspace -scheme App -configuration Release -archivePath App.xcarchive archive CODE_SIGNING_ALLOWED=NO
+          cd App.xcarchive/Products/Applications
+          mkdir Payload
+          mv App.app Payload/
+          zip -r MaVieLife.ipa Payload/
+
+      # 5. Envoi du fichier fini pour que tu puisses le télécharger
+      - name: Mettre l'IPA à disposition
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mon-Application-iPhone
+          path: ios/App/App.xcarchive/Products/Applications/MaVieLife.ipa
