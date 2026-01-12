@@ -6,17 +6,27 @@
   
   /* Désactive le "rebond" élastique blanc moche sur iOS */
   overscroll-behavior-y: none;
+  
+  /* Empêche le zoom automatique du texte en mode paysage */
+  -webkit-text-size-adjust: 100%;
+}
+
+/* On force html et body à prendre toute la hauteur */
+html {
+  height: 100%;
 }
 
 body {
   margin: 0;
   padding: 0;
+  height: 100%; /* Important pour que les % fonctionnent dans les enfants */
   
   /* --- GESTION DE L'ENCOCHE IPHONE (NOTCH) --- */
   
   /* 1. Couleur de fond derrière l'heure/batterie */
   /* CHANGE CE CODE COULEUR si ton app est sombre (ex: #000000) */
-  background-color: #ffffff; 
+  background-color: #ffffff;
+  color: #000000; /* On s'assure que le texte est noir par défaut */
   
   /* 2. Ajout des marges de sécurité */
   /* Le contenu commencera SOUS l'encoche */
@@ -28,7 +38,6 @@ body {
   padding-right: env(safe-area-inset-right);
 
   /* 3. Force l'app à prendre tout l'écran */
-  min-height: 100vh;
   width: 100%;
   
   /* Empêche le scroll horizontal accidentel */
