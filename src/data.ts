@@ -1,5 +1,4 @@
 // --- BASE DE DONNÉES INITIALE (SEED) ---
-// On a renommé le fichier en .ts pour Angular
 
 export interface Exercise {
   id: string;
