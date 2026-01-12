@@ -1,16 +1,20 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <title>LifeTrack</title>
-  <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0f172a">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
-</head>
-<body class="bg-slate-950">
-  <app-root></app-root>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <!-- L'icône du navigateur (pas celle de l'app iPhone) -->
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    
+    <!-- C'EST ICI QUE LA MAGIE OPÈRE -->
+    <!-- viewport-fit=cover est OBLIGATOIRE pour que le CSS fonctionne -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    
+    <!-- Titre de ton app -->
+    <title>Ma Life Tracker</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- Script principal (adapte le chemin si nécessaire, ex: /src/main.tsx ou .js) -->
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
-
-
