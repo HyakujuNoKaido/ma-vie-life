@@ -1,6 +1,24 @@
 // --- BASE DE DONNÉES INITIALE (SEED) ---
+// On a renommé le fichier en .ts pour Angular
 
-export const INITIAL_EXERCICES = [
+export interface Exercise {
+  id: string;
+  name: string;
+  equipment: string;
+  cat: string;
+  img: string;
+}
+
+export interface Food {
+  id: string;
+  name: string;
+  calories: number;
+  protein: number;
+  unit: string;
+  img: string;
+}
+
+export const INITIAL_EXERCICES: Exercise[] = [
   // PECTORAUX
   { id: 'p1', name: "Développé Couché", equipment: "Barre", cat: "Pectoraux", img: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400" },
   { id: 'p2', name: "Développé Incliné Haltères", equipment: "Haltères", cat: "Pectoraux", img: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=400" },
@@ -28,7 +46,7 @@ export const INITIAL_EXERCICES = [
   { id: 'a1', name: "Planche", equipment: "Tapis", cat: "Abdos", img: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400" }
 ];
 
-export const INITIAL_FOODS = [
+export const INITIAL_FOODS: Food[] = [
   { id: 'f1', name: "Poulet (Blanc)", calories: 165, protein: 31, unit: "100g", img: "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=200" },
   { id: 'f2', name: "Riz Basmati Cuit", calories: 130, protein: 2.7, unit: "100g", img: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=200" },
   { id: 'f3', name: "Oeuf entier", calories: 155, protein: 13, unit: "unité", img: "https://images.unsplash.com/photo-1587486913049-53fc88980cfc?w=200" },
