@@ -223,7 +223,7 @@ export class DataService {
         <!-- HEADER MOBILE -->
         <header class="md:hidden flex justify-between items-center mb-6 pt-2">
             <div><h1 class="text-xl font-bold text-white">Life<span class="text-blue-500">Track</span></h1><p class="text-xs text-slate-400 capitalize">{{ today | dateFr:'full' }}</p></div>
-            <!-- Indicateur de synchro discret (petit point) -->
+            <!-- Indicateur de synchro discret (petit point) - LT REMOVED -->
             <div class="w-2 h-2 rounded-full" [class.bg-emerald-500]="!dataService.isSyncing()" [class.bg-amber-500]="dataService.isSyncing()" [class.animate-pulse]="dataService.isSyncing()"></div>
         </header>
 
@@ -637,7 +637,7 @@ export class DataService {
     @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
   `]
 })
-export class AppComponent {
+export class App {
   dataService = inject(DataService);
   activeTab = signal('home');
   tabs = [
