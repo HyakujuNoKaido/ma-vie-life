@@ -359,7 +359,7 @@ export class DataService {
            <!-- Library with Filters -->
            <div *ngIf="sportView === 'library'">
               <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 mb-6">
-                 <h3 class="text-white font-bold mb-4 text-sm uppercase flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg> Filtres & Ajout</h3>
+                 <h3 class="text-white font-bold mb-4 text-sm uppercase flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500"><circle cx="11" cy="11" r="8"/><path d="m21 21-4-4"/></svg> Filtres & Ajout</h3>
                  
                  <!-- Filters -->
                  <div class="grid grid-cols-2 gap-2 mb-4">
@@ -625,7 +625,7 @@ export class DataService {
                <div *ngFor="let ex of sessionModalData.exercises" class="bg-slate-950 p-3 rounded border border-slate-800">
                   <p class="text-white font-bold">{{ ex.name }}</p>
                   <p class="text-xs text-slate-500 uppercase">{{ ex.bodyPart }} - {{ ex.equipment }}</p>
-                  <p class="text-sm text-blue-400 mt-1 font-mono">{{ ex.sets }} x {{ ex.reps }} &#64; {{ ex.weight }}kg</p>
+                  <p class="text-sm text-blue-400 mt-1 font-mono">{{ ex.sets }} x {{ ex.reps }} @ {{ ex.weight }}kg</p>
                </div>
             </div>
             <div *ngIf="planningMode" class="p-4 border-t border-slate-800 bg-slate-900 flex gap-2">
