@@ -2,6 +2,9 @@ import { Component, computed, signal, Injectable, inject, Pipe, PipeTransform } 
 import { CommonModule, DecimalPipe, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
+// --- IMPORTATION DE VOS DONNÉES (DATA.TS) ---
+import { INITIAL_EXERCICES, INITIAL_FOODS } from '../data';
+
 // --- FIREBASE IMPORTS ---
 import { initializeApp } from 'firebase/app';
 import { getFirestore, doc, onSnapshot, setDoc } from 'firebase/firestore';
@@ -165,29 +168,64 @@ export class DataService {
   }
 
   injectData() {
-    // Données de démo
-    const exs = [
-      { id: 'ex1', name: 'Développé Couché', bodyPart: 'Pectoraux', equipment: 'Barre', sets: 4, reps: 10, weight: 80 },
-      { id: 'ex2', name: 'Squat', bodyPart: 'Jambes', equipment: 'Barre', sets: 4, reps: 8, weight: 100 },
-      { id: 'ex3', name: 'Tractions', bodyPart: 'Dos', equipment: 'Poids du corps', sets: 3, reps: 12, weight: 0 }
-    ];
+    // --- INTEGRATION DE DATA.TS ---
+    
+    // 1. Conversion des Exercices (Format Data.ts -> Format App)
+    const exs = INITIAL_EXERCICES.map(e => ({
+      id: e.id,
+      name: e.name,
+      bodyPart: e.cat, // 'cat' devient 'bodyPart'
+      equipment: e.equipment,
+      sets: 4, // Valeur par défaut
+      reps: 10, // Valeur par défaut
+      weight: 0
+    }));
     this.exercises.set(exs);
-    const sess = { id: 'sess1', name: 'Full Body A', exercises: [exs[0], exs[1], exs[2]], totalDuration: 60 };
+
+    // 2. Création d'une séance exemple avec les premiers exercices
+    const sess = { 
+      id: 'sess1', 
+      name: 'Full Body Start', 
+      exercises: exs.slice(0, 4), // Prend les 4 premiers exercices
+      totalDuration: 60 
+    };
     this.sessions.set([sess]);
-    const ings = [
-      { id: 'ing1', name: 'Poulet (cru)', baseUnit: '100g', calories: 120, protein: 23, carbs: 0, fat: 2.5 },
-      { id: 'ing2', name: 'Riz Basmati (cuit)', baseUnit: '100g', calories: 130, protein: 2.7, carbs: 28, fat: 0.3 }
-    ];
+
+    // 3. Conversion des Aliments (Format Data.ts -> Format App)
+    const ings = INITIAL_FOODS.map(f => ({
+      id: f.id,
+      name: f.name,
+      baseUnit: f.unit,
+      calories: f.calories,
+      protein: f.protein,
+      carbs: 0, // Valeur par défaut car absente de data.ts
+      fat: 0    // Valeur par défaut car absente de data.ts
+    }));
     this.ingredients.set(ings);
-    const meal = { id: 'meal1', name: 'Post-Workout', items: [{ ingredient: ings[0], quantity: 150 }, { ingredient: ings[1], quantity: 200 }], totalCalories: 440, totalProtein: 40, totalCarbs: 56, totalFat: 4 };
+
+    // 4. Création d'un repas exemple
+    const meal = { 
+      id: 'meal1', 
+      name: 'Repas Type', 
+      items: [{ ingredient: ings[0], quantity: 150 }, { ingredient: ings[1], quantity: 200 }], 
+      totalCalories: 440, 
+      totalProtein: 40, 
+      totalCarbs: 56, 
+      totalFat: 4 
+    };
     this.meals.set([meal]);
+
+    // 5. Données Financières (Reste inchangé)
     const today = new Date().toISOString().split('T')[0];
     this.finances.set([
         { id: 'f1', date: today, description: 'Salaire', amount: 5000, type: 'revenu', category: 'Salaire' },
         { id: 'f2', date: today, description: 'Loyer', amount: 1600, type: 'fixe', category: 'Logement' }
     ]);
+
+    // 6. Planification exemple
     this.scheduledMeals.set([{ id: 'sm1', date: today, mealId: meal.id, mealName: meal.name, type: 'Déjeuner', caloriesSnapshot: meal.totalCalories, proteinSnapshot: meal.totalProtein, carbsSnapshot: meal.totalCarbs, fatSnapshot: meal.totalFat, consumed: false }]);
     this.scheduledSessions.set([{ id: 'ss1', date: today, sessionId: sess.id, sessionName: sess.name, completed: false }]);
+    
     this.save();
   }
 
