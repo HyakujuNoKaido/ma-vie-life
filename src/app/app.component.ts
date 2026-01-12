@@ -10,8 +10,6 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore, doc, onSnapshot, setDoc } from 'firebase/firestore';
 
 // --- VOTRE CONFIGURATION FIREBASE ---
-// Note: Pour la production, il est recommandé d'utiliser environment.ts, 
-// mais pour ce déploiement rapide, nous laissons tel quel.
 const firebaseConfig = {
   apiKey: "AIzaSyDQlNuPgVI13Jyx1h9ykM7B_6krxltlN6w",
   authDomain: "mondashboardlife.firebaseapp.com",
@@ -64,18 +62,16 @@ export class DataService {
   }
 
   private initSystem() {
-    // Initialisation de Firebase
     if (firebaseConfig.apiKey) {
       try {
         const app = initializeApp(firebaseConfig);
         this.db = getFirestore(app);
-        // "my_data" est le nom du document unique partagé entre vos appareils
         this.docRef = doc(this.db, 'lifetrack_sync', 'my_data'); 
         this.useCloud = true;
         this.startCloudSync();
       } catch (e) {
         console.error("Erreur init Firebase:", e);
-        this.loadLocal(); // Si échec, on utilise le local
+        this.loadLocal();
       }
     } else {
       this.loadLocal();
@@ -85,7 +81,6 @@ export class DataService {
   // --- MODE CLOUD (Firebase) ---
   private startCloudSync() {
     this.isSyncing.set(true);
-    // Écoute en temps réel des changements (venant du PC ou du mobile)
     onSnapshot(this.docRef, (docSnap: any) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
@@ -93,14 +88,13 @@ export class DataService {
         this.lastSyncTime.set(new Date());
         this.isSyncing.set(false);
       } else {
-        // Premier lancement Cloud : on envoie les données locales si elles existent
         console.log("Premier lancement Cloud : Création du document.");
         this.save(); 
       }
     }, (error: any) => {
       console.error("Erreur synchro:", error);
       this.isSyncing.set(false);
-      this.loadLocal(); // Fallback si coupure internet
+      this.loadLocal();
     });
   }
 
@@ -145,16 +139,11 @@ export class DataService {
   // --- SAUVEGARDE UNIFIÉE ---
   save() {
     const data = this.getAllData();
-    
-    // 1. Toujours sauvegarder en local (backup rapide & hors ligne)
     if (this.isBrowser()) {
       localStorage.setItem('lt_full_backup', JSON.stringify(data));
     }
-
-    // 2. Si connecté, envoyer au Cloud
     if (this.useCloud && this.docRef) {
       this.isSyncing.set(true);
-      // 'merge: true' permet de ne mettre à jour que ce qui change si besoin, ici on écrase pour une synchro totale
       setDoc(this.docRef, data) 
         .then(() => {
             this.isSyncing.set(false);
@@ -169,41 +158,36 @@ export class DataService {
 
   injectData() {
     // --- INTEGRATION DE DATA.TS ---
-    
-    // 1. Conversion des Exercices (Format Data.ts -> Format App)
     const exs = INITIAL_EXERCICES.map(e => ({
       id: e.id,
       name: e.name,
-      bodyPart: e.cat, // 'cat' devient 'bodyPart'
+      bodyPart: e.cat,
       equipment: e.equipment,
-      sets: 4, // Valeur par défaut
-      reps: 10, // Valeur par défaut
+      sets: 4,
+      reps: 10,
       weight: 0
     }));
     this.exercises.set(exs);
 
-    // 2. Création d'une séance exemple avec les premiers exercices
     const sess = { 
       id: 'sess1', 
       name: 'Full Body Start', 
-      exercises: exs.slice(0, 4), // Prend les 4 premiers exercices
+      exercises: exs.slice(0, 4),
       totalDuration: 60 
     };
     this.sessions.set([sess]);
 
-    // 3. Conversion des Aliments (Format Data.ts -> Format App)
     const ings = INITIAL_FOODS.map(f => ({
       id: f.id,
       name: f.name,
       baseUnit: f.unit,
       calories: f.calories,
       protein: f.protein,
-      carbs: 0, // Valeur par défaut car absente de data.ts
-      fat: 0    // Valeur par défaut car absente de data.ts
+      carbs: 0,
+      fat: 0
     }));
     this.ingredients.set(ings);
 
-    // 4. Création d'un repas exemple
     const meal = { 
       id: 'meal1', 
       name: 'Repas Type', 
@@ -215,14 +199,12 @@ export class DataService {
     };
     this.meals.set([meal]);
 
-    // 5. Données Financières (Reste inchangé)
     const today = new Date().toISOString().split('T')[0];
     this.finances.set([
         { id: 'f1', date: today, description: 'Salaire', amount: 5000, type: 'revenu', category: 'Salaire' },
         { id: 'f2', date: today, description: 'Loyer', amount: 1600, type: 'fixe', category: 'Logement' }
     ]);
 
-    // 6. Planification exemple
     this.scheduledMeals.set([{ id: 'sm1', date: today, mealId: meal.id, mealName: meal.name, type: 'Déjeuner', caloriesSnapshot: meal.totalCalories, proteinSnapshot: meal.totalProtein, carbsSnapshot: meal.totalCarbs, fatSnapshot: meal.totalFat, consumed: false }]);
     this.scheduledSessions.set([{ id: 'ss1', date: today, sessionId: sess.id, sessionName: sess.name, completed: false }]);
     
@@ -233,7 +215,7 @@ export class DataService {
       if (confirm("Attention: Cela effacera toutes les données sur TOUS les appareils synchronisés via le Cloud. Continuer ?")) {
         this.exercises.set([]); this.sessions.set([]); this.ingredients.set([]); this.meals.set([]); 
         this.scheduledSessions.set([]); this.scheduledMeals.set([]); this.finances.set([]);
-        this.save(); // Propager le vide au cloud
+        this.save();
         location.reload();
       }
   }
@@ -247,7 +229,7 @@ export class DataService {
   template: `
     <div class="flex flex-col md:flex-row h-screen bg-slate-950 text-slate-200 font-sans overflow-hidden selection:bg-blue-600 selection:text-white">
       
-      <!-- NAV MOBILE (Bottom) - Icons intégrées directement -->
+      <!-- NAV MOBILE (Bottom) -->
       <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 flex justify-around items-center z-50 h-[80px] pb-[20px]">
         
         <button (click)="activeTab.set('home')" class="flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors" [class.text-blue-500]="activeTab() === 'home'" [class.text-slate-500]="activeTab() !== 'home'">
@@ -276,27 +258,10 @@ export class DataService {
       <aside class="hidden md:flex w-64 bg-slate-900 border-r border-slate-800 flex-col z-20 shadow-2xl">
         <div class="p-6 border-b border-slate-800"><h1 class="text-2xl font-bold text-white uppercase tracking-tighter">Life<span class="text-blue-500">Track</span></h1></div>
         <nav class="flex-1 py-6 space-y-2">
-          
-          <button (click)="activeTab.set('home')" [class]="activeTab() === 'home' ? 'bg-blue-600/10 text-blue-400 border-r-4 border-blue-600' : 'text-slate-400 hover:bg-slate-800 border-r-4 border-transparent'" class="w-full flex items-center space-x-4 px-6 py-3 transition-all hover:pl-7">
-             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/> <polyline points="9 22 9 12 15 12 15 22"/></svg>
-             <span class="text-sm font-bold uppercase tracking-wider">Accueil</span>
-          </button>
-
-          <button (click)="activeTab.set('sport')" [class]="activeTab() === 'sport' ? 'bg-blue-600/10 text-blue-400 border-r-4 border-blue-600' : 'text-slate-400 hover:bg-slate-800 border-r-4 border-transparent'" class="w-full flex items-center space-x-4 px-6 py-3 transition-all hover:pl-7">
-             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11"/><path d="m21 21-1-1"/><path d="m3 3 1 1"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/></svg>
-             <span class="text-sm font-bold uppercase tracking-wider">Sport</span>
-          </button>
-
-          <button (click)="activeTab.set('nutrition')" [class]="activeTab() === 'nutrition' ? 'bg-blue-600/10 text-blue-400 border-r-4 border-blue-600' : 'text-slate-400 hover:bg-slate-800 border-r-4 border-transparent'" class="w-full flex items-center space-x-4 px-6 py-3 transition-all hover:pl-7">
-             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 10.5a1.5 1.5 0 0 1 3 0v2.8a2 2 0 0 1-2 2H12a2 2 0 0 1-2-2v-2.8Z"/><path d="M7 10.5a1.5 1.5 0 0 1 3 0v2.8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-2.8Z"/><path d="M15 10.5a1.5 1.5 0 0 1 3 0v2.8a2 2 0 0 1-2 2H16a2 2 0 0 1-2-2v-2.8Z"/><rect width="18" height="14" x="3" y="6" rx="2"/><path d="M7 6V4a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v2"/></svg>
-             <span class="text-sm font-bold uppercase tracking-wider">Nutrition</span>
-          </button>
-
-          <button (click)="activeTab.set('finance')" [class]="activeTab() === 'finance' ? 'bg-blue-600/10 text-blue-400 border-r-4 border-blue-600' : 'text-slate-400 hover:bg-slate-800 border-r-4 border-transparent'" class="w-full flex items-center space-x-4 px-6 py-3 transition-all hover:pl-7">
-             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
-             <span class="text-sm font-bold uppercase tracking-wider">Finances</span>
-          </button>
-
+          <button (click)="activeTab.set('home')" [class]="activeTab() === 'home' ? 'bg-blue-600/10 text-blue-400 border-r-4 border-blue-600' : 'text-slate-400 hover:bg-slate-800 border-r-4 border-transparent'" class="w-full flex items-center space-x-4 px-6 py-3 transition-all hover:pl-7"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/> <polyline points="9 22 9 12 15 12 15 22"/></svg><span class="text-sm font-bold uppercase tracking-wider">Accueil</span></button>
+          <button (click)="activeTab.set('sport')" [class]="activeTab() === 'sport' ? 'bg-blue-600/10 text-blue-400 border-r-4 border-blue-600' : 'text-slate-400 hover:bg-slate-800 border-r-4 border-transparent'" class="w-full flex items-center space-x-4 px-6 py-3 transition-all hover:pl-7"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11"/><path d="m21 21-1-1"/><path d="m3 3 1 1"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/></svg><span class="text-sm font-bold uppercase tracking-wider">Sport</span></button>
+          <button (click)="activeTab.set('nutrition')" [class]="activeTab() === 'nutrition' ? 'bg-blue-600/10 text-blue-400 border-r-4 border-blue-600' : 'text-slate-400 hover:bg-slate-800 border-r-4 border-transparent'" class="w-full flex items-center space-x-4 px-6 py-3 transition-all hover:pl-7"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 10.5a1.5 1.5 0 0 1 3 0v2.8a2 2 0 0 1-2 2H12a2 2 0 0 1-2-2v-2.8Z"/><path d="M7 10.5a1.5 1.5 0 0 1 3 0v2.8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-2.8Z"/><path d="M15 10.5a1.5 1.5 0 0 1 3 0v2.8a2 2 0 0 1-2 2H16a2 2 0 0 1-2-2v-2.8Z"/><rect width="18" height="14" x="3" y="6" rx="2"/><path d="M7 6V4a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v2"/></svg><span class="text-sm font-bold uppercase tracking-wider">Nutrition</span></button>
+          <button (click)="activeTab.set('finance')" [class]="activeTab() === 'finance' ? 'bg-blue-600/10 text-blue-400 border-r-4 border-blue-600' : 'text-slate-400 hover:bg-slate-800 border-r-4 border-transparent'" class="w-full flex items-center space-x-4 px-6 py-3 transition-all hover:pl-7"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg><span class="text-sm font-bold uppercase tracking-wider">Finances</span></button>
         </nav>
         <div class="p-4 border-t border-slate-800"><button (click)="activeTab.set('data')" class="text-xs text-slate-500 hover:text-white transition w-full flex items-center gap-2 px-4 py-2 rounded hover:bg-slate-800"><span>⚙️</span><span>Système</span></button></div>
       </aside>
@@ -304,11 +269,10 @@ export class DataService {
       <!-- MAIN CONTENT -->
       <main class="flex-1 overflow-y-auto bg-slate-950 p-4 pb-[100px] md:p-10 relative scroll-smooth">
         
-        <!-- HEADER MOBILE (Avec indicateur de Synchro) -->
+        <!-- HEADER MOBILE -->
         <header class="md:hidden flex justify-between items-center mb-6 pt-2">
             <div><h1 class="text-xl font-bold text-white">Life<span class="text-blue-500">Track</span></h1><p class="text-xs text-slate-400 capitalize">{{ today | dateFr:'full' }}</p></div>
             <div class="flex items-center gap-2">
-                <!-- Indicateur Sync -->
                 <div class="w-2 h-2 rounded-full" [class.bg-emerald-500]="!dataService.isSyncing()" [class.bg-amber-500]="dataService.isSyncing()" [class.animate-pulse]="dataService.isSyncing()"></div>
                 <div class="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-blue-400">LT</div>
             </div>
@@ -394,30 +358,22 @@ export class DataService {
               <button *ngFor="let v of ['schedule', 'library', 'sessions']" (click)="sportView = v" [class]="sportView === v ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-900 text-slate-400 border-slate-800'" class="px-4 py-2 rounded-full text-xs font-bold uppercase whitespace-nowrap transition border shadow-sm">{{ v === 'schedule' ? 'Planning' : v === 'library' ? 'Exercices' : 'Séances' }}</button>
            </div>
 
-           <!-- Library with Filters -->
+           <!-- Library -->
            <div *ngIf="sportView === 'library'">
               <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 mb-6">
                  <h3 class="text-white font-bold mb-4 text-sm uppercase flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500"><circle cx="11" cy="11" r="8"/><path d="m21 21-4-4"/></svg> Filtres & Ajout</h3>
                  
-                 <!-- Filters -->
                  <div class="grid grid-cols-2 gap-2 mb-4">
                     <div>
                         <label class="text-[10px] uppercase text-slate-500 font-bold mb-1 block">Corps</label>
-                        <select [ngModel]="filterBodyPart" (ngModelChange)="filterBodyPart.set($event)" class="w-full bg-slate-950 border border-slate-700 text-white p-2 rounded-lg text-sm">
-                            <option value="">Tout</option>
-                            <option *ngFor="let p of uniqueBodyParts()" [value]="p">{{ p }}</option>
-                        </select>
+                        <select [ngModel]="filterBodyPart" (ngModelChange)="filterBodyPart.set($event)" class="w-full bg-slate-950 border border-slate-700 text-white p-2 rounded-lg text-sm"><option value="">Tout</option><option *ngFor="let p of uniqueBodyParts()" [value]="p">{{ p }}</option></select>
                     </div>
                     <div>
                         <label class="text-[10px] uppercase text-slate-500 font-bold mb-1 block">Matériel</label>
-                        <select [ngModel]="filterEquipment" (ngModelChange)="filterEquipment.set($event)" class="w-full bg-slate-950 border border-slate-700 text-white p-2 rounded-lg text-sm">
-                            <option value="">Tout</option>
-                            <option *ngFor="let e of uniqueEquipment()" [value]="e">{{ e }}</option>
-                        </select>
+                        <select [ngModel]="filterEquipment" (ngModelChange)="filterEquipment.set($event)" class="w-full bg-slate-950 border border-slate-700 text-white p-2 rounded-lg text-sm"><option value="">Tout</option><option *ngFor="let e of uniqueEquipment()" [value]="e">{{ e }}</option></select>
                     </div>
                  </div>
 
-                 <!-- Add Form -->
                  <div class="pt-4 border-t border-slate-800">
                     <input [(ngModel)]="exerciseForm.name" placeholder="Nom de l'exercice" class="w-full bg-slate-950 border border-slate-700 text-white p-3 rounded-lg mb-2 text-sm">
                     <div class="grid grid-cols-2 gap-2 mb-2">
@@ -433,7 +389,6 @@ export class DataService {
                  </div>
               </div>
 
-              <!-- Exercise List -->
               <div class="grid gap-3">
                  <div *ngFor="let ex of filteredExercises()" class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex justify-between items-center group">
                     <div>
@@ -446,7 +401,7 @@ export class DataService {
               </div>
            </div>
 
-           <!-- Schedule & Sessions views -->
+           <!-- Schedule -->
            <div *ngIf="sportView === 'schedule'">
               <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl mb-6">
                  <h3 class="text-slate-400 text-xs font-bold uppercase mb-4">Planifier une séance</h3>
@@ -663,7 +618,7 @@ export class DataService {
                <div *ngFor="let ex of sessionModalData.exercises" class="bg-slate-950 p-3 rounded border border-slate-800">
                   <p class="text-white font-bold">{{ ex.name }}</p>
                   <p class="text-xs text-slate-500 uppercase">{{ ex.bodyPart }} - {{ ex.equipment }}</p>
-                  <p class="text-sm text-blue-400 mt-1 font-mono">{{ ex.sets }} x {{ ex.reps }} @ {{ ex.weight }}kg</p>
+                  <p class="text-sm text-blue-400 mt-1 font-mono">{{ ex.sets }} x {{ ex.reps }} &#64; {{ ex.weight }}kg</p>
                </div>
             </div>
             <div *ngIf="planningMode" class="p-4 border-t border-slate-800 bg-slate-900 flex gap-2">
