@@ -1,19 +1,15 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    
-    <!-- GARDE CETTE LIGNE (C'est elle qui gère l'encoche) -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    
-    <title>Ma Vie Life</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    
-    <!-- REMETS TA LIGNE ORIGINALE ICI (Celle que tu as trouvée dans l'historique) -->
-    <!-- Par exemple : -->
-    <script type="module" src="/src/main.tsx"></script> 
-  </body>
+<head>
+  <meta charset="utf-8">
+  <title>MaVieLife</title>
+  <base href="/">
+  <!-- Ton correctif pour l'encoche iPhone -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+</head>
+<body class="bg-slate-950">
+  <!-- C'EST LA CLÉ : Angular cherche cette balise -->
+  <app-root></app-root>
+</body>
 </html>
