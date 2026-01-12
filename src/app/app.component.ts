@@ -654,7 +654,7 @@ export class DataService {
     @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
   `]
 })
-export class AppComponent {
+export class App {
   dataService = inject(DataService);
   activeTab = signal('home');
   tabs = [
